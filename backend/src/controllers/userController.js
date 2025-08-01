@@ -1,4 +1,4 @@
-import User from '../models/user.js';
+import User from '../data/models/user.js';
 import bcrypt from 'bcryptjs';
 
 export const createUser = async (req, res, next) => {

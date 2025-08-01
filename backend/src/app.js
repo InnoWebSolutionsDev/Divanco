@@ -21,7 +21,7 @@ console.log('🕐 [SERVER] Hora actual Colombia:', new Date().toLocaleString('es
 }));
 
 dotenv.config();
-
+import './data/models/index.js';
 
 const app = express();
 app.use(morgan('dev'));

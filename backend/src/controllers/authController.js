@@ -50,7 +50,7 @@ export const recoverPassword = async (req, res, next) => {
   }
 };
 
-import User from '../models/user.js';
+import User from '../data/models/user.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sendRegistrationMail } from '../utils/mailer.js';
