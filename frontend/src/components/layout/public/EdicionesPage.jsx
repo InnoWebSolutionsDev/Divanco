@@ -72,11 +72,9 @@ function EdicionesPage() {
             className="group inline-block"
           >
             <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-wider text-white mb-4 hover:text-white/90 transition-all duration-500 group-hover:scale-105">
-              EDICIONES
+              EDICION 2025
             </h2>
-            <div className="text-2xl sm:text-3xl md:text-4xl font-extralight tracking-widest text-white/80 group-hover:text-white transition-colors duration-300">
-              2025
-            </div>
+            
           </Link>
 
           {/* Subtítulo */}

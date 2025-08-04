@@ -70,8 +70,8 @@ const Header = () => {
   // Lógica para el fondo del header
   const getHeaderBackground = () => {
     if (!isHomepage) {
-      // En otras páginas: fondo blanco semi-transparente
-      return 'bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100';
+      // En otras páginas: mismo fondo oscuro que en homepage con scroll
+      return 'bg-gray-800/80  backdrop-blur-md shadow-lg border-b border-white/10 py-8';
     } else {
       // En homepage: sin fondo base (usaremos pseudo-elemento)
       return 'bg-transparent';
@@ -80,7 +80,7 @@ const Header = () => {
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${getHeaderBackground()}`}>
-      {/* Fondo expandible para homepage con scroll */}
+      {/* Fondo expandible SOLO para homepage con scroll */}
       {isHomepage && scrolled && (
         <div className="absolute inset-0 bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-white/10 transition-all duration-500" 
              style={{ 
@@ -90,32 +90,26 @@ const Header = () => {
         />
       )}
       
-      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header flotante - Posición fija como antes */}
-       <div className={`flex items-center justify-between relative transition-all duration-500 top-12 ${
-          isHomepage ? 'h-24 pt-8' : 'h-20'
+     <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Header flotante - Ajuste condicional de posición */}
+       <div className={`flex items-center justify-between relative transition-all duration-500 ${
+          isHomepage ? 'top-12 h-24 pt-8' : ' h-16 pt-4'  // ✅ Menos top y padding en otras páginas
         }`}>
           
-          {/* Navegación Izquierda - Más alejada del centro */}
+          {/* Navegación Izquierda - MISMO espaciado */}
           <div className={`hidden lg:flex items-center space-x-6 xl:space-x-8 ${
-            isHomepage ? 'ml-4 xl:ml-8' : 'ml-0'
+            'ml-4 xl:ml-8'  // ✅ Mismo espaciado siempre
           }`}>
             {leftNavigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
                 className={`font-light uppercase tracking-wider transition-all duration-300 hover:scale-105 ${
-                  isHomepage 
-                    ? 'text-lg md:text-xl lg:text-2xl' 
-                    : 'text-sm md:text-base' 
+                  'text-lg md:text-xl lg:text-2xl'  // ✅ Mismo tamaño siempre
                 } ${
                   isActive(item.href)
-                    ? `${(isHomepage && !scrolled) ? 'text-white border-b border-white/60' : 
-                        (isHomepage && scrolled) ? 'text-white border-b border-white/60' :
-                        'text-black border-b border-black'}`
-                    : `${(isHomepage && !scrolled) ? 'text-white/90 hover:text-white hover:border-b hover:border-white/40' : 
-                        (isHomepage && scrolled) ? 'text-white/90 hover:text-white hover:border-b hover:border-white/40' :
-                        'text-gray-600 hover:text-black'}`
+                    ? 'text-white border-b border-white/60'  // ✅ Simplificado
+                    : 'text-white/90 hover:text-white hover:border-b hover:border-white/40'  // ✅ Simplificado
                 }`}
               >
                 {item.name}
@@ -123,19 +117,13 @@ const Header = () => {
             ))}
             <Link 
               to="/buscar"
-              className={`transition-all duration-300 hover:scale-110 ${
-                (isHomepage && !scrolled) ? 'p-2 text-white/90 hover:text-white' : 
-                (isHomepage && scrolled) ? 'p-2 text-white/90 hover:text-white' :
-                'p-1.5 text-gray-600 hover:text-black'
-              }`}
+              className="transition-all duration-300 hover:scale-110 p-2 text-white/90 hover:text-white"  // ✅ Simplificado
             >
-              <MagnifyingGlassIcon className={`${
-                isHomepage ? 'h-6 w-6' : 'h-5 w-5'
-              }`} />
+              <MagnifyingGlassIcon className="h-6 w-6" />  {/* ✅ Mismo tamaño siempre */}
             </Link>
           </div>
 
-          {/* Logo Central - Centrado absoluto */}
+          {/* Logo Central - MISMO tamaño */}
           <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">
             <Link 
               to="/" 
@@ -143,9 +131,7 @@ const Header = () => {
               onClick={handleLogoClick}
             >
               <span className={`font-light uppercase transition-all duration-500 group-hover:opacity-80 ${
-                isHomepage 
-                  ? 'text-4xl md:text-5xl lg:text-6xl tracking-[0.3em] text-white' 
-                  : 'text-2xl tracking-[0.2em] text-black'
+                'text-4xl md:text-5xl lg:text-6xl tracking-[0.3em] text-white'  // ✅ Mismo tamaño siempre
               }`}>
                 Divanco
               </span>
@@ -157,11 +143,7 @@ const Header = () => {
                     <div
                       key={i}
                       className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                        i < clickCount 
-                          ? ((isHomepage && !scrolled) ? 'bg-white' : 
-                             (isHomepage && scrolled) ? 'bg-white' : 'bg-black') 
-                          : ((isHomepage && !scrolled) ? 'bg-white/30' : 
-                             (isHomepage && scrolled) ? 'bg-white/30' : 'bg-gray-300')
+                        i < clickCount ? 'bg-white' : 'bg-white/30'  // ✅ Simplificado
                       }`}
                     />
                   ))}
@@ -170,45 +152,33 @@ const Header = () => {
             </Link>
           </div>
 
-          {/* Navegación Derecha - Más alejada del centro */}
+          {/* Navegación Derecha - MISMO espaciado */}
           <div className={`hidden lg:flex items-center space-x-6 xl:space-x-8 ${
-            isHomepage ? 'mr-4 xl:-mr-4' : 'mr-0'
+            'mr-4 xl:-mr-4'  // ✅ Mismo espaciado siempre
           }`}>
             {rightNavigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
                 className={`font-light uppercase tracking-wider transition-all duration-300 hover:scale-105 ${
-                  isHomepage 
-                    ? 'text-lg md:text-xl lg:text-2xl' 
-                    : 'text-sm md:text-base' 
+                  'text-lg md:text-xl lg:text-2xl'  // ✅ Mismo tamaño siempre
                 } ${
                   isActive(item.href)
-                    ? `${(isHomepage && !scrolled) ? 'text-white border-b border-white/60' : 
-                        (isHomepage && scrolled) ? 'text-white border-b border-white/60' :
-                        'text-black border-b border-black'}`
-                    : `${(isHomepage && !scrolled) ? 'text-white/90 hover:text-white hover:border-b hover:border-white/40' : 
-                        (isHomepage && scrolled) ? 'text-white/90 hover:text-white hover:border-b hover:border-white/40' :
-                        'text-gray-600 hover:text-black'}`
+                    ? 'text-white border-b border-white/60'  // ✅ Simplificado
+                    : 'text-white/90 hover:text-white hover:border-b hover:border-white/40'  // ✅ Simplificado
                 }`}
               >
                 {item.name}
               </Link>
             ))}
 
-            {/* Profile (solo si está autenticado) - En la misma línea */}
+            {/* Profile (solo si está autenticado) */}
             {isAuthenticated && (
               <Link
                 to="/profile"
                 className={`font-light uppercase tracking-wider transition-all duration-300 hover:scale-105 ${
-                  isHomepage 
-                    ? 'text-lg md:text-xl lg:text-2xl' 
-                    : 'text-sm md:text-base'
-                } ${
-                  (isHomepage && !scrolled) ? 'text-white/90 hover:text-white' : 
-                  (isHomepage && scrolled) ? 'text-white/90 hover:text-white' :
-                  'text-gray-600 hover:text-black'
-                }`}
+                  'text-lg md:text-xl lg:text-2xl'  // ✅ Mismo tamaño siempre
+                } text-white/90 hover:text-white`}  // ✅ Simplificado
               >
                 {user?.name || 'Profile'}
               </Link>

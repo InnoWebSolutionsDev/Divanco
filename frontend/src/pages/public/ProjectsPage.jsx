@@ -84,8 +84,11 @@ const ProjectsPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Multi-slide Carousel estilo Minotti */}
-      <section className="relative h-screen overflow-hidden bg-gray-50">
+      {/* Multi-slide Carousel estilo Minotti - Ajustado para header */}
+      <section className="relative overflow-hidden bg-gray-50" style={{ 
+        height: isMobile ? 'calc(100vh - 80px)' : 'calc(100vh - 100px)',
+        paddingTop: isMobile ? '80px' : '100px'
+      }}>
         {/* Container principal con padding lateral */}
         <div className="relative h-full flex items-center px-4 md:px-8 lg:px-16">
           
@@ -118,15 +121,15 @@ const ProjectsPage = () => {
                         : 'opacity-70 scale-95 z-5'
                   }`}
                   style={isMobile ? {
-                    // Móvil: Una imagen por vez, casi pantalla completa
+                    // Móvil: Una imagen por vez, altura reducida
                     width: '90%',
-                    height: '80vh',
+                    height: '65vh', // ✅ Reducido de 80vh a 65vh
                     marginRight: '1rem',
                     marginLeft: '5%' // Para centrar
                   } : {
-                    // Desktop: Múltiples imágenes
+                    // Desktop: Múltiples imágenes, altura reducida
                     width: '55%',
-                    height: '85vh',
+                    height: '70vh', // ✅ Reducido de 85vh a 70vh
                     marginRight: '2rem'
                   }}
                 >
@@ -149,21 +152,21 @@ const ProjectsPage = () => {
                   }`}>
                     <div className="max-w-md">
                       <h3 className={`font-light mb-3 tracking-wide ${
-                        isMobile ? 'text-2xl' : 'text-3xl lg:text-4xl'
+                        isMobile ? 'text-xl' : 'text-2xl lg:text-3xl' // ✅ Reducido tamaños
                       }`}>
                         {project.title}
                       </h3>
-                      <p className={`font-light opacity-90 mb-6 leading-relaxed ${
-                        isMobile ? 'text-sm' : 'text-base lg:text-lg'
+                      <p className={`font-light opacity-90 mb-4 leading-relaxed ${
+                        isMobile ? 'text-xs' : 'text-sm lg:text-base' // ✅ Reducido tamaños
                       }`}>
                         {project.subtitle}
                       </p>
                       
                       <button className={`inline-flex items-center border border-white text-white font-light uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 group ${
-                        isMobile ? 'px-6 py-2 text-xs' : 'px-8 py-3 text-sm'
+                        isMobile ? 'px-4 py-2 text-xs' : 'px-6 py-2 text-xs' // ✅ Reducido padding
                       }`}>
                         Find out more
-                        <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                       </button>
@@ -173,7 +176,7 @@ const ProjectsPage = () => {
                   {/* Número del slide */}
                   <div className={`absolute top-4 md:top-6 left-4 md:left-6 text-white font-light transition-opacity duration-500 ${
                     (isMobile || isActive) ? 'opacity-100' : 'opacity-60'
-                  } ${isMobile ? 'text-lg' : 'text-2xl'}`}>
+                  } ${isMobile ? 'text-base' : 'text-xl'}`}> {/* ✅ Reducido tamaño */}
                     {(index + 1).toString().padStart(2, '0')}
                   </div>
                 </div>
@@ -185,25 +188,25 @@ const ProjectsPage = () => {
           <button
             onClick={prevSlide}
             className={`absolute top-1/2 transform -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20 ${
-              isMobile ? 'left-4 p-3' : 'left-8 p-4'
+              isMobile ? 'left-4 p-2' : 'left-8 p-3' // ✅ Reducido padding
             }`}
           >
-            <ChevronLeftIcon className={isMobile ? 'w-5 h-5' : 'w-6 h-6'} strokeWidth={1} />
+            <ChevronLeftIcon className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} strokeWidth={1} /> {/* ✅ Reducido tamaño */}
           </button>
 
           <button
             onClick={nextSlide}
             className={`absolute top-1/2 transform -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20 ${
-              isMobile ? 'right-4 p-3' : 'right-8 p-4'
+              isMobile ? 'right-4 p-2' : 'right-8 p-3' // ✅ Reducido padding
             }`}
           >
-            <ChevronRightIcon className={isMobile ? 'w-5 h-5' : 'w-6 h-6'} strokeWidth={1} />
+            <ChevronRightIcon className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} strokeWidth={1} /> {/* ✅ Reducido tamaño */}
           </button>
         </div>
 
         {/* Indicadores inferiores - Responsive */}
         <div className={`absolute left-1/2 transform -translate-x-1/2 z-30 flex ${
-          isMobile ? 'bottom-8 space-x-2' : 'bottom-12 space-x-3'
+          isMobile ? 'bottom-6 space-x-2' : 'bottom-8 space-x-3' // ✅ Subido posición
         }`}>
           {projects.map((_, index) => (
             <button
@@ -212,11 +215,11 @@ const ProjectsPage = () => {
               className={`h-1 rounded-full transition-all duration-500 ${
                 index === currentSlide 
                   ? isMobile 
-                    ? 'bg-white w-8' 
-                    : 'bg-white w-12'
+                    ? 'bg-white w-6' // ✅ Reducido ancho
+                    : 'bg-white w-10' // ✅ Reducido ancho
                   : isMobile
-                    ? 'bg-white/40 hover:bg-white/60 w-4'
-                    : 'bg-white/40 hover:bg-white/60 w-6'
+                    ? 'bg-white/40 hover:bg-white/60 w-3' // ✅ Reducido ancho
+                    : 'bg-white/40 hover:bg-white/60 w-5' // ✅ Reducido ancho
               }`}
             />
           ))}
@@ -224,7 +227,7 @@ const ProjectsPage = () => {
 
         {/* Contador elegante - Responsive */}
         <div className={`absolute z-30 text-white font-light ${
-          isMobile ? 'top-4 right-4 text-lg' : 'top-8 right-8 text-2xl'
+          isMobile ? 'top-6 right-4 text-base' : 'top-8 right-8 text-lg' // ✅ Reducido tamaño y bajado posición
         }`}>
           <span>{(currentSlide + 1).toString().padStart(2, '0')}</span>
           <span className="text-white/60 mx-2">—</span>
@@ -235,15 +238,15 @@ const ProjectsPage = () => {
         <button
           onClick={() => setIsAutoPlaying(!isAutoPlaying)}
           className={`absolute z-30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20 ${
-            isMobile ? 'bottom-8 right-4 p-2' : 'bottom-12 right-8 p-3'
+            isMobile ? 'bottom-6 right-4 p-2' : 'bottom-8 right-8 p-2' // ✅ Subido posición y reducido padding
           }`}
         >
           {isAutoPlaying ? (
-            <svg className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} fill="currentColor" viewBox="0 0 20 20">
+            <svg className={isMobile ? 'w-3 h-3' : 'w-4 h-4'} fill="currentColor" viewBox="0 0 20 20"> {/* ✅ Reducido tamaño */}
               <path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z" />
             </svg>
           ) : (
-            <svg className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} fill="currentColor" viewBox="0 0 20 20">
+            <svg className={isMobile ? 'w-3 h-3' : 'w-4 h-4'} fill="currentColor" viewBox="0 0 20 20"> {/* ✅ Reducido tamaño */}
               <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
             </svg>
           )}
@@ -251,12 +254,12 @@ const ProjectsPage = () => {
       </section>
 
       {/* Sección adicional */}
-      <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8"> {/* ✅ Reducido padding */}
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-2xl md:text-3xl font-light mb-4 uppercase tracking-wider text-gray-900">
+          <h2 className="text-xl md:text-2xl font-light mb-4 uppercase tracking-wider text-gray-900"> {/* ✅ Reducido tamaño */}
             Explora Nuestros Proyectos
           </h2>
-          <p className="text-base md:text-lg text-gray-600 font-light max-w-2xl mx-auto">
+          <p className="text-sm md:text-base text-gray-600 font-light max-w-2xl mx-auto"> {/* ✅ Reducido tamaño */}
             Cada proyecto refleja nuestra pasión por el diseño excepcional y la atención al detalle.
           </p>
         </div>
