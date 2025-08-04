@@ -3,3 +3,5 @@ export { default as Footer } from './Footer';
 export { default as Hero } from './Hero';
 export { default as Navigation } from './Navigation';
 export { default as PublicLayout } from './PublicLayout';
+export { default as BlogSection } from './BlogSection';
+export { default as Newsletter } from './Newsletter'; // Importa el componente Newsletter

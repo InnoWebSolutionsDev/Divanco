@@ -6,6 +6,9 @@ import {
   BuildingOfficeIcon
 } from '@heroicons/react/24/outline';
 
+import Newsletter from './Newsletter'; 
+
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
@@ -75,14 +78,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Newsletter</h3>
-            <p className="text-gray-300 mb-4 text-sm">
-              Recibe las últimas noticias y proyectos
-            </p>
-            {/* Newsletter form component aquí */}
-          </div>
+          <Newsletter />
         </div>
 
         {/* Bottom */}
