@@ -77,76 +77,76 @@ const ProjectsPage = () => {
         {/* Container principal con padding lateral */}
         <div className="relative h-full flex items-center px-8 lg:px-16">
           
-          {/* Slides Container - Más ancho con espacios */}
-         <div 
-  className="flex transition-transform duration-1000 ease-out"
-  style={{ 
-    transform: `translateX(-${currentSlide * 60}%)`, // Ajustado para imágenes más grandes
-    gap: '2rem', // Espacio entre slides
-    width: `${projects.length * 60}%` // Ancho total ajustado
-  }}
->
-  {projects.map((project, index) => {
-    const isActive = index === currentSlide;
-    
-    return (
-      <div 
-        key={project.id}
-        className={`relative flex-shrink-0 transition-all duration-1000 ${
-          isActive 
-            ? 'opacity-100 scale-100 z-10' 
-            : 'opacity-70 scale-95 z-5'
-        }`}
-        style={{ 
-          width: '55%', // TODAS las imágenes del mismo tamaño grande
-          height: '85vh',
-          marginRight: '2rem'
-        }}
-      >
-        {/* Imagen principal */}
-        <img
-          src={project.image}
-          alt={project.title}
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23f5f5f5'/%3E%3Ctext x='400' y='280' text-anchor='middle' fill='%23999' font-size='24' font-family='Arial'%3E" + project.title + "%3C/text%3E%3Ctext x='400' y='320' text-anchor='middle' fill='%23666' font-size='16' font-family='Arial'%3E" + project.subtitle + "%3C/text%3E%3C/svg%3E";
-          }}
-        />
-        
-        {/* Overlay gradient sutil */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-        
-        {/* Contenido del slide - solo en el activo */}
-        <div className={`absolute bottom-0 left-0 right-0 p-8 text-white transition-all duration-700 ${
-          isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-        }`}>
-          <div className="max-w-md">
-            <h3 className="text-3xl lg:text-4xl font-light mb-3 tracking-wide">
-              {project.title}
-            </h3>
-            <p className="text-base lg:text-lg font-light opacity-90 mb-6 leading-relaxed">
-              {project.subtitle}
-            </p>
-            
-            <button className="inline-flex items-center px-8 py-3 border border-white text-white text-sm font-light uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 group">
-              Find out more
-              <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </button>
-          </div>
-        </div>
+          {/* Slides Container - Centrado perfecto */}
+          <div 
+            className="flex transition-transform duration-1000 ease-out"
+            style={{ 
+              transform: `translateX(calc(22.5% - ${currentSlide * 57}%))`, // Centrado perfecto
+              gap: '2rem',
+              width: `${projects.length * 57}%`
+            }}
+          >
+            {projects.map((project, index) => {
+              const isActive = index === currentSlide;
+              
+              return (
+                <div 
+                  key={project.id}
+                  className={`relative flex-shrink-0 transition-all duration-1000 ${
+                    isActive 
+                      ? 'opacity-100 scale-100 z-10' 
+                      : 'opacity-70 scale-95 z-5'
+                  }`}
+                  style={{ 
+                    width: '55%', // Todas las imágenes del mismo tamaño grande
+                    height: '85vh',
+                    marginRight: '2rem'
+                  }}
+                >
+                  {/* Imagen principal */}
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="absolute inset-0 w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23f5f5f5'/%3E%3Ctext x='400' y='280' text-anchor='middle' fill='%23999' font-size='24' font-family='Arial'%3E" + project.title + "%3C/text%3E%3Ctext x='400' y='320' text-anchor='middle' fill='%23666' font-size='16' font-family='Arial'%3E" + project.subtitle + "%3C/text%3E%3C/svg%3E";
+                    }}
+                  />
+                  
+                  {/* Overlay gradient sutil */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  
+                  {/* Contenido del slide - solo en el activo */}
+                  <div className={`absolute bottom-0 left-0 right-0 p-8 text-white transition-all duration-700 ${
+                    isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  }`}>
+                    <div className="max-w-md">
+                      <h3 className="text-3xl lg:text-4xl font-light mb-3 tracking-wide">
+                        {project.title}
+                      </h3>
+                      <p className="text-base lg:text-lg font-light opacity-90 mb-6 leading-relaxed">
+                        {project.subtitle}
+                      </p>
+                      
+                      <button className="inline-flex items-center px-8 py-3 border border-white text-white text-sm font-light uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 group">
+                        Find out more
+                        <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
 
-        {/* Número del slide */}
-        <div className={`absolute top-6 left-6 text-white font-light text-2xl transition-opacity duration-500 ${
-          isActive ? 'opacity-100' : 'opacity-60'
-        }`}>
-          {(index + 1).toString().padStart(2, '0')}
-        </div>
-      </div>
-    );
-  })}
-</div>
+                  {/* Número del slide */}
+                  <div className={`absolute top-6 left-6 text-white font-light text-2xl transition-opacity duration-500 ${
+                    isActive ? 'opacity-100' : 'opacity-60'
+                  }`}>
+                    {(index + 1).toString().padStart(2, '0')}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
           {/* Controles de navegación - más elegantes */}
           <button
