@@ -4,7 +4,7 @@ import Header from './Header'; // ✅ Ahora existe
 import Footer from './Footer'; // ✅ Ahora existe
 import { LoadingSpinner } from '../shared/LoadingBoundary'; // ✅ Ya verificado
 import ScrollToTop from '../shared/ScrollToTop'; // ✅ Ya existe
-
+import WhatsApp from '../../ui/WhatsApp'; // ✅ Ahora existe
 const PublicLayout = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -18,6 +18,10 @@ const PublicLayout = () => {
       </main>
       
       <Footer />
+      <WhatsApp 
+        phoneNumber="5491134567890" // Tu número de WhatsApp
+        message="Hablemos"
+      />
     </div>
   );
 };
