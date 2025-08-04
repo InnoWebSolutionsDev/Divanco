@@ -55,7 +55,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'showroom/:categorySlug/:subcategorySlug',
-        element: <SubcategoryPage />,
+        element: <SubCategoryPage />,
       },
       {
         path: 'proyectos',
