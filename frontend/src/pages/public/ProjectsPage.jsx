@@ -4,6 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 const ProjectsPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Datos de ejemplo para los proyectos
   const projects = [
@@ -44,6 +45,17 @@ const ProjectsPage = () => {
     }
   ];
 
+  // Detectar tamaño de pantalla
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   // Auto-play del slider
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -75,13 +87,19 @@ const ProjectsPage = () => {
       {/* Multi-slide Carousel estilo Minotti */}
       <section className="relative h-screen overflow-hidden bg-gray-50">
         {/* Container principal con padding lateral */}
-        <div className="relative h-full flex items-center px-8 lg:px-16">
+        <div className="relative h-full flex items-center px-4 md:px-8 lg:px-16">
           
-          {/* Slides Container - Centrado perfecto */}
+          {/* Slides Container - Responsive */}
           <div 
             className="flex transition-transform duration-1000 ease-out"
-            style={{ 
-              transform: `translateX(calc(22.5% - ${currentSlide * 57}%))`, // Centrado perfecto
+            style={isMobile ? {
+              // Móvil: Una imagen a la vez, centrada
+              transform: `translateX(-${currentSlide * 100}%)`,
+              gap: '1rem',
+              width: `${projects.length * 100}%`
+            } : {
+              // Desktop: Múltiples imágenes visibles
+              transform: `translateX(calc(22.5% - ${currentSlide * 57}%))`,
               gap: '2rem',
               width: `${projects.length * 57}%`
             }}
@@ -93,12 +111,21 @@ const ProjectsPage = () => {
                 <div 
                   key={project.id}
                   className={`relative flex-shrink-0 transition-all duration-1000 ${
-                    isActive 
-                      ? 'opacity-100 scale-100 z-10' 
-                      : 'opacity-70 scale-95 z-5'
+                    isMobile 
+                      ? 'opacity-100 scale-100 z-10' // Móvil: siempre visible
+                      : isActive 
+                        ? 'opacity-100 scale-100 z-10' 
+                        : 'opacity-70 scale-95 z-5'
                   }`}
-                  style={{ 
-                    width: '55%', // Todas las imágenes del mismo tamaño grande
+                  style={isMobile ? {
+                    // Móvil: Una imagen por vez, casi pantalla completa
+                    width: '90%',
+                    height: '80vh',
+                    marginRight: '1rem',
+                    marginLeft: '5%' // Para centrar
+                  } : {
+                    // Desktop: Múltiples imágenes
+                    width: '55%',
                     height: '85vh',
                     marginRight: '2rem'
                   }}
@@ -107,28 +134,34 @@ const ProjectsPage = () => {
                   <img
                     src={project.image}
                     alt={project.title}
-                    className="absolute inset-0 w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
                     onError={(e) => {
                       e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23f5f5f5'/%3E%3Ctext x='400' y='280' text-anchor='middle' fill='%23999' font-size='24' font-family='Arial'%3E" + project.title + "%3C/text%3E%3Ctext x='400' y='320' text-anchor='middle' fill='%23666' font-size='16' font-family='Arial'%3E" + project.subtitle + "%3C/text%3E%3C/svg%3E";
                     }}
                   />
                   
                   {/* Overlay gradient sutil */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-lg" />
                   
-                  {/* Contenido del slide - solo en el activo */}
-                  <div className={`absolute bottom-0 left-0 right-0 p-8 text-white transition-all duration-700 ${
-                    isActive ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                  {/* Contenido del slide */}
+                  <div className={`absolute bottom-0 left-0 right-0 p-4 md:p-8 text-white transition-all duration-700 ${
+                    (isMobile || isActive) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}>
                     <div className="max-w-md">
-                      <h3 className="text-3xl lg:text-4xl font-light mb-3 tracking-wide">
+                      <h3 className={`font-light mb-3 tracking-wide ${
+                        isMobile ? 'text-2xl' : 'text-3xl lg:text-4xl'
+                      }`}>
                         {project.title}
                       </h3>
-                      <p className="text-base lg:text-lg font-light opacity-90 mb-6 leading-relaxed">
+                      <p className={`font-light opacity-90 mb-6 leading-relaxed ${
+                        isMobile ? 'text-sm' : 'text-base lg:text-lg'
+                      }`}>
                         {project.subtitle}
                       </p>
                       
-                      <button className="inline-flex items-center px-8 py-3 border border-white text-white text-sm font-light uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 group">
+                      <button className={`inline-flex items-center border border-white text-white font-light uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 group ${
+                        isMobile ? 'px-6 py-2 text-xs' : 'px-8 py-3 text-sm'
+                      }`}>
                         Find out more
                         <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -138,9 +171,9 @@ const ProjectsPage = () => {
                   </div>
 
                   {/* Número del slide */}
-                  <div className={`absolute top-6 left-6 text-white font-light text-2xl transition-opacity duration-500 ${
-                    isActive ? 'opacity-100' : 'opacity-60'
-                  }`}>
+                  <div className={`absolute top-4 md:top-6 left-4 md:left-6 text-white font-light transition-opacity duration-500 ${
+                    (isMobile || isActive) ? 'opacity-100' : 'opacity-60'
+                  } ${isMobile ? 'text-lg' : 'text-2xl'}`}>
                     {(index + 1).toString().padStart(2, '0')}
                   </div>
                 </div>
@@ -148,55 +181,69 @@ const ProjectsPage = () => {
             })}
           </div>
 
-          {/* Controles de navegación - más elegantes */}
+          {/* Controles de navegación - Responsive */}
           <button
             onClick={prevSlide}
-            className="absolute left-8 top-1/2 transform -translate-y-1/2 z-30 p-4 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20"
+            className={`absolute top-1/2 transform -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20 ${
+              isMobile ? 'left-4 p-3' : 'left-8 p-4'
+            }`}
           >
-            <ChevronLeftIcon className="w-6 h-6" strokeWidth={1} />
+            <ChevronLeftIcon className={isMobile ? 'w-5 h-5' : 'w-6 h-6'} strokeWidth={1} />
           </button>
 
           <button
             onClick={nextSlide}
-            className="absolute right-8 top-1/2 transform -translate-y-1/2 z-30 p-4 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20"
+            className={`absolute top-1/2 transform -translate-y-1/2 z-30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20 ${
+              isMobile ? 'right-4 p-3' : 'right-8 p-4'
+            }`}
           >
-            <ChevronRightIcon className="w-6 h-6" strokeWidth={1} />
+            <ChevronRightIcon className={isMobile ? 'w-5 h-5' : 'w-6 h-6'} strokeWidth={1} />
           </button>
         </div>
 
-        {/* Indicadores inferiores - más grandes */}
-        <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-30 flex space-x-3">
+        {/* Indicadores inferiores - Responsive */}
+        <div className={`absolute left-1/2 transform -translate-x-1/2 z-30 flex ${
+          isMobile ? 'bottom-8 space-x-2' : 'bottom-12 space-x-3'
+        }`}>
           {projects.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
               className={`h-1 rounded-full transition-all duration-500 ${
                 index === currentSlide 
-                  ? 'bg-white w-12' 
-                  : 'bg-white/40 hover:bg-white/60 w-6'
+                  ? isMobile 
+                    ? 'bg-white w-8' 
+                    : 'bg-white w-12'
+                  : isMobile
+                    ? 'bg-white/40 hover:bg-white/60 w-4'
+                    : 'bg-white/40 hover:bg-white/60 w-6'
               }`}
             />
           ))}
         </div>
 
-        {/* Contador elegante */}
-        <div className="absolute top-8 right-8 z-30 text-white font-light">
-          <span className="text-2xl">{(currentSlide + 1).toString().padStart(2, '0')}</span>
-          <span className="text-white/60 mx-3">—</span>
-          <span className="text-white/60 text-lg">{projects.length.toString().padStart(2, '0')}</span>
+        {/* Contador elegante - Responsive */}
+        <div className={`absolute z-30 text-white font-light ${
+          isMobile ? 'top-4 right-4 text-lg' : 'top-8 right-8 text-2xl'
+        }`}>
+          <span>{(currentSlide + 1).toString().padStart(2, '0')}</span>
+          <span className="text-white/60 mx-2">—</span>
+          <span className="text-white/60">{projects.length.toString().padStart(2, '0')}</span>
         </div>
 
-        {/* Control de auto-play */}
+        {/* Control de auto-play - Responsive */}
         <button
           onClick={() => setIsAutoPlaying(!isAutoPlaying)}
-          className="absolute bottom-12 right-8 z-30 p-3 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20"
+          className={`absolute z-30 bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-all duration-300 rounded-full border border-white/20 ${
+            isMobile ? 'bottom-8 right-4 p-2' : 'bottom-12 right-8 p-3'
+          }`}
         >
           {isAutoPlaying ? (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <svg className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} fill="currentColor" viewBox="0 0 20 20">
               <path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z" />
             </svg>
           ) : (
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <svg className={isMobile ? 'w-4 h-4' : 'w-5 h-5'} fill="currentColor" viewBox="0 0 20 20">
               <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
             </svg>
           )}
@@ -204,12 +251,12 @@ const ProjectsPage = () => {
       </section>
 
       {/* Sección adicional */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <section className="py-12 md:py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-3xl font-light mb-4 uppercase tracking-wider text-gray-900">
+          <h2 className="text-2xl md:text-3xl font-light mb-4 uppercase tracking-wider text-gray-900">
             Explora Nuestros Proyectos
           </h2>
-          <p className="text-lg text-gray-600 font-light max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-gray-600 font-light max-w-2xl mx-auto">
             Cada proyecto refleja nuestra pasión por el diseño excepcional y la atención al detalle.
           </p>
         </div>
