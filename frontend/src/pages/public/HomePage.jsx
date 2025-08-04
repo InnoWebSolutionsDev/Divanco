@@ -1,10 +1,13 @@
-import { Hero } from '../../components/layout/public';
+import { EdicionesPage, Hero, SloganPage } from '../../components/layout/public';
 
 const HomePage = () => {
   return (
     <div>
     
       <Hero  />
+      <SloganPage />
+      <EdicionesPage />
+
 
       {/* Otras secciones de la página */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
