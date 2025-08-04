@@ -51,7 +51,7 @@ const WhatsApp = ({
         >
           {/* WhatsApp Icon */}
           <svg 
-            className="w-7 h-7 text-orange-500 transition-colors duration-200 group-hover:text-orange-400" 
+            className="w-7 h-7 text-orange-700 transition-colors duration-200 group-hover:text-orange-400" 
             fill="currentColor" 
             viewBox="0 0 24 24"
           >
