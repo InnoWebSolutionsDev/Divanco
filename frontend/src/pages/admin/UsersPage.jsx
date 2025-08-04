@@ -4,10 +4,9 @@ import {
   useCreateUserMutation, 
   useUpdateUserMutation, 
   useDeleteUserMutation 
-} from '../features/users/usersApi';
-import { useUI } from '../hooks/useUI';
-import Layout from '../components/layout/Layout';
-import { Button, Input, Loading } from '../components/ui';
+} from '../../features/users/usersApi';
+import { useUI } from '../../hooks/useUI';
+import { Button, Input, Loading } from '../../components/ui';
 import { useForm } from 'react-hook-form';
 import { PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 
@@ -75,77 +74,73 @@ const UsersPage = () => {
   const onSubmit = editingUser ? handleUpdateUser : handleCreateUser;
 
   if (isLoading) return (
-    <Layout title="Gestión de Usuarios">
-      <div className="flex justify-center">
-        <Loading text="Cargando usuarios..." />
-      </div>
-    </Layout>
+    <div className="flex justify-center">
+      <Loading text="Cargando usuarios..." />
+    </div>
   );
 
   if (error) return (
-    <Layout title="Gestión de Usuarios">
-      <div className="text-center">
-        <p className="text-red-600">Error al cargar usuarios: {error.message}</p>
-      </div>
-    </Layout>
+    <div className="text-center">
+      <p className="text-red-600">Error al cargar usuarios: {error.message}</p>
+    </div>
   );
 
   return (
-    <Layout title="Gestión de Usuarios">
+   
       <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Usuarios</h1>
-          <Button onClick={openCreateModal} className="flex items-center">
-            <PlusIcon className="h-5 w-5 mr-2" />
-            Nuevo Usuario
-          </Button>
-        </div>
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-semibold text-gray-900">Usuarios</h1>
+        <Button onClick={openCreateModal} className="flex items-center">
+          <PlusIcon className="h-5 w-5 mr-2" />
+          Nuevo Usuario
+        </Button>
+      </div>
 
-        {/* Users Table */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <ul className="divide-y divide-gray-200">
-            {users?.map((user) => (
-              <li key={user.id}>
-                <div className="px-4 py-4 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
-                      <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                        <span className="text-sm font-medium text-gray-700">
-                          {user.username.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">
-                        {user.username}
-                      </div>
-                      <div className="text-sm text-gray-500 capitalize">
-                        {user.role}
-                      </div>
+      {/* Users Table */}
+      <div className="bg-white shadow overflow-hidden sm:rounded-md">
+        <ul className="divide-y divide-gray-200">
+          {users?.map((user) => (
+            <li key={user.id}>
+              <div className="px-4 py-4 flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 h-10 w-10">
+                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-sm font-medium text-gray-700">
+                        {user.username.charAt(0).toUpperCase()}
+                      </span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditModal(user)}
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() => handleDeleteUser(user.id)}
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </Button>
+                  <div className="ml-4">
+                    <div className="text-sm font-medium text-gray-900">
+                      {user.username}
+                    </div>
+                    <div className="text-sm text-gray-500 capitalize">
+                      {user.role}
+                    </div>
                   </div>
                 </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditModal(user)}
+                  >
+                    <PencilIcon className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => handleDeleteUser(user.id)}
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
 
         {/* Modal */}
         {showModal && (
@@ -220,7 +215,7 @@ const UsersPage = () => {
           </div>
         )}
       </div>
-    </Layout>
+   
   );
 };
 

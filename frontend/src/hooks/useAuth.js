@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+// ❌ QUITAR: import { useNavigate } from 'react-router-dom';
 import { 
   selectAuth, 
   selectUser, 
@@ -8,53 +8,111 @@ import {
   logout as logoutAction
 } from '../features/auth/authSlice';
 import { useLogoutUserMutation } from '../features/auth/authApi';
+import { useUI } from './useUI';
 
 export const useAuth = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
+  // ❌ QUITAR: const navigate = useNavigate();
+  const { showSuccess, showError } = useUI();
+  
   const auth = useSelector(selectAuth);
   const user = useSelector(selectUser);
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const isLoading = useSelector(selectIsLoading);
   const [logoutUser] = useLogoutUserMutation();
 
-  const handleLogout = async () => {
+  // Computed values for better UX
+  const isAdmin = user?.role === 'admin';
+  const isUser = user?.role === 'user' || user?.role === 'admin';
+  const userName = user?.firstName ? `${user.firstName} ${user.lastName}` : user?.email;
+  const initials = user?.firstName && user?.lastName 
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : user?.email?.[0]?.toUpperCase() || '?';
+
+  // 🆕 NUEVO: Logout SIN navegación (para usar desde fuera del Router)
+  const handleLogoutWithoutNavigate = async () => {
     try {
-      console.log('🚪 Iniciando logout...');
+      console.log('🚪 Logout sin navegación...');
       
-      // 1. Llamar al API para logout en el servidor (opcional)
+      // 1. Logout del servidor
       try {
         await logoutUser().unwrap();
-        console.log('✅ Logout del servidor exitoso');
+        showSuccess('Sesión cerrada exitosamente');
       } catch (apiError) {
-        console.warn('⚠️ Error en logout del servidor, continuando con logout local:', apiError);
+        console.warn('⚠️ Error en logout del servidor:', apiError);
+        showError('Error al cerrar sesión en el servidor');
       }
       
-      // 2. Hacer logout local (limpiar Redux y localStorage)
+      // 2. Logout local
       dispatch(logoutAction());
       
-      // 3. Redirigir al login
-      navigate('/login');
-      console.log('✅ Redirigido al login');
-      
+      return true;
     } catch (error) {
       console.error('❌ Error en logout:', error);
-      // En caso de error, hacer logout local de todas formas
       dispatch(logoutAction());
-      navigate('/login');
+      showError('Error inesperado al cerrar sesión');
+      return false;
     }
   };
 
-  const isAdmin = user?.role === 'admin';
-  const isUser = user?.role === 'user';
+  // Permission utilities
+  const hasPermission = (requiredRole) => {
+    if (!isAuthenticated || !user) return false;
+    
+    switch (requiredRole) {
+      case 'admin':
+        return user.role === 'admin';
+      case 'user':
+        return user.role === 'user' || user.role === 'admin';
+      default:
+        return isAuthenticated;
+    }
+  };
+
+  const hasAnyRole = (roles = []) => {
+    if (!isAuthenticated || !user) return false;
+    return roles.some(role => hasPermission(role));
+  };
+
+  const canAccess = (resource) => {
+    if (!isAuthenticated) return false;
+    
+    // Admin can access everything
+    if (isAdmin) return true;
+    
+    // Define resource permissions
+    const permissions = {
+      users: ['admin'],
+      categories: ['admin'],
+      projects: ['admin'],
+      blog: ['admin'],
+      dashboard: ['admin', 'user'],
+      profile: ['admin', 'user']
+    };
+    
+    const requiredRoles = permissions[resource] || ['user'];
+    return hasAnyRole(requiredRoles);
+  };
 
   return {
+    // Auth state
     ...auth,
     user,
     isAuthenticated,
     isLoading,
+    
+    // User info
+    userName,
+    initials,
+    
+    // Permissions
     isAdmin,
     isUser,
-    logout: handleLogout,
+    hasPermission,
+    hasAnyRole,
+    canAccess,
+    
+    // Actions (sin navegación)
+    logoutWithoutNavigate: handleLogoutWithoutNavigate,
   };
 };

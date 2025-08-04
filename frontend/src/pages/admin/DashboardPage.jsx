@@ -1,26 +1,25 @@
-import { useAuth } from '../hooks/useAuth';
-import Layout from '../components/layout/Layout';
+import { useAuth } from '../../hooks/useAuth';
+
 
 const DashboardPage = () => {
   const { user, isAdmin } = useAuth();
 
   return (
-    <Layout title="Dashboard">
+   
       <div className="space-y-6">
         {/* Eliminado: Botón temporal de logout */}
         
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              ¡Bienvenido, {user?.username}!
-            </h3>
-            <div className="mt-2 max-w-xl text-sm text-gray-500">
-              <p>
-                Tu rol actual es: <span className="font-semibold capitalize">{user?.role}</span>
-              </p>
-            </div>
-          </div>
+        <div className="md:flex md:items-center md:justify-between">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+            Dashboard
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            ¡Bienvenido de vuelta, {user?.username}!
+          </p>
         </div>
+      </div>
+        
         
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {/* Card 1 */}
@@ -135,7 +134,7 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    
   );
 };
 

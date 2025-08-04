@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { useRegisterMutation } from '../features/auth/authApi';
-import { useAuth } from '../hooks/useAuth';
-import { useUI } from '../hooks/useUI';
-import { Button, Input } from '../components/ui';
+import { useRegisterMutation } from '../../features/auth/authApi';
+import { useAuth } from '../../hooks/useAuth';
+import { useUI } from '../../hooks/useUI';
+import { Button, Input } from '../../components/ui';
 
 const RegisterPage = () => {
   const navigate = useNavigate();

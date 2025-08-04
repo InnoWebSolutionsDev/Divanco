@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { useUI } from '../../hooks/useUI';
-import Button from '../ui/Button';
+import { useAuth } from '../../../hooks/useAuth';
+import { useUI } from '../../../hooks/useUI';
+import Button from '../../ui/Button';
 import { 
   HomeIcon, 
   UsersIcon, 
@@ -10,7 +10,7 @@ import {
   XMarkIcon
 } from '@heroicons/react/24/outline';
 
-const Sidebar = () => {
+const AdminSidebar = () => {
   const { user, isAdmin, logout } = useAuth();
   const { sidebarOpen, setSidebarOpen } = useUI();
   const location = useLocation();
@@ -122,4 +122,4 @@ const SidebarContent = ({ navigation, user, onLogout }) => {
   );
 };
 
-export default Sidebar;
+export default AdminSidebar;

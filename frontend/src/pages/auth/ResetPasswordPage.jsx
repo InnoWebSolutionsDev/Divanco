@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
-import { useResetPasswordMutation } from '../features/auth/authApi';
-import Button from '../components/ui/Button';
+import { useResetPasswordMutation } from '../../features/auth/authApi';
+import Button from '../../components/ui/Button';
 import { toast } from 'react-hot-toast';
 
 const ResetPasswordPage = () => {

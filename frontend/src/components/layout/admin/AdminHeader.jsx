@@ -1,7 +1,7 @@
-import { useUI } from '../../hooks/useUI';
+import { useUI } from '../../../hooks/useUI';
 import { Bars3Icon } from '@heroicons/react/24/outline';
 
-const Header = ({ title }) => {
+const AdminHeader = ({ title }) => {
   const { setSidebarOpen } = useUI();
 
   return (
@@ -27,4 +27,4 @@ const Header = ({ title }) => {
   );
 };
 
-export default Header;
+export default AdminHeader;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useRecoverPasswordMutation } from '../features/auth/authApi';
-import Button from '../components/ui/Button';
+import { useRecoverPasswordMutation } from '../../features/auth/authApi';
+import Button from '../../components/ui/Button';
 import { toast } from 'react-hot-toast';
 
 const ForgotPasswordPage = () => {

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { useLoginMutation } from '../features/auth/authApi';
-import { useAuth } from '../hooks/useAuth';
-import { useUI } from '../hooks/useUI';
-import { Button, Input } from '../components/ui';
+import { useLoginMutation } from '../../features/auth/authApi';
+import { useAuth } from '../../hooks/useAuth';
+import { useUI } from '../../hooks/useUI';
+import { Button, Input } from '../../components/ui';
 
 const LoginPage = () => {
   const navigate = useNavigate();
