@@ -12,7 +12,7 @@ import {
 import HomePage from '../pages/public/HomePage';
 import ShowroomPage from '../pages/public/ShowroomPage';
 import CategoryPage from '../pages/public/CategoryPage';
-import SubcategoryPage from '../pages/public/SubcategoryPage';
+import SubCategoryPage from '../pages/public/SubCategoryPage';
 import ProjectsPage from '../pages/public/ProjectsPage';
 import ProjectDetailPage from '../pages/public/ProjectDetailPage';
 import BlogPage from '../pages/public/BlogPage';
