@@ -8,46 +8,48 @@ const Header = () => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
 
-  const navigation = [
-    { name: 'Inicio', href: '/' },
-    { name: 'Showroom', href: '/showroom' },
-    { name: 'Proyectos', href: '/proyectos' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'Nosotros', href: '/nosotros' },
-    { name: 'Contacto', href: '/contacto' },
+  // Navegación lado izquierdo
+  const leftNavigation = [
+    { name: 'Showrooms', href: '/showrooms' },
+    { name: 'About', href: '/about' },
   ];
+
+  // Navegación lado derecho
+  const rightNavigation = [
+    { name: 'Proyectos', href: '/proyectos' },
+    { name: 'Ediciones', href: '/ediciones' },
+    { name: 'Blog', href: '/blog' },
+  ];
+
+  // Toda la navegación para móvil
+  const allNavigation = [...leftNavigation, ...rightNavigation];
 
   const isActive = (href) => {
     if (href === '/') return location.pathname === '/';
     return location.pathname.startsWith(href);
   };
 
-  return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
-      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 justify-between items-center">
-          {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img 
-              className="h-8 w-auto" 
-              src="/logo.svg" 
-              alt="Divanco Arquitectura" 
-            />
-            <span className="ml-2 text-xl font-bold text-gray-900">
-              Divanco
-            </span>
-          </Link>
+  // Detectar si estamos en la homepage
+  const isHomepage = location.pathname === '/';
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex md:space-x-8">
-            {navigation.map((item) => (
+  return (
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${
+      isHomepage 
+        ? 'bg-transparent' // Transparente en homepage
+        : 'bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100' // Normal en otras páginas
+    }`}>
+      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-20 justify-between items-center">
+          {/* Navegación Izquierda */}
+          <div className="hidden lg:flex lg:space-x-12">
+            {leftNavigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
+                className={`text-sm font-light uppercase tracking-wider transition-colors duration-300 ${
                   isActive(item.href)
-                    ? 'text-primary-600 border-b-2 border-primary-600'
-                    : 'text-gray-700 hover:text-primary-600'
+                    ? `${isHomepage ? 'text-white border-b border-white' : 'text-black border-b border-black'}`
+                    : `${isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'}`
                 }`}
               >
                 {item.name}
@@ -55,65 +57,134 @@ const Header = () => {
             ))}
           </div>
 
-          {/* Right side */}
-          <div className="flex items-center space-x-4">
-            {/* Search */}
+          {/* Logo Central */}
+          <Link to="/" className="flex items-center group">
+            <span className={`text-2xl font-light tracking-[0.2em] uppercase transition-all duration-300 group-hover:opacity-70 ${
+              isHomepage ? 'text-white' : 'text-black'
+            }`}>
+              Divanco
+            </span>
+          </Link>
+
+          {/* Navegación Derecha */}
+          <div className="hidden lg:flex lg:space-x-12 items-center">
+            {rightNavigation.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`text-sm font-light uppercase tracking-wider transition-colors duration-300 ${
+                  isActive(item.href)
+                    ? `${isHomepage ? 'text-white border-b border-white' : 'text-black border-b border-black'}`
+                    : `${isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'}`
+                }`}
+              >
+                {item.name}
+              </Link>
+            ))}
+            
+            {/* Search Icon */}
             <Link 
               to="/buscar"
-              className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
+              className={`p-1 transition-colors duration-300 ${
+                isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'
+              }`}
             >
               <MagnifyingGlassIcon className="h-5 w-5" />
             </Link>
 
-            {/* Auth */}
+            {/* Login/Profile */}
             {isAuthenticated ? (
-              <Link 
-                to="/admin"
-                className="text-sm font-medium text-primary-600 hover:text-primary-700"
+              <Link
+                to="/profile"
+                className={`text-sm font-light uppercase tracking-wider transition-colors duration-300 ${
+                  isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'
+                }`}
               >
-                Dashboard
+                {user?.name || 'Profile'}
               </Link>
             ) : (
-              <Link 
-                to="/auth/login"
-                className="text-sm font-medium text-gray-700 hover:text-primary-600"
+              <Link
+                to="/login"
+                className={`text-sm font-light uppercase tracking-wider transition-colors duration-300 ${
+                  isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'
+                }`}
               >
-                Acceder
+                Login
               </Link>
             )}
-
-            {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2 text-gray-600"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <XMarkIcon className="h-6 w-6" />
-              ) : (
-                <Bars3Icon className="h-6 w-6" />
-              )}
-            </button>
           </div>
+
+          {/* Mobile menu button */}
+          <button
+            className={`lg:hidden p-2 transition-colors ${
+              isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'
+            }`}
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? (
+              <XMarkIcon className="h-6 w-6" />
+            ) : (
+              <Bars3Icon className="h-6 w-6" />
+            )}
+          </button>
         </div>
 
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
-          <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 border-t border-gray-200">
-              {navigation.map((item) => (
+          <div className="lg:hidden">
+            <div className={`px-4 pt-4 pb-6 space-y-4 border-t ${
+              isHomepage 
+                ? 'border-white/20 bg-black/50 backdrop-blur-sm' 
+                : 'border-gray-200 bg-white'
+            }`}>
+              {allNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`block px-3 py-2 text-base font-medium transition-colors ${
+                  className={`block text-base font-light uppercase tracking-wider transition-colors duration-300 ${
                     isActive(item.href)
-                      ? 'text-primary-600 bg-primary-50'
-                      : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                      ? `${isHomepage ? 'text-white' : 'text-black'}`
+                      : `${isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'}`
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.name}
                 </Link>
               ))}
+              
+              {/* Mobile Search */}
+              <Link 
+                to="/buscar"
+                className={`block text-base font-light uppercase tracking-wider transition-colors duration-300 ${
+                  isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'
+                }`}
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Buscar
+              </Link>
+
+              {/* Mobile Auth */}
+              {isAuthenticated ? (
+                <Link
+                  to="/profile"
+                  className={`block text-base font-light uppercase tracking-wider transition-colors duration-300 ${
+                    isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {user?.name || 'Profile'}
+                </Link>
+              ) : (
+                <Link
+                  to="/login"
+                  className={`block text-base font-light uppercase tracking-wider transition-colors duration-300 ${
+                    isHomepage ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-black'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
             </div>
           </div>
         )}
