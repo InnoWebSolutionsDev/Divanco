@@ -93,7 +93,7 @@ const Header = () => {
      <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         {/* Header flotante - Ajuste condicional de posición */}
        <div className={`flex items-center justify-between relative transition-all duration-500 ${
-          isHomepage ? 'top-12 h-24 pt-8' : ' h-16 pt-4'  // ✅ Menos top y padding en otras páginas
+          isHomepage ? 'top-8 h-18 pt-8' : ' h-16 pt-4'  // ✅ Menos top y padding en otras páginas
         }`}>
           
           {/* Navegación Izquierda - MISMO espaciado */}
@@ -105,7 +105,7 @@ const Header = () => {
                 key={item.name}
                 to={item.href}
                 className={`font-light uppercase tracking-wider transition-all duration-300 hover:scale-105 ${
-                  'text-lg md:text-xl lg:text-2xl'  // ✅ Mismo tamaño siempre
+                  'text-lg md:text-xl lg:text-xl'  // ✅ Mismo tamaño siempre
                 } ${
                   isActive(item.href)
                     ? 'text-white border-b border-white/60'  // ✅ Simplificado
@@ -131,7 +131,7 @@ const Header = () => {
               onClick={handleLogoClick}
             >
               <span className={`font-light uppercase transition-all duration-500 group-hover:opacity-80 ${
-                'text-4xl md:text-5xl lg:text-6xl tracking-[0.3em] text-white'  // ✅ Mismo tamaño siempre
+                'text-4xl md:text-4xl lg:text-5xl tracking-[0.3em] text-white'  // ✅ Mismo tamaño siempre
               }`}>
                 Divanco
               </span>
@@ -161,7 +161,7 @@ const Header = () => {
                 key={item.name}
                 to={item.href}
                 className={`font-light uppercase tracking-wider transition-all duration-300 hover:scale-105 ${
-                  'text-lg md:text-xl lg:text-2xl'  // ✅ Mismo tamaño siempre
+                  'text-lg md:text-xl lg:text-xl'  // ✅ Mismo tamaño siempre
                 } ${
                   isActive(item.href)
                     ? 'text-white border-b border-white/60'  // ✅ Simplificado

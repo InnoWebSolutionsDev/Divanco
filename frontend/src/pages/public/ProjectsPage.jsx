@@ -90,8 +90,8 @@ const ProjectsPage = () => {
         paddingTop: isMobile ? '80px' : '100px'
       }}>
         {/* Container principal con padding lateral */}
-        <div className="relative h-full flex items-center px-4 md:px-8 lg:px-16">
-          
+        <div className="relative h-full flex items-center mt-10 mb-4 px-4 md:px-8 lg:px-16">
+
           {/* Slides Container - Responsive */}
           <div 
             className="flex transition-transform duration-1000 ease-out"
@@ -150,13 +150,13 @@ const ProjectsPage = () => {
                   <div className={`absolute bottom-0 left-0 right-0 p-4 md:p-8 text-white transition-all duration-700 ${
                     (isMobile || isActive) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}>
-                    <div className="max-w-md">
-                      <h3 className={`font-light mb-3 tracking-wide ${
+                    <div className="max-w-md mb-16">
+                      <h3 className={`font-light  tracking-wide ${
                         isMobile ? 'text-xl' : 'text-2xl lg:text-3xl' // ✅ Reducido tamaños
                       }`}>
                         {project.title}
                       </h3>
-                      <p className={`font-light opacity-90 mb-4 leading-relaxed ${
+                      <p className={`font-light opacity-90 mb-2 leading-relaxed ${
                         isMobile ? 'text-xs' : 'text-sm lg:text-base' // ✅ Reducido tamaños
                       }`}>
                         {project.subtitle}
@@ -165,7 +165,7 @@ const ProjectsPage = () => {
                       <button className={`inline-flex items-center border border-white text-white font-light uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 group ${
                         isMobile ? 'px-4 py-2 text-xs' : 'px-6 py-2 text-xs' // ✅ Reducido padding
                       }`}>
-                        Find out more
+                        Mas detalles
                         <svg className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>

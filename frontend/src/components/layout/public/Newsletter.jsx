@@ -77,7 +77,7 @@ const Newsletter = () => {
           type="submit"
           disabled={isSubmitting}
           className="
-            w-full bg-orange-500 hover:bg-orange-600 
+            w-full bg-orange-700 hover:bg-orange-500 
             text-white text-sm font-medium 
             py-3 px-6 
             transition-colors duration-200
