@@ -90,12 +90,12 @@ const Hero = ({
   const handleTouchMove = (e) => {
     if (!isPanning || !isMobile) return;
     const touch = e.touches[0];
-    const deltaX = (touch.clientX - startPos.current.x) / window.innerWidth * 50;
-    const deltaY = (touch.clientY - startPos.current.y) / window.innerHeight * 50;
+    const deltaX = (touch.clientX - startPos.current.x) / window.innerWidth * 30;
+    const deltaY = (touch.clientY - startPos.current.y) / window.innerHeight * 30;
 
     setPanPosition({
-      x: Math.max(0, Math.min(100, startPan.current.x - deltaX)),
-      y: Math.max(0, Math.min(100, startPan.current.y - deltaY))
+      x: Math.max(20, Math.min(80, startPan.current.x - deltaX)),
+      y: Math.max(20, Math.min(80, startPan.current.y - deltaY))
     });
     e.preventDefault();
   };
@@ -114,36 +114,22 @@ const Hero = ({
     }
   }, [isPanning, isMobile, panPosition]);
 
-  // Debug: log de la imagen para verificar
-  console.log('Hero backgroundImage:', backgroundImage);
-  
   return (
-    <section className="relative h-screen flex items-center justify-center overflow-hidden -mt-20">
-      {/* -mt-20 compensa la altura del header (h-20) para que la imagen empiece desde arriba */}
-      
-      {/* Background Image - SOLO cambio aquí */}
+    <section className="relative h-screen overflow-hidden -mt-20">
+      {/* Solo la imagen de fondo */}
       <div 
         className="absolute inset-0 z-0 bg-gray-900"
         style={{
           backgroundImage: `url(${backgroundImage})`,
-          // ✅ ÚNICO CAMBIO: backgroundSize y backgroundPosition dinámicos
-          backgroundSize: isMobile ? '140% auto' : 'cover',
+          backgroundSize: 'cover',
           backgroundPosition: isMobile ? `${panPosition.x}% ${panPosition.y}%` : 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundRepeat: 'no-repeat',
+          transition: isPanning ? 'none' : 'background-position 0.3s ease-out'
         }}
-        // ✅ ÚNICO CAMBIO: agregar touch handlers solo en mobile
         onTouchStart={isMobile ? handleTouchStart : undefined}
-      >
-        {/* Overlay oscuro - SIN CAMBIOS */}
-        <div className="absolute inset-0 bg-black/30" />
-      </div>
+      />
 
-      {/* Content - SIN CAMBIOS */}
-      <div className="relative z-10 text-center text-white max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-20">
-        {/* Tu contenido actual permanece igual */}
-      </div>
-
-      {/* Scroll Indicator - SIN CAMBIOS */}
+      {/* ✅ Scroll Indicator */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
         <div className="w-px h-16 bg-white/50 mx-auto mb-4"></div>
         <svg 
