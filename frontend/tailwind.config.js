@@ -5,10 +5,10 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-  'sans': ['Nunito Sans', 'Source Sans Pro', 'sans-serif'], // Más grueso
-  'alt': ['Open Sans', 'Source Sans Pro', 'sans-serif'],    // Trazo medio-grueso
-  'bold': ['Montserrat', 'Source Sans Pro', 'sans-serif'],  // Muy grueso
-}
+        'sans': ['PT Sans', 'Nunito Sans', 'Source Sans Pro', 'sans-serif'], // ✅ PT Sans como principal
+        'pt': ['PT Sans', 'sans-serif'], // ✅ Clase específica para PT Sans
+        'alt': ['Nunito Sans', 'Source Sans Pro', 'sans-serif'], // Alternativa
+      }
     },
   },
   plugins: [],

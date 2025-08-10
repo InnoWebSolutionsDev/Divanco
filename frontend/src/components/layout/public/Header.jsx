@@ -132,9 +132,9 @@ const Header = () => {
                 className="flex items-center group relative z-10"
                 onClick={handleLogoClick}
               >
-                <span className="font-sans font-semibold uppercase transition-all duration-500 group-hover:opacity-80 text-4xl md:text-4xl lg:text-5xl tracking-wide text-white">
-                  Divanco
-                </span>
+                <span className="font-sans font-semibold uppercase transition-all duration-500 group-hover:opacity-80 text-4xl md:text-4xl lg:text-5xl tracking-tight text-white">
+  Divanco
+</span>
                 
                 {/* Indicador visual para clicks */}
                 {clickCount > 0 && (
@@ -205,9 +205,9 @@ const Header = () => {
                 className="flex items-center group relative z-10"
                 onClick={handleLogoClick}
               >
-                <span className="font-sans font-semibold uppercase transition-all duration-500 group-hover:opacity-80 text-4xl md:text-4xl lg:text-5xl tracking-wide text-white">
-                  Divanco
-                </span>
+               <span className="font-sans font-semibold uppercase transition-all duration-500 group-hover:opacity-80 text-4xl md:text-4xl lg:text-5xl tracking-tight text-white">
+  Divanco
+</span>
                 
                 {clickCount > 0 && (
                   <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
