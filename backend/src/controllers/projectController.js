@@ -555,6 +555,325 @@ export const getProjectBySlug = async (req, res) => {
   }
 };
 
+// ...existing code...
+
+// ✅ FUNCIÓN DE TEST ESPECÍFICA PARA DEBUGGING
+export const testProjectCreation = async (req, res) => {
+  try {
+    console.log('🧪 === INICIANDO TEST DE CREACIÓN DE PROYECTO ===');
+    
+    // Test 1: Verificar conexión a DB
+    console.log('📊 Test 1: Verificando conexión a base de datos...');
+    await sequelize.authenticate();
+    console.log('✅ Conexión a DB exitosa');
+    
+    // Test 2: Verificar modelo Project
+    console.log('📊 Test 2: Verificando modelo Project...');
+    const ProjectModel = sequelize.models.Project;
+    console.log('✅ Modelo Project cargado:', !!ProjectModel);
+    
+    // Test 3: Crear proyecto de prueba paso a paso
+    console.log('📊 Test 3: Creando proyecto de prueba...');
+    
+    const testData = {
+      title: 'Proyecto Test ' + Date.now(),
+      description: 'Descripción de prueba para debugging',
+      year: 2024,
+      projectType: 'Proyecto',
+      status: 'render',
+      isActive: true,
+      isPublic: true,
+      tags: ['moderno', 'residencial']
+    };
+    
+    console.log('📋 Datos de prueba:', JSON.stringify(testData, null, 2));
+    
+    // Test 3a: Crear usando Project.create()
+    console.log('🔄 Usando Project.create()...');
+    const project = await Project.create(testData);
+    console.log('✅ Project.create() exitoso');
+    console.log('📝 Proyecto creado:', {
+      id: project.id,
+      title: project.title,
+      slug: project.slug,
+      isActive: project.isActive
+    });
+    
+    // Test 4: Verificar que se guardó en DB
+    console.log('📊 Test 4: Verificando en base de datos...');
+    const foundProject = await Project.findByPk(project.id);
+    console.log('✅ Proyecto encontrado en DB:', !!foundProject);
+    
+    if (foundProject) {
+      console.log('📝 Datos en DB:', {
+        id: foundProject.id,
+        title: foundProject.title,
+        slug: foundProject.slug,
+        year: foundProject.year,
+        projectType: foundProject.projectType,
+        isActive: foundProject.isActive,
+        createdAt: foundProject.createdAt
+      });
+    }
+    
+    // Test 5: Query directa SQL para verificar
+    console.log('📊 Test 5: Query SQL directa...');
+    const [results] = await sequelize.query(
+      `SELECT id, title, slug, year, "projectType", "isActive", "createdAt" 
+       FROM "Projects" 
+       WHERE id = :projectId`,
+      {
+        replacements: { projectId: project.id },
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+    
+    console.log('📝 Resultado SQL directo:', results);
+    
+    // Test 6: Contar proyectos totales
+    console.log('📊 Test 6: Contando proyectos totales...');
+    const totalCount = await Project.count();
+    console.log('📊 Total de proyectos en DB:', totalCount);
+    
+    // Test 7: Listar últimos proyectos
+    console.log('📊 Test 7: Últimos 5 proyectos...');
+    const recentProjects = await Project.findAll({
+      limit: 5,
+      order: [['createdAt', 'DESC']],
+      attributes: ['id', 'title', 'slug', 'createdAt', 'isActive']
+    });
+    
+    console.log('📋 Proyectos recientes:');
+    recentProjects.forEach(p => {
+      console.log(`   - [${p.id}] ${p.title} (${p.slug}) - Activo: ${p.isActive} - Creado: ${p.createdAt}`);
+    });
+    
+    // Cleanup - eliminar proyecto de prueba
+    console.log('🧹 Limpieza: eliminando proyecto de prueba...');
+    await project.destroy();
+    console.log('✅ Proyecto de prueba eliminado');
+    
+    // Respuesta final
+    res.json({
+      success: true,
+      message: 'Test de creación completado exitosamente',
+      results: {
+        connectionOk: true,
+        modelLoaded: true,
+        projectCreated: true,
+        foundInDb: !!foundProject,
+        sqlQueryResult: !!results,
+        totalProjectsInDb: totalCount,
+        recentProjectsCount: recentProjects.length
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ ERROR en test de creación:', error);
+    console.error('❌ Error stack:', error.stack);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Test de creación falló',
+      error: error.message,
+      errorType: error.name,
+      errorDetails: {
+        code: error.code,
+        original: error.original?.message,
+        sql: error.sql
+      }
+    });
+  }
+};
+
+// ✅ FUNCIÓN PARA DEBUGGING DEL CREATEPROJECT ACTUAL
+export const debugCreateProject = async (req, res) => {
+  console.log('\n🚨 === DEBUG CREATE PROJECT INICIADO ===');
+  console.log('📅 Timestamp:', new Date().toISOString());
+  
+  try {
+    // Log 1: Request completo
+    console.log('📨 REQUEST DEBUG:');
+    console.log('   - Method:', req.method);
+    console.log('   - URL:', req.url);
+    console.log('   - Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('   - Body:', JSON.stringify(req.body, null, 2));
+    console.log('   - Body type:', typeof req.body);
+    console.log('   - Body keys:', Object.keys(req.body || {}));
+    
+    // Log 2: Verificar conexión DB antes de proceder
+    console.log('\n📊 DATABASE DEBUG:');
+    try {
+      await sequelize.authenticate();
+      console.log('✅ Conexión DB activa');
+    } catch (dbError) {
+      console.error('❌ Error conexión DB:', dbError.message);
+      throw dbError;
+    }
+    
+    // Log 3: Procesar data exactamente como en createProject
+    const {
+      title,
+      description,
+      content,
+      year,
+      location,
+      client,
+      architect,
+      projectType,
+      status = 'render',
+      area,
+      tags = [],
+      isFeatured = false,
+      isPublic = true,
+      order = 0,
+      startDate,
+      endDate
+    } = req.body;
+    
+    console.log('\n📋 EXTRACTED DATA:');
+    console.log(`   - title: "${title}" (${typeof title}) - valid: ${!!title && title.trim().length >= 5}`);
+    console.log(`   - year: ${year} (${typeof year}) - valid: ${!!year && year >= 2000}`);
+    console.log(`   - projectType: "${projectType}" (${typeof projectType})`);
+    console.log(`   - tags: ${JSON.stringify(tags)} (${typeof tags}) - isArray: ${Array.isArray(tags)}`);
+    
+    // Log 4: Validaciones paso a paso
+    console.log('\n✅ VALIDATION CHECKS:');
+    
+    if (!title || title.trim().length < 5) {
+      console.log('❌ Title validation failed');
+      return res.status(400).json({
+        success: false,
+        message: 'Título inválido',
+        debug: { title, titleTrimmed: title?.trim(), length: title?.trim().length }
+      });
+    }
+    console.log('✅ Title validation passed');
+    
+    if (!year || year < 2000) {
+      console.log('❌ Year validation failed');
+      return res.status(400).json({
+        success: false,
+        message: 'Año inválido',
+        debug: { year, yearType: typeof year }
+      });
+    }
+    console.log('✅ Year validation passed');
+    
+    const validProjectTypes = ['Preproyecto', 'Proyecto', 'Dirección'];
+    if (!projectType || !validProjectTypes.includes(projectType)) {
+      console.log('❌ ProjectType validation failed');
+      return res.status(400).json({
+        success: false,
+        message: 'Tipo de proyecto inválido',
+        debug: { projectType, validTypes: validProjectTypes }
+      });
+    }
+    console.log('✅ ProjectType validation passed');
+    
+    // Log 5: Preparar data final
+    const generateSlug = (title, year) => {
+      return `${title.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')}-${year}`;
+    };
+    
+    const projectData = {
+      title: title.trim(),
+      description: description?.trim(),
+      content: content?.trim(),
+      year: parseInt(year),
+      location: location?.trim(),
+      client: client?.trim(),
+      architect: architect?.trim(),
+      projectType,
+      status,
+      area: area?.trim(),
+      tags: Array.isArray(tags) ? tags : [],
+      slug: generateSlug(title.trim(), parseInt(year)),
+      isFeatured: Boolean(isFeatured),
+      isPublic: Boolean(isPublic),
+      isActive: true,
+      order: parseInt(order) || 0,
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null
+    };
+    
+    console.log('\n📝 FINAL PROJECT DATA:');
+    console.log(JSON.stringify(projectData, null, 2));
+    
+    // Log 6: Intentar crear con seguimiento detallado
+    console.log('\n🔄 ATTEMPTING DATABASE CREATE...');
+    
+    const startTime = Date.now();
+    const project = await Project.create(projectData);
+    const endTime = Date.now();
+    
+    console.log('✅ CREATE SUCCESSFUL!');
+    console.log(`   - Duration: ${endTime - startTime}ms`);
+    console.log(`   - Created ID: ${project.id}`);
+    console.log(`   - Created slug: ${project.slug}`);
+    
+    // Log 7: Verificación inmediata
+    console.log('\n🔍 IMMEDIATE VERIFICATION...');
+    const verification = await Project.findByPk(project.id);
+    console.log('✅ Verification result:', {
+      found: !!verification,
+      id: verification?.id,
+      title: verification?.title,
+      isActive: verification?.isActive,
+      createdAt: verification?.createdAt
+    });
+    
+    // Respuesta exitosa
+    res.status(201).json({
+      success: true,
+      message: 'DEBUG: Proyecto creado exitosamente',
+      data: project,
+      debug: {
+        processingTime: endTime - startTime,
+        verified: !!verification
+      }
+    });
+    
+  } catch (error) {
+    console.error('\n❌ ERROR en debugCreateProject:');
+    console.error('   - Name:', error.name);
+    console.error('   - Message:', error.message);
+    console.error('   - Code:', error.code);
+    console.error('   - Stack:', error.stack);
+    
+    if (error.original) {
+      console.error('   - Original error:', error.original);
+    }
+    
+    if (error.errors) {
+      console.error('   - Validation errors:');
+      error.errors.forEach(err => {
+        console.error(`     * ${err.path}: ${err.message} (value: ${err.value})`);
+      });
+    }
+    
+    res.status(500).json({
+      success: false,
+      message: 'DEBUG: Error en creación',
+      error: error.message,
+      errorType: error.name,
+      debug: {
+        code: error.code,
+        original: error.original?.message,
+        validationErrors: error.errors?.map(e => ({
+          field: e.path,
+          message: e.message,
+          value: e.value
+        }))
+      }
+    });
+  } finally {
+    console.log('\n🏁 === DEBUG CREATE PROJECT FINALIZADO ===\n');
+  }
+};
+
 
 
 // Crear nuevo proyecto

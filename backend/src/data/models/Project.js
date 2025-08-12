@@ -128,41 +128,88 @@ Project.init({
   sequelize,
   modelName: 'Project',
  hooks: {
-  beforeSave: async (project, options) => {
-    // ✅ Auto-generar slug SOLO si no existe
-    if (!project.slug && project.title && project.year) {
-      const baseSlug = `${project.title
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, '-')}-${project.year}`;
+     beforeValidate: (project, options) => {
+      console.log('🔍 HOOK beforeValidate ejecutado');
+      console.log('   - Project data:', JSON.stringify(project.dataValues, null, 2));
+    },
+    
+    afterValidate: (project, options) => {
+      console.log('✅ HOOK afterValidate ejecutado');
+      console.log('   - Validación exitosa para:', project.title);
+    },
+    
+    beforeSave: async (project, options) => {
+      console.log('🔍 HOOK beforeSave ejecutado');
+      console.log('   - isNewRecord:', project.isNewRecord);
+      console.log('   - Project ID:', project.id);
+      console.log('   - Title:', project.title);
       
-      // ✅ Verificar si el slug ya existe
-      let finalSlug = baseSlug;
-      let counter = 1;
-      
-      while (true) {
-        const existingProject = await Project.findOne({
-          where: {
-            slug: finalSlug,
-            id: { [DataTypes.Op.ne]: project.id || 0 } // Excluir el proyecto actual si es update
+      try {
+        // ✅ Auto-generar slug SOLO si no existe
+        if (!project.slug && project.title && project.year) {
+          const baseSlug = `${project.title
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .replace(/\s+/g, '-')}-${project.year}`;
+          
+          console.log('   - Base slug generado:', baseSlug);
+          
+          // ✅ Verificar si el slug ya existe
+          let finalSlug = baseSlug;
+          let counter = 1;
+          
+          while (true) {
+            console.log('   - Verificando slug:', finalSlug);
+            
+            const existingProject = await Project.findOne({
+              where: {
+                slug: finalSlug,
+                id: { [DataTypes.Op.ne]: project.id || 0 }
+              }
+            });
+            
+            if (!existingProject) {
+              console.log('   - Slug disponible:', finalSlug);
+              break;
+            }
+            
+            console.log('   - Slug ya existe, probando siguiente...');
+            finalSlug = `${baseSlug}-${counter}`;
+            counter++;
           }
-        });
+          
+          project.slug = finalSlug;
+          console.log('   - Slug final asignado:', project.slug);
+        }
         
-        if (!existingProject) break;
+        // ✅ Generar searchableText
+        const tagsText = project.tags ? project.tags.join(' ') : '';
+        project.searchableText = `${project.title || ''} ${project.description || ''} ${project.content || ''} ${project.location || ''} ${project.client || ''} ${project.architect || ''} ${tagsText} ${project.year || ''}`.toLowerCase();
         
-        finalSlug = `${baseSlug}-${counter}`;
-        counter++;
+        console.log('   - SearchableText generado (primeros 100 chars):', project.searchableText.substring(0, 100));
+        
+      } catch (hookError) {
+        console.error('❌ ERROR en beforeSave hook:', hookError);
+        throw hookError;
       }
-      
-      project.slug = finalSlug;
+    },
+    
+    afterSave: (project, options) => {
+      console.log('✅ HOOK afterSave ejecutado');
+      console.log('   - Proyecto guardado con ID:', project.id);
+      console.log('   - isNewRecord era:', project._previousDataValues ? false : true);
+    },
+    
+    beforeCreate: (project, options) => {
+      console.log('🆕 HOOK beforeCreate ejecutado');
+      console.log('   - Creando proyecto:', project.title);
+    },
+    
+    afterCreate: (project, options) => {
+      console.log('✅ HOOK afterCreate ejecutado');
+      console.log('   - Proyecto creado exitosamente con ID:', project.id);
     }
-    
-    // ✅ Generar searchableText
-    const tagsText = project.tags ? project.tags.join(' ') : '';
-    
-    project.searchableText = `${project.title || ''} ${project.description || ''} ${project.content || ''} ${project.location || ''} ${project.client || ''} ${project.architect || ''} ${tagsText} ${project.year || ''}`.toLowerCase();
-  }
-},
+  },
   indexes: [
     {
       fields: ['slug']

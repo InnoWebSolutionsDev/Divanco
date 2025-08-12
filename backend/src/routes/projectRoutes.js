@@ -12,6 +12,8 @@ import {
   getFilterOptions,      // ✅ Ya importado
   getSearchSuggestions,  // ✅ Ya importado
   uploadProjectMedia,    // ✅ Nueva función para MediaFile
+  testProjectCreation,   // ✅ Nueva función de prueba
+  debugCreateProject
 } from '../controllers/projectController.js';
 
 import { authenticateToken, requireRole } from '../middlewares/auth.js';
@@ -58,6 +60,9 @@ router.get('/suggestions', getSearchSuggestions);   // ✅ Nueva
 router.get('/featured', getFeaturedProjects);
 router.get('/year/:year', getProjectsByYear);
 
+// ✅ RUTAS DE DEBUG TEMPORALES
+router.get('/debug/test-creation', testProjectCreation);
+router.post('/debug/create', debugCreateProject);
 // Ruta general (debe ir después de las específicas)
 router.get('/', getAllProjects);
 
