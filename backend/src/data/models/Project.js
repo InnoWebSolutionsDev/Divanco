@@ -47,13 +47,13 @@ Project.init({
   },
   // Tipo de participación
   projectType: {
-    type: DataTypes.ENUM('arquitectura', 'obra', 'completo'),
-    allowNull: false,
+    type: DataTypes.ENUM('Preproyecto', 'Proyecto', 'Dirección'),
+    allowNull: true,
   },
   // Estado del proyecto
   status: {
-    type: DataTypes.ENUM('planificacion', 'en_proceso', 'finalizado', 'pausado'),
-    defaultValue: 'planificacion',
+    type: DataTypes.ENUM('render', 'obra', 'finalizado' ),
+    defaultValue: 'render',
   },
   area: {
     type: DataTypes.STRING(50),
@@ -66,18 +66,7 @@ Project.init({
     }
   },
   // Imágenes
-  featuredImage: {
-    type: DataTypes.JSON,
-  },
-  images: {
-    type: DataTypes.JSON,
-  },
-  videos: {
-    type: DataTypes.JSON,
-  },
-  documents: {
-    type: DataTypes.JSON,
-  },
+  
   // Tags como ENUM - puedes ajustar según tus necesidades
   tags: {
     type: DataTypes.ARRAY(DataTypes.ENUM([
@@ -174,5 +163,34 @@ Project.init({
     }
   ]
 });
+
+Project.prototype.getMainImage = function() {
+  return this.media?.find(m => m.isMain && m.isActive) || this.media?.[0];
+};
+
+Project.prototype.getMediaByType = function(type) {
+  return (this.media || []).filter(m => m.type === type && m.isActive)
+    .sort((a, b) => a.order - b.order);
+};
+
+Project.prototype.getRenders = function() {
+  return this.getMediaByType('render');
+};
+
+Project.prototype.getPlanos = function() {
+  return this.getMediaByType('plano');
+};
+
+Project.prototype.getVideos = function() {
+  return this.getMediaByType('video');
+};
+
+Project.prototype.getObraProceso = function() {
+  return this.getMediaByType('obra_proceso');
+};
+
+Project.prototype.getObraFinalizada = function() {
+  return this.getMediaByType('obra_finalizada');
+};
 
 export default Project;

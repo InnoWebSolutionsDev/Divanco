@@ -15,12 +15,14 @@ import { combineReducers } from '@reduxjs/toolkit';
 // APIs
 import { baseApi } from './services/api';
 import { authApi } from './features/auth/authApi';
+
 import { usersApi } from './features/users/usersApi';
 
 // Slices
 import authReducer from './features/auth/authSlice';
 import uiReducer from './features/ui/uiSlice';
 import categoriesReducer from './features/categories/categoriesSlice'; // 🆕 Nuevo reducer
+import projectsReducer from './features/projects/projectsSlice';
 
 const persistConfig = {
   key: 'root',
@@ -37,7 +39,8 @@ const persistConfig = {
 const rootReducer = combineReducers({
   auth: authReducer,
   ui: uiReducer,
-  categories: categoriesReducer, // 🆕 Agregar categories
+  categories: categoriesReducer, 
+  projects: projectsReducer,
   
   // APIs
   [baseApi.reducerPath]: baseApi.reducer,

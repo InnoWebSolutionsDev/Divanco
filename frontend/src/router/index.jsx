@@ -31,7 +31,7 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 import DashboardPage from '../pages/admin/DashboardPage';
 import UsersPage from '../pages/admin/UsersPage';
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
-import AdminProjectsPage from '../pages/admin/AdminProjectsPage';
+import ProjectUpload from '../pages/admin/ProjectUpload';
 import AdminBlogPage from '../pages/admin/AdminBlogPage';
 import AdminSubscribersPage from '../pages/admin/AdminSubscribersPage';
 
@@ -151,7 +151,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'projects',
-        element: <AdminProjectsPage />,
+        element: <ProjectUpload />,
       },
       {
         path: 'blog',

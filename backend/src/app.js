@@ -20,38 +20,49 @@ console.log('🕐 [SERVER] Hora actual Colombia:', new Date().toLocaleString('es
   second: '2-digit'
 }));
 
+// ✅ CARGAR .env ANTES de importar modelos
 dotenv.config();
 import './data/models/index.js';
 
 const app = express();
+
+// ✅ MIDDLEWARES EN EL ORDEN CORRECTO
 app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// Static files example (uncomment if needed)
-// app.use('/images', express.static(path.join(process.cwd(), 'images')));
-
-// Multer config (archivos en /uploads)
-const upload = multer({ dest: path.join(process.cwd(), 'uploads/') });
-app.use(upload.any());
-
-// CORS configuration
+// ✅ CONFIGURAR CORS PRIMERO
 app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
+
+// ✅ MIDDLEWARE CONDICIONAL - NO parsear JSON en rutas de upload
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
-  next();
+  // Excluir rutas que manejan archivos del parsing JSON
+  if (req.path.includes('/media') || req.path.includes('/upload')) {
+    console.log('🚫 Saltando JSON parsing para:', req.path);
+    return next();
+  }
+  
+  // Para todas las demás rutas, aplicar JSON parsing
+  express.json({ limit: '10mb' })(req, res, next);
 });
 
+app.use((req, res, next) => {
+  // Excluir rutas que manejan archivos del parsing URL-encoded
+  if (req.path.includes('/media') || req.path.includes('/upload')) {
+    return next();
+  }
+  
+  express.urlencoded({ limit: '10mb', extended: true })(req, res, next);
+});
+
+// ✅ Static files
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads/')));
 
 app.get('/', (req, res) => {
-  res.send('Backend Boilerplate Running');
+  res.send('Backend Divanco Running 🏗️');
 });
 
 // Ejemplo de endpoint para enviar email
@@ -72,11 +83,18 @@ app.post('/send-email', async (req, res, next) => {
   }
 });
 
-// Ejemplo de endpoint para subir archivos
-app.post('/upload', upload.single('file'), (req, res) => {
+// ✅ ENDPOINT DE UPLOAD SIMPLE (para testing)
+const testUpload = multer({ 
+  dest: path.join(process.cwd(), 'uploads/'),
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB
+});
+
+app.post('/upload', testUpload.single('file'), (req, res) => {
+  console.log('📁 Test upload:', req.file);
   res.json({ success: true, file: req.file });
 });
 
+// ✅ RUTAS PRINCIPALES (después de middlewares básicos)
 app.use(routes);
 
 // 404 handler
@@ -84,9 +102,8 @@ app.use('*', (req, res) => {
   res.status(404).json({ error: true, message: 'Route not found' });
 });
 
-import errorHandler from './middlewares/errorHandler.js';
-
 // Error handler
+import errorHandler from './middlewares/errorHandler.js';
 app.use(errorHandler);
 
 export default app;

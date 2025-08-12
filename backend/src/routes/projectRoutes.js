@@ -7,27 +7,39 @@ import {
   createProject,
   updateProject,
   deleteProject,
-  uploadProjectImage,
-  getFeaturedProjects
+  getFeaturedProjects,
+  searchProjects,        // ✅ Ya importado
+  getFilterOptions,      // ✅ Ya importado
+  getSearchSuggestions,  // ✅ Ya importado
+  uploadProjectMedia,    // ✅ Nueva función para MediaFile
 } from '../controllers/projectController.js';
+
 import { authenticateToken, requireRole } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// Configuración de multer para subida de archivos
+// ✅ Configuración de multer actualizada para diferentes tipos de media
 const upload = multer({
   dest: 'uploads/temp/',
   limits: {
-    fileSize: 15 * 1024 * 1024 // 15MB máximo (para imágenes de proyectos)
+    fileSize: 50 * 1024 * 1024 // ✅ Aumentado a 50MB para videos
   },
   fileFilter: (req, file, cb) => {
-    // Aceptar imágenes y algunos documentos
+    // ✅ Expandir tipos permitidos para el nuevo sistema MediaFile
     const allowedTypes = [
+      // Imágenes
       'image/jpeg',
       'image/png',
       'image/webp',
       'image/gif',
-      'application/pdf' // Para planos o documentos técnicos
+      'image/svg+xml',
+      // Videos
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
+      // Documentos
+      'application/pdf',
+      'application/zip'
     ];
     
     if (allowedTypes.includes(file.mimetype)) {
@@ -38,21 +50,47 @@ const upload = multer({
   }
 });
 
-// Rutas públicas
-router.get('/', getAllProjects);
+// ✅ RUTAS PÚBLICAS (ordenadas para evitar conflictos)
+// Rutas específicas primero (antes de parámetros dinámicos)
+router.get('/search', searchProjects);              // ✅ Nueva
+router.get('/filter-options', getFilterOptions);    // ✅ Nueva
+router.get('/suggestions', getSearchSuggestions);   // ✅ Nueva
 router.get('/featured', getFeaturedProjects);
 router.get('/year/:year', getProjectsByYear);
+
+// Ruta general (debe ir después de las específicas)
+router.get('/', getAllProjects);
+
+// Ruta con parámetro dinámico (debe ir al final)
 router.get('/:slug', getProjectBySlug);
 
-// Rutas protegidas
+// ✅ RUTAS PROTEGIDAS (para administradores)
+// CRUD básico
 router.post('/', authenticateToken, requireRole(['admin']), createProject);
 router.put('/:id', authenticateToken, requireRole(['admin']), updateProject);
 router.delete('/:id', authenticateToken, requireRole(['admin']), deleteProject);
-router.post('/:id/upload-image', 
+
+// ✅ Nueva ruta para subir archivos multimedia (reemplaza upload-image)
+router.post('/:id/media', 
+  (req, res, next) => {
+    console.log('🔍 Headers:', req.headers);
+    console.log('🔍 Content-Type:', req.get('Content-Type'));
+    next();
+  },
   authenticateToken, 
   requireRole(['admin']), 
-  upload.single('image'), 
-  uploadProjectImage
+  (req, res, next) => {
+    console.log('✅ Auth passed, procesando multer...');
+    next();
+  },
+  upload.single('file'), // ✅ Cambio de 'image' a 'file'
+  (req, res, next) => {
+    console.log('✅ Multer procesado, archivo:', req.file);
+    console.log('✅ Body:', req.body);
+    next();
+  },
+  uploadProjectMedia     // ✅ Nueva función
 );
+
 
 export default router;

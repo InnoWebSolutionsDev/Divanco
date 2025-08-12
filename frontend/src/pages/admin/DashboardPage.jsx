@@ -1,140 +1,231 @@
-import { useAuth } from '../../hooks/useAuth';
-
+import React from 'react';
+import { useNavigate } from 'react-router-dom'; // ✅ Importar useNavigate
+import { 
+  FolderIcon, 
+  DocumentTextIcon, 
+  TagIcon, 
+  Squares2X2Icon,
+  PlusIcon,
+  EyeIcon,
+  PencilIcon
+} from '@heroicons/react/24/outline';
 
 const DashboardPage = () => {
-  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate(); // ✅ Hook para navegación
+
+  const sections = [
+    {
+      id: 'projects',
+      title: 'Proyectos',
+      description: 'Gestiona tu portfolio de proyectos',
+      icon: FolderIcon,
+      count: 24,
+      color: 'bg-blue-50 text-blue-600',
+      borderColor: 'border-blue-200 hover:border-blue-300',
+      actions: [
+        { label: 'Crear', icon: PlusIcon, href: '/admin/projects' }, // ✅ Corregido
+        { label: 'Ver todos', icon: EyeIcon, href: '/admin/projects' }, // ✅ Corregido
+      ]
+    },
+    {
+      id: 'blog',
+      title: 'Blog',
+      description: 'Entradas y artículos del blog',
+      icon: DocumentTextIcon,
+      count: 12,
+      color: 'bg-green-50 text-green-600',
+      borderColor: 'border-green-200 hover:border-green-300',
+      actions: [
+        { label: 'Escribir', icon: PlusIcon, href: '/admin/blog' }, // ✅ Corregido
+        { label: 'Gestionar', icon: PencilIcon, href: '/admin/blog' }, // ✅ Corregido
+      ]
+    },
+    {
+      id: 'categories',
+      title: 'Categorías',
+      description: 'Categorías del showroom',
+      icon: TagIcon,
+      count: 8,
+      color: 'bg-purple-50 text-purple-600',
+      borderColor: 'border-purple-200 hover:border-purple-300',
+      actions: [
+        { label: 'Crear', icon: PlusIcon, href: '/admin/categories' }, // ✅ Corregido
+        { label: 'Organizar', icon: Squares2X2Icon, href: '/admin/categories' }, // ✅ Corregido
+      ]
+    },
+    {
+      id: 'subcategories',
+      title: 'Materiales', // ✅ Cambié el nombre para que sea más claro
+      description: 'Materiales del showroom',
+      icon: Squares2X2Icon,
+      count: 15,
+      color: 'bg-orange-50 text-orange-600',
+      borderColor: 'border-orange-200 hover:border-orange-300',
+      actions: [
+        { label: 'Crear', icon: PlusIcon, href: '/admin/categories' }, // ✅ Apunta a categorías (materiales)
+        { label: 'Ver todos', icon: EyeIcon, href: '/admin/categories' }, // ✅ Apunta a categorías
+      ]
+    }
+  ];
+
+  // ✅ Función mejorada para navegación
+  const handleNavigation = (href) => {
+    navigate(href);
+  };
 
   return (
-   
-      <div className="space-y-6">
-        {/* Eliminado: Botón temporal de logout */}
-        
-        <div className="md:flex md:items-center md:justify-between">
-        <div className="min-w-0 flex-1">
-          <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-            Dashboard
-          </h2>
-          <p className="mt-1 text-sm text-gray-500">
-            ¡Bienvenido de vuelta, {user?.username}!
-          </p>
-        </div>
+    <div className="w-full max-w-7xl mx-auto p-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-light text-gray-900 mb-2">
+          Dashboard
+        </h1>
+        <p className="text-gray-500 text-sm">
+          Gestiona tu contenido y configuración del estudio
+        </p>
       </div>
+
+      {/* Grid de tarjetas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {sections.map((section) => {
+          const IconComponent = section.icon;
+          
+          return (
+            <div
+              key={section.id}
+              className={`
+                bg-white rounded-lg border-2 transition-all duration-200
+                ${section.borderColor}
+                hover:shadow-lg hover:-translate-y-1
+              `}
+            >
+              {/* Header de la tarjeta */}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`
+                    p-3 rounded-lg ${section.color}
+                  `}>
+                    <IconComponent className="h-6 w-6" />
+                  </div>
+                  <span className="text-2xl font-light text-gray-900">
+                    {section.count}
+                  </span>
+                </div>
+                
+                <h3 className="text-lg font-medium text-gray-900 mb-1">
+                  {section.title}
+                </h3>
+                <p className="text-sm text-gray-500">
+                  {section.description}
+                </p>
+              </div>
+
+              {/* Acciones */}
+              <div className="border-t border-gray-100 p-4">
+                <div className="flex gap-2">
+                  {section.actions.map((action, index) => {
+                    const ActionIcon = action.icon;
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleNavigation(action.href)}
+                        className="
+                          flex items-center gap-2 px-3 py-2 text-xs font-medium
+                          text-gray-600 hover:text-gray-900
+                          bg-gray-50 hover:bg-gray-100
+                          rounded-md transition-colors duration-150
+                          flex-1 justify-center
+                        "
+                      >
+                        <ActionIcon className="h-4 w-4" />
+                        {action.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Stats rápidas */}
+      <div className="mt-12 bg-gray-50 rounded-lg p-6">
+        <h2 className="text-lg font-medium text-gray-900 mb-4">
+          Resumen rápido
+        </h2>
         
-        
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Card 1 */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">📊</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Estado del Sistema
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      Activo
-                    </dd>
-                  </dl>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="text-center">
+            <div className="text-2xl font-light text-gray-900">
+              {sections.reduce((total, section) => total + section.count, 0)}
             </div>
+            <div className="text-sm text-gray-500">Total elementos</div>
           </div>
-
-          {/* Card 2 - Solo para admin */}
-          {isAdmin && (
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold">👥</span>
-                    </div>
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Panel de Admin
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        Disponible
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Card 3 */}
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-semibold">⚙️</span>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">
-                      Configuración
-                    </dt>
-                    <dd className="text-lg font-medium text-gray-900">
-                      Personalizable
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
+          
+          <div className="text-center">
+            <div className="text-2xl font-light text-blue-600">24</div>
+            <div className="text-sm text-gray-500">Proyectos activos</div>
           </div>
-        </div>
-
-        {/* Información adicional */}
-        <div className="bg-white shadow overflow-hidden sm:rounded-md">
-          <div className="px-4 py-5 sm:px-6">
-            <h3 className="text-lg leading-6 font-medium text-gray-900">
-              Información del Boilerplate
-            </h3>
-            <p className="mt-1 max-w-2xl text-sm text-gray-500">
-              Este es tu boilerplate personalizado con React, Redux Toolkit y Tailwind CSS.
-            </p>
+          
+          <div className="text-center">
+            <div className="text-2xl font-light text-green-600">12</div>
+            <div className="text-sm text-gray-500">Entradas blog</div>
           </div>
-          <div className="border-t border-gray-200">
-            <dl>
-              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Frontend</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  React + Redux Toolkit + Tailwind CSS
-                </dd>
-              </div>
-              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Estado</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  Redux Toolkit con RTK Query
-                </dd>
-              </div>
-              <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Estilo</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  Tailwind CSS con componentes reutilizables
-                </dd>
-              </div>
-              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Autenticación</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  JWT con roles de usuario
-                </dd>
-              </div>
-            </dl>
+          
+          <div className="text-center">
+            <div className="text-2xl font-light text-purple-600">23</div>
+            <div className="text-sm text-gray-500">Materiales totales</div> {/* ✅ Cambié a "Materiales" */}
           </div>
         </div>
       </div>
-    
+
+      {/* ✅ NUEVO: Enlaces rápidos para navegación */}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Accesos rápidos</h3>
+          <div className="space-y-2">
+            <button
+              onClick={() => navigate('/proyectos')}
+              className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors"
+            >
+              📐 Ver proyectos públicos
+            </button>
+            <button
+              onClick={() => navigate('/showroom')}
+              className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors"
+            >
+              🏪 Ver showroom público
+            </button>
+            <button
+              onClick={() => navigate('/blog')}
+              className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors"
+            >
+              📝 Ver blog público
+            </button>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Actividad reciente</h3>
+          <div className="space-y-3 text-sm text-gray-600">
+            <div className="flex justify-between">
+              <span>Último proyecto creado</span>
+              <span className="text-gray-400">Hace 2 días</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Último post del blog</span>
+              <span className="text-gray-400">Hace 1 semana</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Nuevos materiales</span>
+              <span className="text-gray-400">Hace 3 días</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

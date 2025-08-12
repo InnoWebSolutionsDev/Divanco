@@ -7,6 +7,7 @@ import Subcategory from './Subcategory.js';
 import Project from './Project.js';
 import BlogPost from './BlogPost.js';
 import Subscriber from './Subscriber.js';
+import MediaFile from './MediaFile.js';
 
 // Importar y ejecutar asociaciones
 import { defineAssociations } from './associations.js';
@@ -22,7 +23,9 @@ export {
   Subcategory,
   Project,
   BlogPost,
-  Subscriber
+  Subscriber,
+  MediaFile
+
 };
 
 // Función para sincronizar todos los modelos
@@ -35,9 +38,9 @@ export async function syncAllModels(force = false) {
       
       // Eliminar tablas en orden inverso para evitar conflictos de FK
       console.log('🗑️  Eliminando tablas existentes...');
-      
-      const tablesToDrop = ['BlogPosts', 'Subcategories', 'Projects', 'Subscribers', 'Categories', 'Users'];
-      
+
+      const tablesToDrop = ['BlogPosts', 'Subcategories', 'Projects', 'Subscribers', 'Categories', 'Users', 'MediaFiles'];
+
       for (const tableName of tablesToDrop) {
         try {
           await sequelize.queryInterface.dropTable(tableName, { cascade: true });
@@ -70,7 +73,10 @@ export async function syncAllModels(force = false) {
     
     await BlogPost.sync({ force: false });
     console.log('✅ Tabla BlogPosts creada');
-    
+
+    await MediaFile.sync({ force: false });
+    console.log('✅ Tabla MediaFiles creada');
+
     console.log('✅ Todos los modelos sincronizados exitosamente');
     return true;
   } catch (error) {
@@ -98,5 +104,6 @@ export default {
   Project,
   BlogPost,
   Subscriber,
-  syncAllModels
+  syncAllModels, 
+  MediaFile
 };

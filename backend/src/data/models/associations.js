@@ -4,6 +4,7 @@ import Project from './Project.js';
 import BlogPost from './BlogPost.js';
 import User from './User.js';
 import Subscriber from './Subscriber.js';
+import MediaFile from './MediaFile.js'; // ✅ Nuevo import
 
 // Definir todas las relaciones aquí
 export function defineAssociations() {
@@ -42,6 +43,20 @@ export function defineAssociations() {
     foreignKey: 'projectId', 
     as: 'project' 
   });
+
+  // ✅ Nuevas relaciones para MediaFiles
+  Project.hasMany(MediaFile, {
+    foreignKey: 'projectId',
+    as: 'media',
+    onDelete: 'CASCADE' // Si se elimina el proyecto, se eliminan todos sus archivos
+  });
+
+  MediaFile.belongsTo(Project, {
+    foreignKey: 'projectId',
+    as: 'project'
+  });
+
+  
 
   console.log('✅ Asociaciones de modelos definidas');
 }
