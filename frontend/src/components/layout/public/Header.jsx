@@ -170,14 +170,14 @@ const Header = () => {
                 </Link>
               ))}
 
-              {isAuthenticated && (
+              {/* {isAuthenticated && (
                 <Link
                   to="/profile"
                   className="font-light uppercase tracking-wider transition-all duration-300 hover:scale-105 text-lg md:text-xl lg:text-2xl text-white/90 hover:text-white"
                 >
                   {user?.name || 'Profile'}
                 </Link>
-              )}
+              )} */}
             </div>
 
             {/* ✅ Hamburguesa - Siempre visible, a la derecha */}
@@ -279,7 +279,7 @@ const Header = () => {
                 Buscar
               </Link>
 
-              {isAuthenticated && (
+              {/* {isAuthenticated && (
                 <Link
                   to="/profile"
                   className={`block text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
@@ -291,7 +291,7 @@ const Header = () => {
                 >
                   {user?.name || 'Profile'}
                 </Link>
-              )}
+              )} */}
             </div>
           )}
         </div>

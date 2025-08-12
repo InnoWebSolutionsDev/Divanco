@@ -2,27 +2,32 @@ import { baseApi } from '../../services/api.js';
 
 export const projectsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    // ✅ BÚSQUEDA Y FILTROS AVANZADOS
-    // Búsqueda con filtros avanzados
-    searchProjects: builder.query({
-      query: ({ 
-        title,
-        tags,
-        location,
-        search,
-        year,
-        projectType,
-        status,
-        client,
-        architect,
-        featured = false,
-        publicOnly = true,
-        limit = 12,
-        page = 1,
-        sortBy = 'updatedAt',
-        sortOrder = 'DESC'
-      } = {}) => {
-        const params = new URLSearchParams({
+    
+    // ✅ ENDPOINT PRINCIPAL UNIFICADO - Obtener proyectos con filtros
+    getProjects: builder.query({
+      query: (params = {}) => {
+        const {
+          // Paginación
+          limit = 12,
+          page = 1,
+          // Filtros básicos
+          search,
+          projectType,
+          status,
+          year,
+          location,
+          client,
+          architect,
+          tags,
+          // Flags
+          featured,
+          publicOnly = true,
+          // Ordenamiento
+          sortBy = 'updatedAt',
+          sortOrder = 'DESC'
+        } = params;
+
+        const searchParams = new URLSearchParams({
           limit: limit.toString(),
           page: page.toString(),
           publicOnly: publicOnly.toString(),
@@ -30,108 +35,96 @@ export const projectsApi = baseApi.injectEndpoints({
           sortOrder
         });
         
-        if (title) params.append('title', title);
+        // Agregar parámetros opcionales solo si existen
+        if (search) searchParams.append('search', search);
+        if (projectType) searchParams.append('projectType', projectType);
+        if (status) searchParams.append('status', status);
+        if (year) searchParams.append('year', year.toString());
+        if (location) searchParams.append('location', location);
+        if (client) searchParams.append('client', client);
+        if (architect) searchParams.append('architect', architect);
+        if (featured !== undefined) searchParams.append('featured', featured.toString());
+        
         if (tags) {
           const tagsString = Array.isArray(tags) ? tags.join(',') : tags;
-          params.append('tags', tagsString);
+          searchParams.append('tags', tagsString);
         }
-        if (location) params.append('location', location);
-        if (search) params.append('search', search);
-        if (year) params.append('year', year.toString());
-        if (projectType) params.append('projectType', projectType);
-        if (status) params.append('status', status);
-        if (client) params.append('client', client);
-        if (architect) params.append('architect', architect);
-        if (featured) params.append('featured', featured.toString());
         
+        return `/projects?${searchParams.toString()}`;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Project', id })),
+              { type: 'Project', id: 'LIST' },
+            ]
+          : [{ type: 'Project', id: 'LIST' }],
+    }),
+
+    // ✅ BÚSQUEDA ESPECÍFICA (si tu backend tiene endpoint separado)
+    searchProjects: builder.query({
+      query: ({ query, type = 'all', limit = 10 }) => {
+        const params = new URLSearchParams({
+          q: query,
+          type,
+          limit: limit.toString()
+        });
         return `/projects/search?${params}`;
       },
+      // Cache corto para búsquedas
+      keepUnusedDataFor: 30, // 30 segundos
       providesTags: ['Project'],
     }),
 
-    // Opciones disponibles para filtros
+    // ✅ OPCIONES DE FILTROS
     getFilterOptions: builder.query({
       query: () => '/projects/filter-options',
       providesTags: ['FilterOptions'],
+      // Cache largo para opciones (cambian poco)
+      keepUnusedDataFor: 300, // 5 minutos
     }),
 
-    // Sugerencias de búsqueda
+    // ✅ SUGERENCIAS DE BÚSQUEDA
     getSearchSuggestions: builder.query({
-      query: ({ query, type = 'all' }) => {
+      query: ({ query, limit = 5 }) => {
         const params = new URLSearchParams({
-          query,
-          type
+          q: query,
+          limit: limit.toString()
         });
         return `/projects/suggestions?${params}`;
       },
-      // No cachear sugerencias para que sean siempre actuales
+      // No cachear sugerencias
       keepUnusedDataFor: 0,
     }),
 
-    // ✅ PROYECTOS GENERALES (actualizados)
-    // Obtener todos los proyectos
-    getProjects: builder.query({
-      query: ({ 
-        limit = 12, 
-        page = 1, 
-        year, 
-        featured, 
-        projectType,
-        status,
-        tags,
-        publicOnly = true
-      } = {}) => {
-        const params = new URLSearchParams({
-          limit: limit.toString(),
-          page: page.toString(),
-          publicOnly: publicOnly.toString()
-        });
-        
-        if (year) params.append('year', year.toString());
-        if (featured !== undefined) params.append('featured', featured.toString());
-        if (projectType) params.append('projectType', projectType);
-        if (status) params.append('status', status);
-        if (tags) {
-          const tagsString = Array.isArray(tags) ? tags.join(',') : tags;
-          params.append('tags', tagsString);
-        }
-        
-        return `/projects?${params}`;
-      },
-      providesTags: ['Project'],
-    }),
-
-    // Proyectos destacados para homepage
+    // ✅ PROYECTOS ESPECÍFICOS
+    // Proyectos destacados
     getFeaturedProjects: builder.query({
       query: (limit = 6) => `/projects/featured?limit=${limit}`,
       providesTags: ['Project'],
+      keepUnusedDataFor: 180, // 3 minutos
     }),
 
-    // Proyectos por año
+    // Proyectos por año (si existe endpoint específico)
     getProjectsByYear: builder.query({
       query: (year) => `/projects/year/${year}`,
       providesTags: ['Project'],
     }),
 
-    // ✅ NUEVO: Años disponibles (extraer de getFilterOptions si no existe endpoint separado)
-    getAvailableYears: builder.query({
-      query: () => '/projects/filter-options',
-      transformResponse: (response) => response.data?.years || [],
-      providesTags: ['FilterOptions'],
-    }),
-
-    // Obtener proyecto por slug
+    // Proyecto individual por slug
     getProjectBySlug: builder.query({
       query: (slug) => `/projects/${slug}`,
       providesTags: (result, error, slug) => [
-        { type: 'Project', id: slug }
+        { type: 'Project', id: slug },
+        { type: 'Project', id: result?.id }
       ],
     }),
 
-    // ✅ NUEVO: Proyectos relacionados (si existe en backend)
-    getRelatedProjects: builder.query({
-      query: ({ slug, limit = 4 }) => `/projects/${slug}/related?limit=${limit}`,
+    // ✅ PROYECTOS RECIENTES (usando endpoint existente)
+    getRecentProjects: builder.query({
+      query: (limit = 6) => `/projects?limit=${limit}&sortBy=updatedAt&sortOrder=DESC&publicOnly=true`,
       providesTags: ['Project'],
+      keepUnusedDataFor: 60, // 1 minuto
     }),
 
     // ✅ CRUD PARA ADMINISTRADORES
@@ -154,12 +147,12 @@ export const projectsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: (result, error, { id }) => [
         { type: 'Project', id },
-        'Project',
+        { type: 'Project', id: 'LIST' },
         'FilterOptions'
       ],
     }),
 
-    // Eliminar proyecto
+    // Eliminar proyecto (soft delete)
     deleteProject: builder.mutation({
       query: (id) => ({
         url: `/projects/${id}`,
@@ -168,35 +161,36 @@ export const projectsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Project', 'FilterOptions'],
     }),
 
-    // ✅ NUEVO SISTEMA DE ARCHIVOS MULTIMEDIA
-    // Subir archivo multimedia (reemplaza uploadProjectImage)
+    // ✅ SISTEMA DE MULTIMEDIA MEJORADO
+    // Subir archivo multimedia
     uploadProjectMedia: builder.mutation({
-  query: ({ projectId, formData }) => {
-    // ✅ Debug para verificar que FormData llega correctamente
-    console.log('🔧 RTK Query uploadProjectMedia:', {
-      projectId,
-      isFormData: formData instanceof FormData,
-      formDataEntries: formData instanceof FormData ? [...formData.entries()] : 'Not FormData'
-    });
+      query: ({ projectId, formData }) => {
+        console.log('🔧 RTK Query - uploadProjectMedia:', {
+          projectId,
+          isFormData: formData instanceof FormData,
+          hasFile: formData instanceof FormData ? formData.has('file') : false
+        });
 
-    return {
-      url: `/projects/${projectId}/media`,
-      method: 'POST',
-      body: formData,
-      // ✅ NO establecer headers - deja que el navegador maneje FormData
-    };
-  },
-  invalidatesTags: (result, error, { projectId }) => [
-    { type: 'Project', id: projectId },
-    { type: 'ProjectMedia', id: projectId }
-  ],
-}),
+        return {
+          url: `/projects/${projectId}/media`,
+          method: 'POST',
+          body: formData,
+          // ✅ NO establecer Content-Type - deja que FormData lo maneje
+        };
+      },
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: 'Project', id: projectId },
+        { type: 'ProjectMedia', id: projectId },
+        { type: 'Project', id: 'LIST' }
+      ],
+    }),
 
-    // ✅ GESTIÓN DE ARCHIVOS MULTIMEDIA
-    // Obtener archivos multimedia de un proyecto
+    // Obtener multimedia de un proyecto
     getProjectMedia: builder.query({
-      query: ({ projectId, type }) => {
-        const params = new URLSearchParams();
+      query: ({ projectId, type, isActive = true }) => {
+        const params = new URLSearchParams({
+          isActive: isActive.toString()
+        });
         if (type) params.append('type', type);
         
         return `/projects/${projectId}/media?${params}`;
@@ -206,14 +200,15 @@ export const projectsApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // Actualizar archivo multimedia
+    // ✅ GESTIÓN DE ARCHIVOS MULTIMEDIA
+    // Actualizar metadata de archivo
     updateMediaFile: builder.mutation({
-      query: ({ mediaId, ...data }) => ({
+      query: ({ mediaId, projectId, ...data }) => ({
         url: `/media/${mediaId}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { mediaId, projectId }) => [
+      invalidatesTags: (result, error, { projectId }) => [
         { type: 'ProjectMedia', id: projectId },
         { type: 'Project', id: projectId }
       ],
@@ -221,22 +216,23 @@ export const projectsApi = baseApi.injectEndpoints({
 
     // Eliminar archivo multimedia
     deleteMediaFile: builder.mutation({
-      query: (mediaId) => ({
+      query: ({ mediaId, projectId }) => ({
         url: `/media/${mediaId}`,
         method: 'DELETE',
       }),
       invalidatesTags: (result, error, { projectId }) => [
         { type: 'ProjectMedia', id: projectId },
-        { type: 'Project', id: projectId }
+        { type: 'Project', id: projectId },
+        { type: 'Project', id: 'LIST' }
       ],
     }),
 
     // Reordenar archivos multimedia
-    reorderMediaFiles: builder.mutation({
-      query: ({ projectId, mediaIds }) => ({
+    reorderProjectMedia: builder.mutation({
+      query: ({ projectId, mediaOrder }) => ({
         url: `/projects/${projectId}/media/reorder`,
         method: 'PUT',
-        body: { mediaIds },
+        body: { mediaOrder }, // Array de IDs en el orden deseado
       }),
       invalidatesTags: (result, error, { projectId }) => [
         { type: 'ProjectMedia', id: projectId },
@@ -244,50 +240,65 @@ export const projectsApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // ✅ UTILIDADES
-    // Incrementar contador de vistas
+    // ✅ UTILIDADES Y ESTADÍSTICAS
+    // Incrementar vistas (si tienes analytics)
     incrementProjectViews: builder.mutation({
-      query: (slug) => ({
-        url: `/projects/${slug}/view`,
+      query: (projectId) => ({
+        url: `/projects/${projectId}/views`,
         method: 'POST',
       }),
-      // No invalidar cache para no refrescar datos
+      // No invalidar cache para no causar re-renders
       invalidatesTags: [],
     }),
 
-    
   }),
 });
 
+// ✅ HOOKS EXPORTADOS
 export const {
-  // ✅ Búsqueda y filtros
-  useSearchProjectsQuery,
-  useGetFilterOptionsQuery,
-  useGetSearchSuggestionsQuery,
-  useLazyGetSearchSuggestionsQuery, // Para sugerencias on-demand
-  
-  // Proyectos generales
+  // Consultas principales
   useGetProjectsQuery,
-  useGetFeaturedProjectsQuery,
-  useGetProjectsByYearQuery,
-  useGetAvailableYearsQuery,
-  useGetProjectBySlugQuery,
-  useGetRelatedProjectsQuery,
+  useLazyGetProjectsQuery,
   
-  // ✅ CRUD para admin
+  // Búsqueda
+  useSearchProjectsQuery,
+  useLazySearchProjectsQuery,
+  useGetSearchSuggestionsQuery,
+  useLazyGetSearchSuggestionsQuery,
+  
+  // Filtros y opciones
+  useGetFilterOptionsQuery,
+  
+  // Proyectos específicos
+  useGetFeaturedProjectsQuery,
+  useGetRecentProjectsQuery,
+  useGetProjectsByYearQuery,
+  useGetProjectBySlugQuery,
+  
+  // CRUD Admin
   useCreateProjectMutation,
   useUpdateProjectMutation,
   useDeleteProjectMutation,
   
-  // ✅ Sistema multimedia
+  // Sistema multimedia
   useUploadProjectMediaMutation,
   useGetProjectMediaQuery,
   useUpdateMediaFileMutation,
   useDeleteMediaFileMutation,
-  useReorderMediaFilesMutation,
+  useReorderProjectMediaMutation,
   
   // Utilidades
   useIncrementProjectViewsMutation,
   
-
 } = projectsApi;
+
+// ✅ SELECTORES ÚTILES (opcional)
+export const selectProjectById = (projectId) => (state) => {
+  return projectsApi.endpoints.getProjects.select()(state)?.data?.data?.find(
+    project => project.id === projectId
+  );
+};
+
+export const selectFeaturedProjects = (state) => {
+  return projectsApi.endpoints.getFeaturedProjects.select()(state)?.data?.data || [];
+};

@@ -23,11 +23,14 @@ Project.init({
     }
   },
   slug: {
-    type: DataTypes.STRING(220),
-    allowNull: false,
-    unique: true,
-    // Ejemplo: "casa-moderna-2024"
-  },
+  type: DataTypes.STRING(220),
+  allowNull: false,
+  unique: true,
+  validate: {
+    notEmpty: true,
+    len: [3, 220]
+  }
+},
   year: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -47,9 +50,13 @@ Project.init({
   },
   // Tipo de participación
   projectType: {
-    type: DataTypes.ENUM('Preproyecto', 'Proyecto', 'Dirección'),
-    allowNull: true,
-  },
+  type: DataTypes.ENUM('Preproyecto', 'Proyecto', 'Dirección'),
+  allowNull: false, // ✅ CAMBIAR: ahora es requerido
+  validate: {
+    notEmpty: true,
+    isIn: [['Preproyecto', 'Proyecto', 'Dirección']]
+  }
+},
   // Estado del proyecto
   status: {
     type: DataTypes.ENUM('render', 'obra', 'finalizado' ),
@@ -120,22 +127,42 @@ Project.init({
 }, {
   sequelize,
   modelName: 'Project',
-  hooks: {
-    beforeSave: (project, options) => {
-      // Auto-generar slug
-      if (!project.slug && project.title) {
-        project.slug = project.title
-          .toLowerCase()
-          .replace(/[^a-z0-9\s]/g, '')
-          .replace(/\s+/g, '-');
+ hooks: {
+  beforeSave: async (project, options) => {
+    // ✅ Auto-generar slug SOLO si no existe
+    if (!project.slug && project.title && project.year) {
+      const baseSlug = `${project.title
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '-')}-${project.year}`;
+      
+      // ✅ Verificar si el slug ya existe
+      let finalSlug = baseSlug;
+      let counter = 1;
+      
+      while (true) {
+        const existingProject = await Project.findOne({
+          where: {
+            slug: finalSlug,
+            id: { [DataTypes.Op.ne]: project.id || 0 } // Excluir el proyecto actual si es update
+          }
+        });
+        
+        if (!existingProject) break;
+        
+        finalSlug = `${baseSlug}-${counter}`;
+        counter++;
       }
       
-      // Generar searchableText
-      const tagsText = project.tags ? project.tags.join(' ') : '';
-      
-      project.searchableText = `${project.title} ${project.description || ''} ${project.content || ''} ${project.location || ''} ${project.client || ''} ${project.architect || ''} ${tagsText} ${project.year}`.toLowerCase();
+      project.slug = finalSlug;
     }
-  },
+    
+    // ✅ Generar searchableText
+    const tagsText = project.tags ? project.tags.join(' ') : '';
+    
+    project.searchableText = `${project.title || ''} ${project.description || ''} ${project.content || ''} ${project.location || ''} ${project.client || ''} ${project.architect || ''} ${tagsText} ${project.year || ''}`.toLowerCase();
+  }
+},
   indexes: [
     {
       fields: ['slug']

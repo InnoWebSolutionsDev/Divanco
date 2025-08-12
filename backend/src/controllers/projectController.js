@@ -655,6 +655,7 @@ export const createProject = async (req, res) => {
       slug: generateSlug(title.trim(), parseInt(year)), // ✅ GENERAR SLUG AQUÍ
       isFeatured: Boolean(isFeatured),
       isPublic: Boolean(isPublic),
+      isActive: true, // ✅ AGREGAR EXPLÍCITAMENTE
       order: parseInt(order),
       startDate: startDate ? new Date(startDate) : null,
       endDate: endDate ? new Date(endDate) : null
@@ -671,6 +672,13 @@ export const createProject = async (req, res) => {
     console.log('✅ SUCCESS: Proyecto creado exitosamente');
     console.log('   - ID:', project.id);
     console.log('   - Slug generado:', project.slug);
+    
+    // ✅ LOG EXTRA: Verificar que se guardó en DB
+    console.log('7. Verificando en base de datos...');
+    const projectInDB = await Project.findByPk(project.id);
+    console.log('   - Proyecto encontrado en DB:', !!projectInDB);
+    console.log('   - isActive en DB:', projectInDB?.isActive);
+    console.log('   - isPublic en DB:', projectInDB?.isPublic);
 
     res.status(201).json({
       success: true,
@@ -733,9 +741,7 @@ export const createProject = async (req, res) => {
   }
 };
 
-// ...existing code...
 
-// Actualizar proyecto
 export const updateProject = async (req, res) => {
   try {
     const { id } = req.params;
