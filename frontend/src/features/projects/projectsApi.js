@@ -13,7 +13,7 @@ export const projectsApi = baseApi.injectEndpoints({
           // Filtros básicos
           search,
           projectType,
-          status,
+          etapa,
           year,
           location,
           client,
@@ -38,7 +38,7 @@ export const projectsApi = baseApi.injectEndpoints({
         // Agregar parámetros opcionales solo si existen
         if (search) searchParams.append('search', search);
         if (projectType) searchParams.append('projectType', projectType);
-        if (status) searchParams.append('status', status);
+        if (etapa) searchParams.append('etapa', etapa);
         if (year) searchParams.append('year', year.toString());
         if (location) searchParams.append('location', location);
         if (client) searchParams.append('client', client);

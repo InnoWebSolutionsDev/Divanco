@@ -8,6 +8,9 @@ module.exports = {
         'sans': ['PT Sans', 'Nunito Sans', 'Source Sans Pro', 'sans-serif'], // ✅ PT Sans como principal
         'pt': ['PT Sans', 'sans-serif'], // ✅ Clase específica para PT Sans
         'alt': ['Nunito Sans', 'Source Sans Pro', 'sans-serif'], // Alternativa
+      },
+      colors: {
+        'naranjaDivanco': '#e5542e',
       }
     },
   },

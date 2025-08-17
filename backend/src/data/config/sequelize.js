@@ -1,16 +1,31 @@
-
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Detect environment
 const env = process.env.NODE_ENV || 'development';
 
-// Configuración flexible para local y producción
 let sequelize;
 if (env === 'production' && process.env.DB_DEPLOY) {
   sequelize = new Sequelize(process.env.DB_DEPLOY, {
-    logging: false,
+    // ✅ CAMBIO: Habilitar logging en desarrollo para debugging
+    logging: env === 'development' ? (sql, timing) => {
+      console.log('\n🔍 === SQL QUERY ===');
+      console.log('⏱️  Timing:', timing);
+      console.log('💻 SQL:', sql);
+      
+      // ✅ ALERTAS para queries de eliminación
+      if (sql.toLowerCase().includes('delete') || sql.toLowerCase().includes('truncate')) {
+        console.log('🚨 ¡QUERY DE ELIMINACIÓN!');
+        console.trace();
+      }
+      
+      if (sql.toLowerCase().includes('drop table') || sql.toLowerCase().includes('drop cascade')) {
+        console.log('🚨 ¡DROP TABLE DETECTADO!');
+        console.trace();
+      }
+      
+      console.log('=== FIN SQL ===\n');
+    } : false,
     dialect: 'postgres',
   });
 } else {
@@ -21,12 +36,29 @@ if (env === 'production' && process.env.DB_DEPLOY) {
     {
       host: process.env.DB_HOST,
       dialect: 'postgres',
-      logging: false,
+      // ✅ CAMBIO: Habilitar logging detallado en desarrollo
+      logging: env === 'development' ? (sql, timing) => {
+        console.log('\n🔍 === SQL QUERY ===');
+        console.log('⏱️  Timing:', timing);
+        console.log('💻 SQL:', sql);
+        
+        // ✅ ALERTAS para queries críticas
+        if (sql.toLowerCase().includes('delete')) {
+          console.log('🚨 ¡DELETE DETECTADO!');
+          console.trace();
+        }
+        
+        if (sql.toLowerCase().includes('update') && sql.toLowerCase().includes('projects')) {
+          console.log('⚠️  UPDATE en Projects detectado');
+          console.log('⚠️  SQL completo:', sql);
+        }
+        
+        console.log('=== FIN SQL ===\n');
+      } : false,
     }
   );
 }
 
-// Helper para testear conexión
 export async function testConnection() {
   try {
     await sequelize.authenticate();
@@ -38,7 +70,6 @@ export async function testConnection() {
   }
 }
 
-// Helper para sincronizar modelos
 export async function syncModels(force = false) {
   try {
     await sequelize.sync({ force });

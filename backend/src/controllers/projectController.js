@@ -8,7 +8,7 @@ export const getAllProjects = async (req, res) => {
     const { 
       year, 
       projectType, 
-      status,
+      etapa,
       featured = false,
       publicOnly = true,
       tags,
@@ -21,7 +21,7 @@ export const getAllProjects = async (req, res) => {
     if (publicOnly === 'true') whereClause.isPublic = true;
     if (year) whereClause.year = year;
     if (projectType) whereClause.projectType = projectType;
-    if (status) whereClause.status = status;
+    if (etapa) whereClause.etapa = etapa;
     if (featured === 'true') whereClause.isFeatured = true;
     if (tags) {
       // Buscar proyectos que contengan cualquiera de los tags
@@ -82,7 +82,7 @@ export const searchProjects = async (req, res) => {
       // Filtros adicionales
       year,
       projectType,
-      status,
+      etapa,
       client,
       architect,
       
@@ -145,7 +145,7 @@ export const searchProjects = async (req, res) => {
     // ✅ Filtros específicos
     if (year) whereClause.year = year;
     if (projectType) whereClause.projectType = projectType;
-    if (status) whereClause.status = status;
+    if (etapa) whereClause.etapa = etapa;
     if (client) {
       whereClause.client = {
         [Op.iLike]: `%${client}%`
@@ -191,7 +191,7 @@ export const searchProjects = async (req, res) => {
       search: search || null,
       year: year || null,
       projectType: projectType || null,
-      status: status || null,
+      etapa: etapa || null,
       client: client || null,
       architect: architect || null
     };
@@ -274,11 +274,11 @@ export const getFilterOptions = async (req, res) => {
     });
 
     // Obtener estados únicos
-    const statuses = await Project.findAll({
-      attributes: ['status'],
+    const etapas = await Project.findAll({
+      attributes: ['etapa'],
       where: { isActive: true, isPublic: true },
-      group: ['status'],
-      order: [['status', 'ASC']]
+      group: ['etapa'],
+      order: [['etapa', 'ASC']]
     });
 
     res.json({
@@ -288,7 +288,7 @@ export const getFilterOptions = async (req, res) => {
         locations: locations.map(l => l.location).filter(Boolean),
         tags: Array.from(allTags).sort(),
         project_types: projectTypes.map(p => p.projectType),
-        statuses: statuses.map(s => s.status),
+        etapas: etapas.map(e => e.etapa),
         sort_options: [
           { value: 'updatedAt', label: 'Más Recientes' },
           { value: 'title', label: 'Título A-Z' },
@@ -580,7 +580,7 @@ export const testProjectCreation = async (req, res) => {
       description: 'Descripción de prueba para debugging',
       year: 2024,
       projectType: 'Proyecto',
-      status: 'render',
+      etapa: 'render',
       isActive: true,
       isPublic: true,
       tags: ['moderno', 'residencial']
@@ -721,7 +721,7 @@ export const debugCreateProject = async (req, res) => {
       client,
       architect,
       projectType,
-      status = 'render',
+      etapa = 'render',
       area,
       tags = [],
       isFeatured = false,
@@ -787,7 +787,7 @@ export const debugCreateProject = async (req, res) => {
       client: client?.trim(),
       architect: architect?.trim(),
       projectType,
-      status,
+      etapa,
       area: area?.trim(),
       tags: Array.isArray(tags) ? tags : [],
       slug: generateSlug(title.trim(), parseInt(year)),
@@ -893,7 +893,7 @@ export const createProject = async (req, res) => {
       client,
       architect,
       projectType,
-      status = 'render',
+      etapa = 'render',
       area,
       tags = [],
       isFeatured = false,
@@ -968,7 +968,7 @@ export const createProject = async (req, res) => {
       client: client?.trim(),
       architect: architect?.trim(),
       projectType,
-      status,
+      etapa,
       area: area?.trim(),
       tags: Array.isArray(tags) ? tags : [],
       slug: generateSlug(title.trim(), parseInt(year)), // ✅ GENERAR SLUG AQUÍ

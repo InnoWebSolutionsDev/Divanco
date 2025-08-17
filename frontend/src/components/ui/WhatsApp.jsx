@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 const WhatsApp = ({ 
-  phoneNumber = "5491134567890", // Reemplaza con tu número
-  message = "Hola! Me interesa conocer más sobre Divanco Arquitectura.",
+  phoneNumber = "573203033270", // Reemplaza con tu número
+  message = "Hola! Me interesa contactarlos",
   position = "bottom-right" 
 }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -24,7 +24,7 @@ const WhatsApp = ({
         {/* Texto expandible - ahora a la izquierda del botón */}
         <div className={`
           flex items-center h-14
-          bg-green-500 rounded-l-lg px-4 mr-1
+          bg-naranjaDivanco rounded-l-lg px-4 mr-1
           transition-all duration-700 ease-out
           ${isHovered ? 'opacity-100 translate-x-0 w-auto' : 'opacity-0 translate-x-4 w-0 px-0 mr-0'}
           overflow-hidden
@@ -42,7 +42,7 @@ const WhatsApp = ({
           className={`
             group relative flex items-center justify-center
             w-14 h-14 
-            bg-green-500 hover:bg-green-600
+            bg-naranjaDivanco hover:bg-naranjaDivanco/80
             rounded-xl shadow-lg hover:shadow-xl
             transition-all duration-700 ease-out
             transform hover:scale-105
@@ -59,7 +59,7 @@ const WhatsApp = ({
           </svg>
 
           {/* Pulse effect - más lento */}
-          <div className="absolute inset-0 rounded-xl bg-green-400 opacity-30 animate-pulse"></div>
+          <div className="absolute inset-0 rounded-xl bg-naranjaDivanco/30 animate-pulse"></div>
         </button>
       </div>
     </div>

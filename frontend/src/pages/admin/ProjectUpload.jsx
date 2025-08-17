@@ -76,8 +76,8 @@ const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
     'economico', 'reforma', 'construccion_nueva'
   ];
 
-  const projectTypes = ['Preproyecto', 'Proyecto', 'Dirección'];
-  const statusOptions = ['render', 'obra', 'finalizado'];
+  const projectTypes = ['Diseño', 'Proyecto', 'Dirección de Obra'];
+  const etapasOptions = ['render', 'obra', 'finalizado'];
 
   const fileTypes = {
     render: {
@@ -694,9 +694,9 @@ const uploadFiles = async (targetProjectId = projectId) => {
                 onChange={(e) => setProjectData(prev => ({ ...prev, status: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
-                {statusOptions.map(status => (
-                  <option key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                {etapasOptions.map(etapa => (
+                  <option key={etapa} value={etapa}>
+                    {etapa.charAt(0).toUpperCase() + etapa.slice(1)}
                   </option>
                 ))}
               </select>

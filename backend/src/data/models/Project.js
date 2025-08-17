@@ -50,15 +50,15 @@ Project.init({
   },
   // Tipo de participación
   projectType: {
-  type: DataTypes.ENUM('Preproyecto', 'Proyecto', 'Dirección'),
+  type: DataTypes.ENUM('Diseño', 'Proyecto', 'Dirección de Obra'),
   allowNull: false, // ✅ CAMBIAR: ahora es requerido
   validate: {
     notEmpty: true,
-    isIn: [['Preproyecto', 'Proyecto', 'Dirección']]
+    isIn: [['Diseño', 'Proyecto', 'Dirección de Obra']]
   }
 },
   // Estado del proyecto
-  status: {
+  etapa: {
     type: DataTypes.ENUM('render', 'obra', 'finalizado' ),
     defaultValue: 'render',
   },
@@ -72,9 +72,7 @@ Project.init({
       len: [0, 5000]
     }
   },
-  // Imágenes
-  
-  // Tags como ENUM - puedes ajustar según tus necesidades
+
   tags: {
     type: DataTypes.ARRAY(DataTypes.ENUM([
       'residencial',
@@ -208,8 +206,28 @@ Project.init({
     afterCreate: (project, options) => {
       console.log('✅ HOOK afterCreate ejecutado');
       console.log('   - Proyecto creado exitosamente con ID:', project.id);
-    }
+    },
+    beforeDestroy: (project, options) => {
+    console.log('🗑️ HOOK beforeDestroy ejecutado');
+    console.log('   - Eliminando proyecto ID:', project.id);
+    console.log('   - Título:', project.title);
+    console.log('   - Stack trace:');
+    console.trace();
   },
+  afterDestroy: (project, options) => {
+    console.log('✅ HOOK afterDestroy ejecutado');
+    console.log('   - Proyecto eliminado ID:', project.id);
+  },
+beforeBulkDestroy: (options) => {
+    console.log('🗑️ HOOK beforeBulkDestroy ejecutado');
+    console.log('   - Eliminación masiva con opciones:', options.where);
+    console.trace();
+  },
+afterBulkDestroy: (options) => {
+    console.log('✅ HOOK afterBulkDestroy ejecutado');
+    console.log('   - Eliminación masiva completada');
+  },
+},
   indexes: [
     {
       fields: ['slug']
@@ -221,7 +239,7 @@ Project.init({
       fields: ['projectType']
     },
     {
-      fields: ['status']
+      fields: ['etapa']
     },
     {
       fields: ['searchableText']  // Índice simple

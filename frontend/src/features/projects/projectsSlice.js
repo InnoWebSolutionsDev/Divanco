@@ -29,7 +29,7 @@ const initialState = {
     locations: [],
     tags: [],
     project_types: [],
-    statuses: [],
+    etapas: [],
     sort_options: []
   },
   
@@ -41,7 +41,7 @@ const initialState = {
     search: '',
     year: null,
     projectType: null,
-    status: null,
+    etapa: null,
     client: '',
     architect: '',
     featured: false,
@@ -351,7 +351,7 @@ const projectsSlice = createSlice({
         search: '',
         year: null,
         projectType: null,
-        status: null,
+        etapa: null,
         client: '',
         architect: '',
         featured: false,
