@@ -52,14 +52,14 @@ const LoginPage = () => {
             <Input
               label="Email"
               type="email"
-              {...register('username', {
+              {...register('email', {
                 required: 'El email es requerido',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: 'Email inválido'
                 }
               })}
-              error={errors.username?.message}
+              error={errors.email?.message}
               placeholder="tu@email.com"
             />
             <Input

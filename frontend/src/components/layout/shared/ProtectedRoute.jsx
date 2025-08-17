@@ -1,9 +1,10 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../../hooks/useAuth';
 import { LoadingSpinner } from './LoadingBoundary'; // ✅ Importar LoadingSpinner compartido
+import LogoutButton from '../../ui/LogoutButton'; // ✅ Importar LogoutButton
 
 // Access Denied component específico para ProtectedRoute
-const AccessDenied = ({ userRole, requiredRole = "admin" }) => (
+const AccessDenied = ({ userRole, requiredRole = "admin", userName }) => (
   <div className="min-h-screen flex items-center justify-center bg-gray-50">
     <div className="text-center max-w-md mx-auto">
       <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 mb-6">
@@ -12,6 +13,9 @@ const AccessDenied = ({ userRole, requiredRole = "admin" }) => (
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Acceso Denegado</h2>
       <p className="text-gray-600 mb-2">
         No tienes permisos para acceder a esta sección.
+      </p>
+      <p className="text-sm text-gray-500 mb-2">
+        Usuario: <span className="font-medium">{userName || 'Usuario'}</span>
       </p>
       <p className="text-sm text-gray-500 mb-6">
         Rol actual: <span className="font-medium capitalize">{userRole}</span> | 
@@ -30,6 +34,19 @@ const AccessDenied = ({ userRole, requiredRole = "admin" }) => (
         >
           Ir al Inicio
         </button>
+        
+        {/* ✅ NUEVO: Botón de Logout */}
+        <div className="pt-4 border-t border-gray-200">
+          <LogoutButton
+            variant="danger"
+            size="md"
+            className="w-full"
+            showConfirm={true}
+            redirectTo="/"
+          >
+            🚪 Cerrar Sesión
+          </LogoutButton>
+        </div>
       </div>
     </div>
   </div>
@@ -81,6 +98,7 @@ const ProtectedRoute = ({
         return (
           <AccessDenied 
             userRole={user?.role} 
+            userName={user?.name || user?.email}
             requiredRole={adminOnly ? "admin" : allowedRoles.join(" o ")} 
           />
         );

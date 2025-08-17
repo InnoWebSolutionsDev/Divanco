@@ -105,6 +105,13 @@ export const projectsApi = baseApi.injectEndpoints({
       keepUnusedDataFor: 180, // 3 minutos
     }),
 
+    // ✅ NUEVO: Proyectos para slider
+    getSliderProjects: builder.query({
+      query: (limit = 5) => `/projects/slider?limit=${limit}`,
+      providesTags: ['Project', 'SliderProjects'],
+      keepUnusedDataFor: 300, // 5 minutos - cache más largo
+    }),
+
     // Proyectos por año (si existe endpoint específico)
     getProjectsByYear: builder.query({
       query: (year) => `/projects/year/${year}`,
@@ -200,6 +207,20 @@ export const projectsApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // ✅ NUEVA MUTACIÓN: Toggle imagen del slider
+    toggleSliderImage: builder.mutation({
+      query: ({ projectId, mediaId }) => ({
+        url: `/projects/${projectId}/media/${mediaId}/slider-toggle`,
+        method: 'PUT',
+      }),
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: 'Project', id: projectId },
+        { type: 'ProjectMedia', id: projectId },
+        { type: 'Project', id: 'LIST' },
+        'SliderProjects'
+      ],
+    }),
+
     // ✅ GESTIÓN DE ARCHIVOS MULTIMEDIA
     // Actualizar metadata de archivo
     updateMediaFile: builder.mutation({
@@ -271,6 +292,7 @@ export const {
   
   // Proyectos específicos
   useGetFeaturedProjectsQuery,
+  useGetSliderProjectsQuery,        // ✅ NUEVO HOOK
   useGetRecentProjectsQuery,
   useGetProjectsByYearQuery,
   useGetProjectBySlugQuery,
@@ -283,6 +305,7 @@ export const {
   // Sistema multimedia
   useUploadProjectMediaMutation,
   useGetProjectMediaQuery,
+  useToggleSliderImageMutation,     // ✅ NUEVO HOOK
   useUpdateMediaFileMutation,
   useDeleteMediaFileMutation,
   useReorderProjectMediaMutation,

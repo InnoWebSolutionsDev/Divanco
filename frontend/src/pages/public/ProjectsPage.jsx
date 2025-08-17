@@ -1,52 +1,24 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import FilterProjects from './FilterProjects';
-
-
+import { useGetSliderProjectsQuery } from '../../features/projects/projectsApi';
 
 const ProjectsPage = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const navigate = useNavigate();
+  const [currentSlide, setCurrentSlide] = useState(1);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Datos de ejemplo para los proyectos
-  const projects = [
-    {
-      id: 1,
-      title: "Casa Minimalista",
-      subtitle: "Arquitectura contemporánea",
-      image: "/images/prueba/living.png",
-      description: "Diseño elegante con líneas limpias"
-    },
-    {
-      id: 2,
-      title: "Loft Urbano",
-      subtitle: "Espacios industriales",
-      image: "/images/prueba/modelo.png",
-      description: "Fusión perfecta entre lo urbano y elegante"
-    },
-    {
-      id: 3,
-      title: "Villa Mediterránea",
-      subtitle: "Lujo costero",
-      image: "/images/prueba/piscina.png",
-      description: "Inspiración mediterránea con toques modernos"
-    },
-    {
-      id: 4,
-      title: "Penthouse Moderno",
-      subtitle: "Altura y sofisticación",
-      image: "/images/prueba/hero.png",
-      description: "Vistas panorámicas con diseño excepcional"
-    },
-    {
-      id: 5,
-      title: "Oficina Corporativa",
-      subtitle: "Espacios de trabajo",
-      image: "/images/prueba/living.png",
-      description: "Productividad y estilo en perfecta armonía"
-    }
-  ];
+  // ✅ USAR DATOS REALES DEL BACKEND
+  const { 
+    data: sliderResponse, 
+    isLoading: isLoadingSlider,
+    error: sliderError 
+  } = useGetSliderProjectsQuery(5);
+
+  // ✅ EXTRAER PROYECTOS DE LA RESPUESTA
+  const projects = sliderResponse?.data || [];
 
   // Detectar tamaño de pantalla
   useEffect(() => {
@@ -85,7 +57,43 @@ const ProjectsPage = () => {
     setIsAutoPlaying(false);
   };
 
-  return (
+  // ✅ MANEJAR ESTADOS DE CARGA
+  if (isLoadingSlider) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-naranjaDivanco"></div>
+          <p className="mt-4 text-gray-600">Cargando proyectos...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sliderError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600">Error cargando proyectos</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="mt-4 px-4 py-2 bg-naranjaDivanco text-white rounded"
+          >
+            Recargar
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!projects.length) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">No hay proyectos en el slider</p>
+      </div>
+    );
+  }
+
+    return (
     <div className="min-h-screen bg-white">
       {/* Multi-slide Carousel estilo Minotti - Ajustado para header */}
       <section className="relative overflow-hidden bg-gray-50" style={{ 
@@ -104,7 +112,7 @@ const ProjectsPage = () => {
               gap: '1rem',
               width: `${projects.length * 100}%`
             } : {
-              // Desktop: Múltiples imágenes visibles
+              // Desktop: Múltiples imágenes visibles - ✅ Ajustado para empezar desde la segunda imagen
               transform: `translateX(calc(22.5% - ${currentSlide * 57}%))`,
               gap: '2rem',
               width: `${projects.length * 57}%`
@@ -116,7 +124,7 @@ const ProjectsPage = () => {
               return (
                 <div 
                   key={project.id}
-                  className={`relative flex-shrink-0 transition-all duration-1000 ${
+                  className={`relative flex-shrink-0 transition-all duration-1000 cursor-pointer ${
                     isMobile 
                       ? 'opacity-100 scale-100 z-10' // Móvil: siempre visible
                       : isActive 
@@ -126,49 +134,80 @@ const ProjectsPage = () => {
                   style={isMobile ? {
                     // Móvil: Una imagen por vez, altura reducida
                     width: '90%',
-                    height: '65vh', // ✅ Reducido de 80vh a 65vh
+                    height: '65vh',
                     marginRight: '1rem',
                     marginLeft: '5%' // Para centrar
                   } : {
                     // Desktop: Múltiples imágenes, altura reducida
                     width: '55%',
-                    height: '70vh', // ✅ Reducido de 85vh a 70vh
+                    height: '70vh',
                     marginRight: '2rem'
                   }}
+                  onClick={() => navigate(`/proyectos/${project.slug}`)}
                 >
-                  {/* Imagen principal */}
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                    onError={(e) => {
-                      e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600' viewBox='0 0 800 600'%3E%3Crect width='800' height='600' fill='%23f5f5f5'/%3E%3Ctext x='400' y='280' text-anchor='middle' fill='%23999' font-size='24' font-family='Arial'%3E" + project.title + "%3C/text%3E%3Ctext x='400' y='320' text-anchor='middle' fill='%23666' font-size='16' font-family='Arial'%3E" + project.subtitle + "%3C/text%3E%3C/svg%3E";
-                    }}
-                  />
+                  {/* ✅ USAR IMAGEN DEL SLIDER */}
+                  {project.sliderImage ? (
+                    <img
+                      src={project.sliderImage.urls?.desktop || project.sliderImage.urls?.mobile}
+                      alt={project.title}
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 w-full h-full bg-gray-300 flex items-center justify-center rounded-lg">
+                      <span className="text-gray-500">Sin imagen</span>
+                    </div>
+                  )}
                   
                   {/* Overlay gradient sutil */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-lg" />
+                  
+                  {/* ✅ BOTÓN KUULA SI EXISTE */}
+                  {project.kuulaUrl && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(project.kuulaUrl, '_blank');
+                      }}
+                      className="absolute top-4 right-4 bg-naranjaDivanco hover:bg-naranjaDivanco/80 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 z-20"
+                    >
+                      Ver en 360°
+                    </button>
+                  )}
                   
                   {/* Contenido del slide */}
                   <div className={`absolute bottom-0 left-0 right-0 p-4 md:p-8 text-white transition-all duration-700 ${
                     (isMobile || isActive) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                   }`}>
                     <div className="max-w-md mb-16">
-                      <h3 className={`font-light  tracking-wide ${
-                        isMobile ? 'text-xl' : 'text-2xl lg:text-3xl' // ✅ Reducido tamaños
+                      <h3 className={`font-light tracking-wide ${
+                        isMobile ? 'text-xl' : 'text-2xl lg:text-3xl'
                       }`}>
                         {project.title}
                       </h3>
                       <p className={`font-light opacity-90 mb-2 leading-relaxed ${
-                        isMobile ? 'text-xs' : 'text-sm lg:text-base' // ✅ Reducido tamaños
+                        isMobile ? 'text-xs' : 'text-sm lg:text-base'
                       }`}>
-                        {project.subtitle}
+                        {project.projectType} • {project.year}
                       </p>
+                      {project.location && (
+                        <p className={`font-light opacity-80 mb-2 ${
+                          isMobile ? 'text-xs' : 'text-sm'
+                        }`}>
+                          {project.location}
+                        </p>
+                      )}
+                      {project.description && (
+                        <p className={`font-light opacity-90 mb-4 line-clamp-2 ${
+                          isMobile ? 'text-xs' : 'text-sm'
+                        }`}>
+                          {project.description}
+                        </p>
+                      )}
                       
                       <button className={`inline-flex items-center border border-white text-white font-light uppercase tracking-widest hover:bg-white hover:text-black transition-all duration-300 group ${
-                        isMobile ? 'px-4 py-2 text-xs' : 'px-6 py-2 text-xs' // ✅ Reducido padding
+                        isMobile ? 'px-4 py-2 text-xs' : 'px-6 py-2 text-xs'
                       }`}>
-                        Mas detalles
+                        Ver proyecto
                         <svg className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
@@ -179,7 +218,7 @@ const ProjectsPage = () => {
                   {/* Número del slide */}
                   <div className={`absolute top-4 md:top-6 left-4 md:left-6 text-white font-light transition-opacity duration-500 ${
                     (isMobile || isActive) ? 'opacity-100' : 'opacity-60'
-                  } ${isMobile ? 'text-base' : 'text-xl'}`}> {/* ✅ Reducido tamaño */}
+                  } ${isMobile ? 'text-base' : 'text-xl'}`}>
                     {(index + 1).toString().padStart(2, '0')}
                   </div>
                 </div>

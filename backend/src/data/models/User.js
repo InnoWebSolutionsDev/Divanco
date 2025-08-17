@@ -9,9 +9,21 @@ User.init({
     autoIncrement: true,
     primaryKey: true,
   },
-  username: {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  email: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true,
+    },
+  },
+  username: {
+    type: DataTypes.STRING,
+    allowNull: true,
     unique: true,
   },
   password: {
@@ -19,7 +31,7 @@ User.init({
     allowNull: false,
   },
   role: {
-    type: DataTypes.ENUM('admin', 'user'),
+    type: DataTypes.ENUM('admin', 'user', 'editor', 'author'),
     defaultValue: 'user',
     allowNull: false,
   },

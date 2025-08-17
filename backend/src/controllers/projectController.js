@@ -896,7 +896,9 @@ export const createProject = async (req, res) => {
       etapa = 'render',
       area,
       tags = [],
+      kuulaUrl,
       isFeatured = false,
+      showInSlider = false,
       isPublic = true,
       order = 0,
       startDate,
@@ -971,8 +973,10 @@ export const createProject = async (req, res) => {
       etapa,
       area: area?.trim(),
       tags: Array.isArray(tags) ? tags : [],
+      kuulaUrl: kuulaUrl?.trim() || null, 
       slug: generateSlug(title.trim(), parseInt(year)), // ✅ GENERAR SLUG AQUÍ
       isFeatured: Boolean(isFeatured),
+      showInSlider: Boolean(showInSlider),
       isPublic: Boolean(isPublic),
       isActive: true, // ✅ AGREGAR EXPLÍCITAMENTE
       order: parseInt(order),
@@ -1060,33 +1064,179 @@ export const createProject = async (req, res) => {
   }
 };
 
+// ✅ NUEVA FUNCIÓN: Obtener proyectos para slider
+export const getSliderProjects = async (req, res) => {
+  try {
+    console.log('🎠 Obteniendo proyectos para slider...');
+    const { limit = 5 } = req.query;
+
+    const projects = await Project.findAll({
+      where: { 
+        isActive: true,
+        isPublic: true, 
+        showInSlider: true 
+      },
+      include: [{
+        model: MediaFile,
+        as: 'media',
+        where: { 
+          isActive: true,
+          [Op.or]: [
+            { isSliderImage: true },  // Prioridad 1: Imagen específica del slider
+            { isMain: true }          // Prioridad 2: Imagen principal
+          ]
+        },
+        required: true, // Solo proyectos que tengan al menos una imagen
+        order: [['isSliderImage', 'DESC'], ['isMain', 'DESC'], ['order', 'ASC']]
+      }],
+      order: [['order', 'ASC'], ['updatedAt', 'DESC']],
+      limit: parseInt(limit)
+    });
+
+    // ✅ Procesar para que cada proyecto tenga solo UNA imagen del slider
+    const processedProjects = projects.map(project => {
+      const projectData = project.toJSON();
+      
+      // Buscar imagen del slider específica, sino usar la principal
+      const sliderImage = projectData.media.find(img => img.isSliderImage) || 
+                         projectData.media.find(img => img.isMain) ||
+                         projectData.media[0];
+      
+      return {
+        ...projectData,
+        sliderImage, // Imagen específica para el slider
+        media: [sliderImage] // Solo la imagen del slider
+      };
+    });
+
+    console.log(`✅ Encontrados ${processedProjects.length} proyectos para slider`);
+
+    res.json({
+      success: true,
+      data: processedProjects,
+      meta: {
+        total: processedProjects.length,
+        limit: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error obteniendo proyectos del slider:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
 
 export const updateProject = async (req, res) => {
   try {
+    console.log('=== UPDATE PROJECT DEBUG ===');
     const { id } = req.params;
-    const updateData = req.body;
+    console.log('1. Project ID:', id);
+    console.log('2. Update data received:', JSON.stringify(req.body, null, 2));
 
+    const {
+      title,
+      description,
+      content,
+      year,
+      location,
+      client,
+      architect,
+      projectType,
+      etapa,
+      area,
+      tags,
+      kuulaUrl,           // ✅ NUEVO CAMPO
+      isFeatured,
+      showInSlider,       // ✅ NUEVO CAMPO
+      isPublic,
+      isActive,
+      order,
+      startDate,
+      endDate
+    } = req.body;
+
+    // Verificar que el proyecto existe
     const project = await Project.findByPk(id);
-
     if (!project) {
+      console.log('❌ Proyecto no encontrado:', id);
       return res.status(404).json({
         success: false,
         message: 'Proyecto no encontrado'
       });
     }
 
+    console.log('3. Proyecto encontrado:', project.title);
+
+    // ✅ Preparar datos de actualización con validación
+    const updateData = {};
+
+    // Solo actualizar campos que vienen en el body
+    if (title !== undefined) updateData.title = title.trim();
+    if (description !== undefined) updateData.description = description?.trim();
+    if (content !== undefined) updateData.content = content?.trim();
+    if (year !== undefined) updateData.year = parseInt(year);
+    if (location !== undefined) updateData.location = location?.trim();
+    if (client !== undefined) updateData.client = client?.trim();
+    if (architect !== undefined) updateData.architect = architect?.trim();
+    if (projectType !== undefined) updateData.projectType = projectType;
+    if (etapa !== undefined) updateData.etapa = etapa;
+    if (area !== undefined) updateData.area = area?.trim();
+    if (tags !== undefined) updateData.tags = Array.isArray(tags) ? tags : [];
+    
+    // ✅ NUEVOS CAMPOS
+    if (kuulaUrl !== undefined) updateData.kuulaUrl = kuulaUrl?.trim() || null;
+    if (showInSlider !== undefined) updateData.showInSlider = Boolean(showInSlider);
+    
+    // Campos booleanos
+    if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
+    if (isPublic !== undefined) updateData.isPublic = Boolean(isPublic);
+    if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+    
+    // Campos numéricos
+    if (order !== undefined) updateData.order = parseInt(order);
+    
+    // Fechas
+    if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
+    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+
+    console.log('4. Data to update:', JSON.stringify(updateData, null, 2));
+
+    // ✅ Regenerar slug si título o año cambian
+    if (updateData.title || updateData.year) {
+      const newTitle = updateData.title || project.title;
+      const newYear = updateData.year || project.year;
+      
+      // Solo regenerar si realmente cambió
+      const currentSlugBase = `${newTitle.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-')}-${newYear}`;
+      const currentProjectSlugBase = `${project.title.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, '-')}-${project.year}`;
+      
+      if (currentSlugBase !== currentProjectSlugBase) {
+        console.log('5. Regenerando slug...');
+        // El hook beforeSave se encargará de generar el nuevo slug
+        updateData.slug = ''; // Esto forzará la regeneración en el hook
+      }
+    }
+
+    // Actualizar el proyecto
     await project.update(updateData);
+
+    console.log('✅ SUCCESS: Proyecto actualizado exitosamente');
 
     res.json({
       success: true,
       message: 'Proyecto actualizado exitosamente',
       data: project
     });
+
   } catch (error) {
-    console.error('Error actualizando proyecto:', error);
+    console.error('❌ Error actualizando proyecto:', error);
     res.status(500).json({
       success: false,
-      message: 'Error interno del servidor'
+      message: 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -1291,6 +1441,13 @@ export const getFeaturedProjects = async (req, res) => {
         isPublic: true, 
         isFeatured: true 
       },
+      include: [{
+        model: MediaFile,
+        as: 'media',
+        where: { isActive: true },
+        required: false,
+        order: [['isMain', 'DESC'], ['order', 'ASC']]
+      }],
       order: [['order', 'ASC'], ['updatedAt', 'DESC']],
       limit: parseInt(limit)
     });
@@ -1328,6 +1485,64 @@ export const getRecentProjects = async (req, res) => {
     });
   } catch (error) {
     console.error('Error obteniendo proyectos recientes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+// ✅ NUEVA FUNCIÓN: Toggle imagen del slider
+export const toggleSliderImage = async (req, res) => {
+  try {
+    const { projectId, mediaId } = req.params;
+    
+    console.log(`🎠 Toggle slider image - Project: ${projectId}, Media: ${mediaId}`);
+
+    // Verificar que el proyecto existe
+    const project = await Project.findByPk(projectId);
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Proyecto no encontrado'
+      });
+    }
+
+    // Verificar que la imagen pertenece al proyecto
+    const mediaFile = await MediaFile.findOne({
+      where: { id: mediaId, projectId: projectId }
+    });
+    
+    if (!mediaFile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Imagen no encontrada en este proyecto'
+      });
+    }
+
+    // Desactivar todas las imágenes del slider para este proyecto
+    await MediaFile.update(
+      { isSliderImage: false },
+      { where: { projectId: projectId } }
+    );
+
+    // Activar la imagen seleccionada como imagen del slider
+    await mediaFile.update({ isSliderImage: true });
+
+    console.log(`✅ Imagen ${mediaId} marcada como imagen del slider para proyecto ${projectId}`);
+
+    res.json({
+      success: true,
+      message: 'Imagen del slider actualizada exitosamente',
+      data: {
+        projectId,
+        mediaId,
+        isSliderImage: true
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error actualizando imagen del slider:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

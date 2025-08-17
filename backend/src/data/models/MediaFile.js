@@ -47,6 +47,11 @@ MediaFile.init({
     defaultValue: false,
     field: 'is_main'
   },
+  isSliderImage: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'is_slider_image'
+  },
   isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

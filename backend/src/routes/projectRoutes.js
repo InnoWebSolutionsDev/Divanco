@@ -8,11 +8,13 @@ import {
   updateProject,
   deleteProject,
   getFeaturedProjects,
-  searchProjects,        // ✅ Ya importado
-  getFilterOptions,      // ✅ Ya importado
-  getSearchSuggestions,  // ✅ Ya importado
-  uploadProjectMedia,    // ✅ Nueva función para MediaFile
-  testProjectCreation,   // ✅ Nueva función de prueba
+  getSliderProjects,
+  toggleSliderImage,     // ✅ NUEVA FUNCIÓN
+  searchProjects,
+  getFilterOptions,
+  getSearchSuggestions,
+  uploadProjectMedia,
+  testProjectCreation,
   debugCreateProject
 } from '../controllers/projectController.js';
 
@@ -58,6 +60,7 @@ router.get('/search', searchProjects);              // ✅ Nueva
 router.get('/filter-options', getFilterOptions);    // ✅ Nueva
 router.get('/suggestions', getSearchSuggestions);   // ✅ Nueva
 router.get('/featured', getFeaturedProjects);
+router.get('/slider', getSliderProjects);           // ✅ Nueva
 router.get('/year/:year', getProjectsByYear);
 
 // ✅ RUTAS DE DEBUG TEMPORALES
@@ -97,5 +100,11 @@ router.post('/:id/media',
   uploadProjectMedia     // ✅ Nueva función
 );
 
+// ✅ NUEVA RUTA: Toggle imagen del slider
+router.put('/:projectId/media/:mediaId/slider-toggle', 
+  authenticateToken, 
+  requireRole(['admin', 'editor']), 
+  toggleSliderImage
+);
 
 export default router;

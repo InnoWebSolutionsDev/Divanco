@@ -3,7 +3,7 @@ import sequelize from './data/config/sequelize.js';  // ✅ Agregada extensión 
 import { syncAllModels } from './data/models/index.js';
 import app from './app.js';
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 const env = process.env.NODE_ENV || 'development';
 
 // Función para inicializar la aplicación

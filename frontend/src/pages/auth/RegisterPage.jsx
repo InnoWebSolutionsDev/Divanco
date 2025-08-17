@@ -50,16 +50,29 @@ const RegisterPage = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-4">
             <Input
+              label="Nombre completo"
+              type="text"
+              {...registerForm('name', {
+                required: 'El nombre es requerido',
+                minLength: {
+                  value: 2,
+                  message: 'El nombre debe tener al menos 2 caracteres'
+                }
+              })}
+              error={errors.name?.message}
+              placeholder="Tu nombre completo"
+            />
+            <Input
               label="Email"
               type="email"
-              {...registerForm('username', {
+              {...registerForm('email', {
                 required: 'El email es requerido',
                 pattern: {
                   value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                   message: 'Email inválido'
                 }
               })}
-              error={errors.username?.message}
+              error={errors.email?.message}
               placeholder="tu@email.com"
             />
             <Input

@@ -9,7 +9,7 @@ const WhatsApp = ({
 
   const handleWhatsAppClick = () => {
     const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+    const whatsappUrl = `https://wa.me/${573203033270}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
   };
 

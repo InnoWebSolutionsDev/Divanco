@@ -3,6 +3,7 @@ import multer from 'multer';
 import { promises as fs } from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
+import sharp from 'sharp';
 
 dotenv.config();
 
@@ -54,7 +55,7 @@ export const uploadImageMiddleware = multer({
   storage: storage,
   fileFilter: imageFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: 20 * 1024 * 1024, // 20MB - Permitir archivos grandes para comprimir
   }
 });
 
@@ -74,11 +75,69 @@ export const uploadPDFMiddleware = multer({
   }
 });
 
+// ✅ Función para comprimir imágenes grandes antes de subir a Cloudinary
+const compressImageIfNeeded = async (filePath) => {
+  try {
+    const stats = await fs.stat(filePath);
+    const fileSizeInMB = stats.size / (1024 * 1024);
+    
+    // Si el archivo es menor a 8MB, no necesita compresión
+    if (fileSizeInMB <= 8) {
+      console.log(`📁 Archivo ${fileSizeInMB.toFixed(2)}MB - No requiere compresión`);
+      return filePath;
+    }
+    
+    console.log(`📁 Archivo ${fileSizeInMB.toFixed(2)}MB - Comprimiendo...`);
+    
+    // Crear nombre para archivo comprimido
+    const ext = path.extname(filePath);
+    const compressedPath = filePath.replace(ext, `_compressed${ext}`);
+    
+    // Comprimir imagen manteniendo calidad visual
+    await sharp(filePath)
+      .jpeg({ 
+        quality: 85, // Buena calidad visual con menos tamaño
+        progressive: true,
+        mozjpeg: true
+      })
+      .png({ 
+        quality: 85,
+        compressionLevel: 8
+      })
+      .webp({ 
+        quality: 85 
+      })
+      .resize(2400, 1800, { // Máximo tamaño razonable
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .toFile(compressedPath);
+    
+    // Verificar que la compresión funcionó
+    const compressedStats = await fs.stat(compressedPath);
+    const compressedSizeInMB = compressedStats.size / (1024 * 1024);
+    
+    console.log(`✅ Compresión exitosa: ${fileSizeInMB.toFixed(2)}MB → ${compressedSizeInMB.toFixed(2)}MB`);
+    
+    // Eliminar archivo original y retornar el comprimido
+    await fs.unlink(filePath);
+    return compressedPath;
+    
+  } catch (error) {
+    console.error('❌ Error comprimiendo imagen:', error);
+    // Si falla la compresión, retornar archivo original
+    return filePath;
+  }
+};
+
 // Función principal para subir imágenes responsivas (SIN CORTAR)
 export const uploadResponsiveImage = async (filePath, folder = 'divanco') => {
   try {
+    // ✅ NUEVO: Comprimir imagen si es muy grande
+    const optimizedFilePath = await compressImageIfNeeded(filePath);
+    
     // Imagen para desktop - NO CORTA, solo limita tamaño máximo
-    const desktopUpload = await cloudinary.uploader.upload(filePath, {
+    const desktopUpload = await cloudinary.uploader.upload(optimizedFilePath, {
       folder: `${folder}/desktop`,
       transformation: [
         { 
@@ -94,7 +153,7 @@ export const uploadResponsiveImage = async (filePath, folder = 'divanco') => {
     });
 
     // Imagen para mobile - NO CORTA
-    const mobileUpload = await cloudinary.uploader.upload(filePath, {
+    const mobileUpload = await cloudinary.uploader.upload(optimizedFilePath, {
       folder: `${folder}/mobile`,
       transformation: [
         { 
@@ -110,7 +169,7 @@ export const uploadResponsiveImage = async (filePath, folder = 'divanco') => {
     });
 
     // Thumbnail - ESTA SÍ corta para tener tamaño exacto (para tarjetas, previews)
-    const thumbnailUpload = await cloudinary.uploader.upload(filePath, {
+    const thumbnailUpload = await cloudinary.uploader.upload(optimizedFilePath, {
       folder: `${folder}/thumbnails`,
       transformation: [
         { 
@@ -125,8 +184,8 @@ export const uploadResponsiveImage = async (filePath, folder = 'divanco') => {
       public_id_suffix: '_thumb'
     });
 
-    // Eliminar archivo temporal
-    await fs.unlink(filePath);
+    // Eliminar archivo temporal (optimizado)
+    await fs.unlink(optimizedFilePath);
 
     return {
       desktop: {
@@ -149,11 +208,19 @@ export const uploadResponsiveImage = async (filePath, folder = 'divanco') => {
       }
     };
   } catch (error) {
-    // Limpiar archivo temporal en caso de error
+    // Limpiar archivos temporales en caso de error
     try {
-      await fs.unlink(filePath);
+      await fs.unlink(optimizedFilePath);
     } catch (unlinkError) {
-      console.error('Error eliminando archivo temporal:', unlinkError);
+      console.error('Error eliminando archivo temporal optimizado:', unlinkError);
+    }
+    // También intentar limpiar el original si es diferente
+    if (optimizedFilePath !== filePath) {
+      try {
+        await fs.unlink(filePath);
+      } catch (unlinkError) {
+        console.error('Error eliminando archivo temporal original:', unlinkError);
+      }
     }
     throw new Error(`Error uploading responsive images: ${error.message}`);
   }

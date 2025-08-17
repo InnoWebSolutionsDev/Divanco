@@ -27,16 +27,23 @@ export const authApi = createApi({
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          // Decodificar el token para obtener info del usuario
-          const tokenPayload = JSON.parse(atob(data.token.split('.')[1]));
-          const user = {
-            id: tokenPayload.id,
-            role: tokenPayload.role,
-            username: arg.username, // Del formulario
-          };
-          dispatch(loginSuccess({ token: data.token, user }));
+          
+          // Si el backend ya envía la información del usuario
+          if (data.user) {
+            dispatch(loginSuccess({ token: data.token, user: data.user }));
+          } else {
+            // Fallback: decodificar el token para obtener info del usuario
+            const tokenPayload = JSON.parse(atob(data.token.split('.')[1]));
+            const user = {
+              id: tokenPayload.id,
+              role: tokenPayload.role,
+              email: tokenPayload.email || arg.email,
+              name: tokenPayload.name,
+            };
+            dispatch(loginSuccess({ token: data.token, user }));
+          }
         } catch (error) {
-          dispatch(loginFailure());
+          dispatch(loginFailure(error?.data?.message || 'Error al iniciar sesión'));
         }
       },
     }),

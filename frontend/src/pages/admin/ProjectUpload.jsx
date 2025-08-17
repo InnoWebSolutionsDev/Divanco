@@ -14,7 +14,8 @@ import {
 } from '@heroicons/react/24/outline';
 import { 
   useUploadProjectMediaMutation,
-  useCreateProjectMutation 
+  useCreateProjectMutation,
+  useToggleSliderImageMutation
 } from '../../features/projects/projectsApi';
 import { 
   selectIsUploading, 
@@ -36,6 +37,7 @@ const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
   // Mutaciones
   const [uploadMedia] = useUploadProjectMediaMutation();
   const [createProject] = useCreateProjectMutation();
+  const [toggleSliderImage] = useToggleSliderImageMutation();
   
   // Estados locales
   const [isDragging, setIsDragging] = useState(false);
@@ -45,8 +47,9 @@ const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
   const [uploadProgress, setUploadProgress] = useState({});
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [uploadSummary, setUploadSummary] = useState(null);
+  const [currentSliderImageId, setCurrentSliderImageId] = useState(null);
   
-  // ✅ Estado del proyecto CON TAGS Y SLUG
+  // ✅ Estado del proyecto CON NUEVOS CAMPOS
   const [projectData, setProjectData] = useState({
     title: '',
     description: '',
@@ -60,9 +63,11 @@ const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
     content: '',
     tags: [],
     slug: '',
+    kuulaUrl: '',           // ✅ NUEVO CAMPO
     startDate: '',
     endDate: '',
     isFeatured: false,
+    showInSlider: false,    // ✅ NUEVO CAMPO
     isPublic: true,
     isActive: true,
     order: 0
@@ -192,7 +197,7 @@ const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
 
   const addFiles = (newFiles) => {
   // ✅ AGREGAR: Validación de tamaño de archivos
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
   const validFiles = [];
   const rejectedFiles = [];
 
@@ -230,13 +235,37 @@ const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
 };
 
   const removeFile = (fileId) => {
-    setFiles(prev => {
-      const updated = prev.filter(f => f.id !== fileId);
-      if (updated.length > 0 && !updated.some(f => f.isMain)) {
-        updated[0].isMain = true;
-      }
-      return updated;
-    });
+    const fileToRemove = files.find(f => f.id === fileId);
+    
+    if (!fileToRemove) return;
+    
+    // Mensaje de confirmación más informativo
+    const isMainFile = fileToRemove.isMain;
+    const confirmMessage = isMainFile 
+      ? `¿Eliminar "${fileToRemove.file.name}"?\n\n⚠️ Este es el archivo principal. Si lo eliminas, se asignará automáticamente otro archivo como principal.`
+      : `¿Eliminar "${fileToRemove.file.name}"?`;
+    
+    if (confirm(confirmMessage)) {
+      setFiles(prev => {
+        const updated = prev.filter(f => f.id !== fileId);
+        
+        // Si eliminamos el archivo principal y quedan archivos, asignar el primero como principal
+        if (updated.length > 0 && !updated.some(f => f.isMain)) {
+          updated[0].isMain = true;
+          console.log(`📌 Nuevo archivo principal: ${updated[0].file.name}`);
+        }
+        
+        return updated;
+      });
+
+      // Limpiar progreso de subida si existe
+      setUploadProgress(prev => {
+        const { [fileId]: removed, ...rest } = prev;
+        return rest;
+      });
+
+      console.log(`🗑️ Archivo eliminado: ${fileToRemove.file.name}`);
+    }
   };
 
   const updateFileType = (fileId, type) => {
@@ -258,6 +287,23 @@ const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
     })));
   };
 
+  // ✅ NUEVA FUNCIÓN: Cambiar imagen del slider
+  const handleSliderImageToggle = async (mediaId) => {
+    if (!projectId || !mediaId) return;
+
+    try {
+      console.log('🎠 Cambiando imagen del slider:', { projectId, mediaId });
+      
+      await toggleSliderImage({ projectId, mediaId }).unwrap();
+      setCurrentSliderImageId(mediaId);
+      
+      console.log('✅ Imagen del slider actualizada exitosamente');
+    } catch (error) {
+      console.error('❌ Error cambiando imagen del slider:', error);
+      alert('Error al cambiar la imagen del slider. Inténtalo de nuevo.');
+    }
+  };
+
   // ✅ FUNCIÓN MEJORADA de subida secuencial
 const uploadFiles = async (targetProjectId = projectId) => {
   if (!targetProjectId || files.length === 0) return;
@@ -276,7 +322,7 @@ const uploadFiles = async (targetProjectId = projectId) => {
       const fileData = files[i];
       
       // ✅ Verificar tamaño antes de subir
-      if (fileData.file.size > 10 * 1024 * 1024) {
+      if (fileData.file.size > 30 * 1024 * 1024) {
         setUploadProgress(prev => ({
           ...prev,
           [fileData.id]: { 
@@ -339,6 +385,10 @@ const uploadFiles = async (targetProjectId = projectId) => {
         results.successful.push({
           file: fileData.file.name,
           type: fileData.type,
+          mediaId: result.data?.id,        // ✅ Agregar mediaId
+          originalName: result.data?.originalName,
+          urls: result.data?.urls,
+          isMain: result.data?.isMain,
           result
         });
 
@@ -385,8 +435,16 @@ const uploadFiles = async (targetProjectId = projectId) => {
       }
     }
 
-    // ✅ Mostrar resumen final mejorado
-    setUploadSummary(results);
+    // ✅ Mostrar resumen final mejorado CON mediaId para selector de slider
+    const summaryWithMediaIds = {
+      ...results,
+      successful: results.successful.map(item => ({
+        ...item,
+        displayInfo: `${item.originalName || item.file} (${item.type}) - ID: ${item.mediaId || 'N/A'}${item.isMain ? ' [Principal]' : ''}`
+      }))
+    };
+    
+    setUploadSummary(summaryWithMediaIds);
     
     console.log(`🎯 Subida completada: ${results.successful.length}/${results.total} exitosos`);
 
@@ -478,9 +536,11 @@ const uploadFiles = async (targetProjectId = projectId) => {
       content: '',
       tags: [],
       slug: '',
+      kuulaUrl: '',           // ✅ NUEVO CAMPO
       startDate: '',
       endDate: '',
       isFeatured: false,
+      showInSlider: false,    // ✅ NUEVO CAMPO
       isPublic: true,
       isActive: true,
       order: 0
@@ -558,22 +618,125 @@ const uploadFiles = async (targetProjectId = projectId) => {
         </div>
       )}
 
-      {/* ✅ RESUMEN FINAL DE SUBIDA */}
+      {/* ✅ RESUMEN FINAL DE SUBIDA CON DETALLES */}
       {uploadSummary && (
         <div className={`border rounded-lg p-4 mb-6 ${
           uploadSummary.failed.length === 0 
             ? 'bg-green-50 border-green-200' 
             : 'bg-yellow-50 border-yellow-200'
         }`}>
-          <h4 className="font-medium mb-2">
+          <h4 className="font-medium mb-3">
             📊 Resumen de subida
           </h4>
-          <div className="text-sm">
-            <p className="text-green-700">✅ {uploadSummary.successful.length} archivos subidos exitosamente</p>
+          <div className="space-y-2">
+            <p className="text-green-700 font-medium">✅ {uploadSummary.successful.length} archivos subidos exitosamente</p>
+            
+            {/* Mostrar detalles de archivos exitosos con mediaId */}
+            {uploadSummary.successful.length > 0 && (
+              <div className="bg-white rounded border border-green-200 p-3 mt-2">
+                <div className="text-xs text-gray-600 space-y-1">
+                  {uploadSummary.successful.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <span className="truncate mr-2">{item.displayInfo || item.file}</span>
+                      {item.isMain && <span className="text-blue-600 text-xs bg-blue-100 px-1 rounded">Principal</span>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
             {uploadSummary.failed.length > 0 && (
-              <p className="text-red-700">❌ {uploadSummary.failed.length} archivos fallaron</p>
+              <>
+                <p className="text-red-700 font-medium">❌ {uploadSummary.failed.length} archivos fallaron</p>
+                <div className="bg-white rounded border border-red-200 p-3 mt-2">
+                  <div className="text-xs text-red-600 space-y-1">
+                    {uploadSummary.failed.map((item, index) => (
+                      <div key={index}>
+                        {item.file}: {item.error}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* ✅ GESTIÓN DE IMÁGENES SUBIDAS - Solo si hay proyectos exitosos */}
+      {uploadSummary && uploadSummary.successful.length > 0 && projectData.showInSlider && (
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+          <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+            🎠 Seleccionar imagen para slider
+          </h3>
+          <p className="text-sm text-gray-600 mb-4">
+            Selecciona cuál imagen aparecerá en el slider de la página de proyectos:
+          </p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {uploadSummary.successful
+              .filter(item => item.type === 'render') // Solo imágenes render
+              .map((item) => (
+                <div 
+                  key={item.mediaId} 
+                  className={`relative group border-2 rounded-lg overflow-hidden transition-all duration-200 ${
+                    currentSliderImageId === item.mediaId 
+                      ? 'border-naranjaDivanco shadow-lg' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  {/* Imagen preview */}
+                  <div className="aspect-square bg-gray-100 relative">
+                    {item.urls?.mobile ? (
+                      <img 
+                        src={item.urls.mobile} 
+                        alt={item.originalName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <PhotoIcon className="h-12 w-12" />
+                      </div>
+                    )}
+                    
+                    {/* Overlay de estado */}
+                    {currentSliderImageId === item.mediaId && (
+                      <div className="absolute inset-0 bg-naranjaDivanco/20 flex items-center justify-center">
+                        <div className="bg-naranjaDivanco text-white px-2 py-1 rounded text-xs font-medium">
+                          EN SLIDER
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Información y botón */}
+                  <div className="p-3">
+                    <p className="text-xs text-gray-500 truncate mb-2">
+                      {item.originalName}
+                    </p>
+                    
+                    <button
+                      onClick={() => handleSliderImageToggle(item.mediaId)}
+                      disabled={currentSliderImageId === item.mediaId}
+                      className={`w-full px-3 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
+                        currentSliderImageId === item.mediaId
+                          ? 'bg-naranjaDivanco text-white cursor-default'
+                          : 'bg-gray-100 text-gray-700 hover:bg-naranjaDivanco hover:text-white'
+                      }`}
+                    >
+                      {currentSliderImageId === item.mediaId ? '✓ En slider' : 'Usar en slider'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+          
+          {uploadSummary.successful.filter(item => item.type === 'render').length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <PhotoIcon className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>No hay imágenes render subidas para usar en el slider</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -615,11 +778,11 @@ const uploadFiles = async (targetProjectId = projectId) => {
               />
             </div>
 
-            {/* Slug */}
+            {/* Slug - ✅ SOLO LECTURA */}
             <div className="md:col-span-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
                 <LinkIcon className="h-4 w-4" />
-                Slug (URL del proyecto)
+                Slug (URL del proyecto) - Solo lectura
               </label>
               <div className="flex">
                 <span className="inline-flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm rounded-l-md">
@@ -628,16 +791,31 @@ const uploadFiles = async (targetProjectId = projectId) => {
                 <input
                   type="text"
                   value={projectData.slug}
-                  onChange={(e) => setProjectData(prev => ({ 
-                    ...prev, 
-                    slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') 
-                  }))}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  readOnly
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-r-md text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
                   placeholder="se-genera-automaticamente"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Se genera automáticamente desde el título y año.
+                Se genera automáticamente desde el título y año. No se puede modificar.
+              </p>
+            </div>
+
+            {/* ✅ NUEVO CAMPO: URL de Kuula */}
+            <div className="md:col-span-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
+                <LinkIcon className="h-4 w-4 text-blue-500" />
+                URL de Kuula (Recorrido 360°)
+              </label>
+              <input
+                type="url"
+                value={projectData.kuulaUrl}
+                onChange={(e) => setProjectData(prev => ({ ...prev, kuulaUrl: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="https://kuula.co/share/..."
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Si el proyecto tiene un recorrido virtual en Kuula, ingresa la URL aquí.
               </p>
             </div>
 
@@ -764,6 +942,61 @@ const uploadFiles = async (targetProjectId = projectId) => {
               </div>
             )}
           </div>
+
+          {/* ✅ NUEVAS OPCIONES DE PUBLICACIÓN */}
+          <div className="mb-6">
+            <h4 className="text-sm font-medium text-gray-700 mb-3">Opciones de publicación</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              {/* Proyecto destacado */}
+              <div className="flex items-center">
+                <input
+                  id="isFeatured"
+                  type="checkbox"
+                  checked={projectData.isFeatured}
+                  onChange={(e) => setProjectData(prev => ({ ...prev, isFeatured: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isFeatured" className="ml-2 block text-sm text-gray-700">
+                  Proyecto destacado
+                </label>
+              </div>
+
+              {/* ✅ NUEVO: Mostrar en slider */}
+              <div className="flex items-center">
+                <input
+                  id="showInSlider"
+                  type="checkbox"
+                  checked={projectData.showInSlider}
+                  onChange={(e) => setProjectData(prev => ({ ...prev, showInSlider: e.target.checked }))}
+                  className="h-4 w-4 text-naranjaDivanco focus:ring-naranjaDivanco border-gray-300 rounded"
+                />
+                <label htmlFor="showInSlider" className="ml-2 block text-sm text-gray-700">
+                  Mostrar en slider principal
+                </label>
+              </div>
+
+              {/* Público */}
+              <div className="flex items-center">
+                <input
+                  id="isPublic"
+                  type="checkbox"
+                  checked={projectData.isPublic}
+                  onChange={(e) => setProjectData(prev => ({ ...prev, isPublic: e.target.checked }))}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isPublic" className="ml-2 block text-sm text-gray-700">
+                  Proyecto público
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-3 text-xs text-gray-500 space-y-1">
+              <p>• <strong>Destacado:</strong> Aparecerá en la sección de proyectos destacados</p>
+              <p>• <strong>Slider principal:</strong> Se mostrará en el carrusel de la página de proyectos</p>
+              <p>• <strong>Público:</strong> Visible para todos los visitantes del sitio</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -812,17 +1045,37 @@ const uploadFiles = async (targetProjectId = projectId) => {
       <span>• Documentos: PDF</span>
     </div>
     <div className="text-xs text-amber-600 bg-amber-50 rounded px-3 py-1 inline-block">
-      ⚠️ Tamaño máximo por archivo: 10 MB
+      ⚠️ Tamaño máximo por archivo: 30 MB
+    </div>
+    <div className="text-xs text-green-600 bg-green-50 rounded px-3 py-1 inline-block">
+      ✨ Las imágenes se optimizarán automáticamente para web
     </div>
   </div>
 </div>
 
-      {/* LISTA DE ARCHIVOS (mantiene igual - simplificada por brevedad) */}
+      {/* LISTA DE ARCHIVOS CON OPCIONES DE GESTIÓN */}
       {files.length > 0 && (
         <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">
-            Archivos seleccionados ({files.length})
-          </h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">
+              Archivos seleccionados ({files.length})
+            </h3>
+            
+            {/* Botón para eliminar todos los archivos */}
+            {files.length > 1 && (
+              <button
+                onClick={() => {
+                  if (confirm(`¿Estás seguro de que quieres eliminar todos los ${files.length} archivos seleccionados?`)) {
+                    setFiles([]);
+                    setUploadProgress({});
+                  }
+                }}
+                className="text-sm text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-1 rounded transition-colors"
+              >
+                🗑️ Eliminar todos
+              </button>
+            )}
+          </div>
           
           <div className="space-y-4">
             {files.map((fileData) => {
@@ -949,11 +1202,12 @@ const uploadFiles = async (targetProjectId = projectId) => {
                     </div>
                   </div>
                   
-                  {/* Botón eliminar */}
+                  {/* Botón eliminar mejorado */}
                   <button
                     onClick={() => removeFile(fileData.id)}
                     disabled={progress?.status === 'uploading'}
-                    className="p-2 text-gray-400 hover:text-red-500 transition-colors disabled:opacity-50"
+                    title="Eliminar archivo"
+                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <XMarkIcon className="h-5 w-5" />
                   </button>
