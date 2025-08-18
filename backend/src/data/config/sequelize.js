@@ -9,18 +9,20 @@ if (env === 'production' && process.env.DB_DEPLOY) {
   sequelize = new Sequelize(process.env.DB_DEPLOY, {
     // ✅ CAMBIO: Habilitar logging en desarrollo para debugging
     logging: env === 'development' ? (sql, timing) => {
-      console.log('\n🔍 === SQL QUERY ===');
-      console.log('⏱️  Timing:', timing);
-      console.log('💻 SQL:', sql);
-      
+      // ✅ ALERTAS para queries de actualización
+      if (sql.toLowerCase().includes('update') && sql.toLowerCase().includes('projects')) {
+        console.warn('⚠️  UPDATE en Projects detectado');
+        console.warn('⚠️  SQL completo:', sql);
+      }
+
       // ✅ ALERTAS para queries de eliminación
       if (sql.toLowerCase().includes('delete') || sql.toLowerCase().includes('truncate')) {
-        console.log('🚨 ¡QUERY DE ELIMINACIÓN!');
+        
         console.trace();
       }
       
       if (sql.toLowerCase().includes('drop table') || sql.toLowerCase().includes('drop cascade')) {
-        console.log('🚨 ¡DROP TABLE DETECTADO!');
+       
         console.trace();
       }
       
@@ -38,22 +40,19 @@ if (env === 'production' && process.env.DB_DEPLOY) {
       dialect: 'postgres',
       // ✅ CAMBIO: Habilitar logging detallado en desarrollo
       logging: env === 'development' ? (sql, timing) => {
-        console.log('\n🔍 === SQL QUERY ===');
-        console.log('⏱️  Timing:', timing);
-        console.log('💻 SQL:', sql);
+        
         
         // ✅ ALERTAS para queries críticas
         if (sql.toLowerCase().includes('delete')) {
-          console.log('🚨 ¡DELETE DETECTADO!');
+          
           console.trace();
         }
         
         if (sql.toLowerCase().includes('update') && sql.toLowerCase().includes('projects')) {
-          console.log('⚠️  UPDATE en Projects detectado');
-          console.log('⚠️  SQL completo:', sql);
+          
         }
         
-        console.log('=== FIN SQL ===\n');
+       
       } : false,
     }
   );
@@ -62,7 +61,7 @@ if (env === 'production' && process.env.DB_DEPLOY) {
 export async function testConnection() {
   try {
     await sequelize.authenticate();
-    console.log('✅ Conexión a la base de datos exitosa');
+   
     return true;
   } catch (error) {
     console.error('❌ Error de conexión:', error.message);
@@ -70,10 +69,10 @@ export async function testConnection() {
   }
 }
 
-export async function syncModels(force = false) {
+export async function syncModels(alter = true) {
   try {
-    await sequelize.sync({ force });
-    console.log('✅ Modelos sincronizados');
+    await sequelize.sync({ alter });
+    
   } catch (error) {
     console.error('❌ Error al sincronizar modelos:', error.message);
   }

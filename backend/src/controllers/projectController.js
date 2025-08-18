@@ -33,6 +33,13 @@ export const getAllProjects = async (req, res) => {
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
+    // 🔍 DEBUG: Agregar logs para debuggear proyectos
+    console.log('📊 getAllProjects DEBUG:', {
+      whereClause,
+      limit: parseInt(limit),
+      offset
+    });
+
  const { count, rows: projects } = await Project.findAndCountAll({
       where: whereClause,
       include: [{
@@ -49,6 +56,19 @@ export const getAllProjects = async (req, res) => {
       ],
       limit: parseInt(limit),
       offset: offset
+    });
+
+    // 🔍 DEBUG: Log los proyectos encontrados
+    console.log('🎯 Projects found:', {
+      count,
+      projectsLength: projects.length,
+      firstProject: projects[0] ? {
+        id: projects[0].id,
+        title: projects[0].title,
+        hasMedia: !!projects[0].media,
+        mediaLength: projects[0].media?.length || 0,
+        media: projects[0].media
+      } : 'No projects'
     });
 
     res.json({

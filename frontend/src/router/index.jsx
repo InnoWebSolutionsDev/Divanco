@@ -32,7 +32,7 @@ import DashboardPage from '../pages/admin/DashboardPage';
 import UsersPage from '../pages/admin/UsersPage';
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
 import ProjectUpload from '../pages/admin/ProjectUpload';
-import AdminBlogPage from '../pages/admin/AdminBlogPage';
+import AdminBlogPage from '../pages/admin/AdminBlogPage.jsx';
 import AdminSubscribersPage from '../pages/admin/AdminSubscribersPage';
 
 export const router = createBrowserRouter([
@@ -62,11 +62,11 @@ export const router = createBrowserRouter([
         element: <ProjectsPage />,
       },
       {
-        path: 'proyectos/:year',
-        element: <ProjectsPage />, // Misma página pero filtrada por año
+        path: 'proyectos/año/:year',
+        element: <ProjectsPage />, // Filtrada por año con ruta específica
       },
       {
-        path: 'proyecto/:slug',
+        path: 'proyectos/:slug',
         element: <ProjectDetailPage />,
       },
       {

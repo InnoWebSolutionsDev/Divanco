@@ -58,5 +58,5 @@ export function defineAssociations() {
 
   
 
-  console.log('✅ Asociaciones de modelos definidas');
+ 
 }

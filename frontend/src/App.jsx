@@ -1,6 +1,7 @@
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { RouterProvider } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { store, persistor } from './store';
 import { router } from './router';
 import { ToastContainer } from './components/ui';
@@ -14,8 +15,10 @@ function App() {
         loading={<Loading text="Cargando aplicación..." />} 
         persistor={persistor}
       >
-        <RouterProvider router={router} />
-        <ToastContainer />
+        <HelmetProvider>
+          <RouterProvider router={router} />
+          <ToastContainer />
+        </HelmetProvider>
       </PersistGate>
     </Provider>
   );

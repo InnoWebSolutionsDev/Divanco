@@ -1,36 +1,27 @@
 import { Link } from 'react-router-dom';
+import { useGetFeaturedBlogPostsQuery } from '../../../features/blog';
 
 const BlogSection = () => {
-  // Datos de ejemplo para mostrar el diseño
-  const blogPosts = [
-    {
-      id: 1,
-      title: "Explore the 2025 Collection @ Company Showroom & Superset",
-      date: "JUL. 2025",
-      category: "News",
-      image: "/images/blog/blog1.png",
-      excerpt: "Descubre las últimas tendencias en diseño de interiores y mobiliario contemporáneo en nuestra nueva colección.",
-      slug: "explore-2025-collection"
-    },
-    {
-      id: 2,
-      title: "Sustainable Materials in Contemporary Architecture",
-      date: "JUN. 2025",
-      category: "Design",
-      image: "/images/blog/blog2.png",
-      excerpt: "Exploramos los materiales sostenibles que están definiendo el futuro de la arquitectura contemporánea.",
-      slug: "sustainable-materials-architecture"
-    },
-    {
-      id: 3,
-      title: "Showroom Renovation: Behind the Scenes",
-      date: "MAY. 2025",
-      category: "News",
-      image: "/images/blog/blog3.png",
-      excerpt: "Un vistazo exclusivo al proceso de renovación de nuestro showroom principal y las nuevas experiencias que ofrecemos.",
-      slug: "showroom-renovation"
-    }
-  ];
+  const { data: blogResponse, isLoading, error } = useGetFeaturedBlogPostsQuery(3);
+  const blogPosts = blogResponse?.data || [];
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const months = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+    return `${months[date.getMonth()]}. ${date.getFullYear()}`;
+  };
+
+  const getImageUrl = (post) => {
+    return post.featuredImage?.urls?.desktop || 
+           post.featuredImage?.urls?.mobile || 
+           post.featuredImage?.url || 
+           '/images/blog/default-blog.jpg';
+  };
+
+  // Si no hay posts o está cargando, no mostrar la sección
+  if (isLoading || error || !blogPosts.length) {
+    return null;
+  }
 
   return (
     <section className="py-16 lg:py-24 bg-white">
@@ -73,7 +64,7 @@ const BlogSection = () => {
                 {/* Date */}
                 <div className="mb-4">
                   <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">
-                    {post.date}
+                    {formatDate(post.publishedAt)}
                   </span>
                 </div>
 
@@ -81,19 +72,13 @@ const BlogSection = () => {
                 <div className="relative mb-6 overflow-hidden bg-gray-100">
                   <div className="aspect-[4/3] bg-gray-200">
                     <img
-                      src={post.image}
+                      src={getImageUrl(post)}
                       alt={post.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
+                        e.target.src = '/images/blog/default-blog.jpg';
                       }}
                     />
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style={{display: 'none'}}>
-                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
                   </div>
                 </div>
 
@@ -129,7 +114,7 @@ const BlogSection = () => {
                 {/* Date Column - 2 columnas */}
                 <div className="col-span-2">
                   <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">
-                    {post.date}
+                    {formatDate(post.publishedAt)}
                   </span>
                 </div>
 
@@ -163,19 +148,13 @@ const BlogSection = () => {
                   <div className="relative overflow-hidden bg-gray-100">
                     <div className="aspect-[4/3] bg-gray-200">
                       <img
-                        src={post.image}
+                        src={getImageUrl(post)}
                         alt={post.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
+                          e.target.src = '/images/blog/default-blog.jpg';
                         }}
                       />
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style={{display: 'none'}}>
-                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
                     </div>
                   </div>
                 </div>

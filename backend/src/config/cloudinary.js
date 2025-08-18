@@ -89,27 +89,21 @@ const compressImageIfNeeded = async (filePath) => {
     
     console.log(`📁 Archivo ${fileSizeInMB.toFixed(2)}MB - Comprimiendo...`);
     
-    // Crear nombre para archivo comprimido
+    // Crear nombre para archivo comprimido usando rutas seguras
+    const dir = path.dirname(filePath);
+    const basename = path.basename(filePath, path.extname(filePath));
     const ext = path.extname(filePath);
-    const compressedPath = filePath.replace(ext, `_compressed${ext}`);
+    const compressedPath = path.join(dir, `${basename}_compressed${ext}`);
     
     // Comprimir imagen manteniendo calidad visual
     await sharp(filePath)
-      .jpeg({ 
-        quality: 85, // Buena calidad visual con menos tamaño
-        progressive: true,
-        mozjpeg: true
-      })
-      .png({ 
-        quality: 85,
-        compressionLevel: 8
-      })
-      .webp({ 
-        quality: 85 
-      })
       .resize(2400, 1800, { // Máximo tamaño razonable
         fit: 'inside',
         withoutEnlargement: true
+      })
+      .jpeg({ 
+        quality: 80, // Buena calidad visual con menos tamaño
+        progressive: true
       })
       .toFile(compressedPath);
     

@@ -147,11 +147,21 @@ const ProjectsPage = () => {
                 >
                   {/* ✅ USAR IMAGEN DEL SLIDER */}
                   {project.sliderImage ? (
-                    <img
-                      src={project.sliderImage.urls?.desktop || project.sliderImage.urls?.mobile}
-                      alt={project.title}
-                      className="absolute inset-0 w-full h-full object-cover rounded-lg"
-                    />
+                    (() => {
+                      const imageUrl = project.sliderImage.urls?.desktop || project.sliderImage.urls?.mobile;
+                      
+                      return imageUrl ? (
+                        <img
+                          src={imageUrl}
+                          alt={project.title}
+                          className="absolute inset-0 w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 w-full h-full bg-gray-300 flex items-center justify-center rounded-lg">
+                          <span className="text-gray-500">Sin imagen</span>
+                        </div>
+                      );
+                    })()
                   ) : (
                     <div className="absolute inset-0 w-full h-full bg-gray-300 flex items-center justify-center rounded-lg">
                       <span className="text-gray-500">Sin imagen</span>

@@ -69,13 +69,47 @@ export const blogApi = baseApi.injectEndpoints({
 
     // Admin: Subir imagen a post
     uploadBlogPostImage: builder.mutation({
-      query: ({ slug, formData }) => ({
-        url: `/blog/${slug}/upload-image`,
+      query: ({ id, formData }) => ({
+        url: `/blog/${id}/upload-image`,
         method: 'POST',
         body: formData,
       }),
-      invalidatesTags: (result, error, { slug }) => [
-        { type: 'BlogPost', id: slug }
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'BlogPost', id: id }
+      ],
+    }),
+
+    // Admin: Subir video a post
+    uploadBlogPostVideo: builder.mutation({
+      query: ({ id, formData }) => ({
+        url: `/blog/${id}/upload-video`,
+        method: 'POST',
+        body: formData,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'BlogPost', id: id }
+      ],
+    }),
+
+    // Admin: Eliminar imagen de post
+    deleteBlogPostImage: builder.mutation({
+      query: ({ id, imageId }) => ({
+        url: `/blog/${id}/images/${imageId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'BlogPost', id: id }
+      ],
+    }),
+
+    // Admin: Eliminar video de post
+    deleteBlogPostVideo: builder.mutation({
+      query: ({ id, videoId }) => ({
+        url: `/blog/${id}/videos/${videoId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'BlogPost', id: id }
       ],
     }),
   }),
@@ -90,4 +124,7 @@ export const {
   useCreateBlogPostMutation,
   useUpdateBlogPostMutation,
   useUploadBlogPostImageMutation,
+  useUploadBlogPostVideoMutation,
+  useDeleteBlogPostImageMutation,
+  useDeleteBlogPostVideoMutation,
 } = blogApi;

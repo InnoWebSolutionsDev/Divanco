@@ -1,5 +1,5 @@
 import { BlogPost, User, Project, Subscriber } from '../data/models/index.js';
-import { uploadResponsiveImage, deleteResponsiveImages } from '../config/cloudinary.js';
+import { uploadResponsiveImage, deleteResponsiveImages, uploadVideo, deleteVideo } from '../config/cloudinary.js';
 import { sendBlogNotification } from '../utils/mailer.js';
 import { Op } from 'sequelize';
 
@@ -397,6 +397,167 @@ export const uploadBlogPostImage = async (req, res) => {
     });
   } catch (error) {
     console.error('Error subiendo imagen:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+// Subir video para post
+export const uploadBlogPostVideo = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, description } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se proporcionó ningún archivo de video'
+      });
+    }
+
+    const post = await BlogPost.findByPk(id);
+    
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post no encontrado'
+      });
+    }
+
+    // Subir video a Cloudinary
+    const folder = `blog/${new Date().getFullYear()}/${post.slug}/videos`;
+    const videoResult = await uploadVideo(req.file.path, folder);
+
+    const videoData = {
+      id: Date.now().toString(),
+      title: title || 'Video',
+      description: description || '',
+      url: videoResult.secure_url,
+      publicId: videoResult.public_id,
+      duration: videoResult.duration,
+      format: videoResult.format,
+      uploadedAt: new Date().toISOString()
+    };
+
+    // Agregar video a la lista
+    const currentVideos = post.videos || [];
+    const updateData = {
+      videos: [...currentVideos, videoData]
+    };
+
+    await post.update(updateData);
+
+    res.json({
+      success: true,
+      message: 'Video subido exitosamente',
+      data: {
+        post: post,
+        newVideo: videoData
+      }
+    });
+  } catch (error) {
+    console.error('Error subiendo video:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+// Eliminar imagen de galería
+export const deleteBlogPostImage = async (req, res) => {
+  try {
+    const { id, imageId } = req.params;
+    
+    const post = await BlogPost.findByPk(id);
+    
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post no encontrado'
+      });
+    }
+
+    if (imageId === 'featured') {
+      // Eliminar imagen destacada
+      if (post.featuredImage) {
+        try {
+          await deleteResponsiveImages(post.featuredImage);
+        } catch (deleteError) {
+          console.warn('Error eliminando imagen:', deleteError);
+        }
+      }
+      await post.update({ featuredImage: null });
+    } else {
+      // Eliminar de galería
+      const currentImages = post.images || [];
+      const imageIndex = parseInt(imageId);
+      
+      if (imageIndex >= 0 && imageIndex < currentImages.length) {
+        const imageToDelete = currentImages[imageIndex];
+        
+        try {
+          await deleteResponsiveImages(imageToDelete);
+        } catch (deleteError) {
+          console.warn('Error eliminando imagen:', deleteError);
+        }
+        
+        const updatedImages = currentImages.filter((_, index) => index !== imageIndex);
+        await post.update({ images: updatedImages });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Imagen eliminada exitosamente'
+    });
+  } catch (error) {
+    console.error('Error eliminando imagen:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+// Eliminar video
+export const deleteBlogPostVideo = async (req, res) => {
+  try {
+    const { id, videoId } = req.params;
+    
+    const post = await BlogPost.findByPk(id);
+    
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post no encontrado'
+      });
+    }
+
+    const currentVideos = post.videos || [];
+    const videoIndex = currentVideos.findIndex(video => video.id === videoId);
+    
+    if (videoIndex !== -1) {
+      const videoToDelete = currentVideos[videoIndex];
+      
+      try {
+        await deleteVideo(videoToDelete.publicId);
+      } catch (deleteError) {
+        console.warn('Error eliminando video:', deleteError);
+      }
+      
+      const updatedVideos = currentVideos.filter(video => video.id !== videoId);
+      await post.update({ videos: updatedVideos });
+    }
+
+    res.json({
+      success: true,
+      message: 'Video eliminado exitosamente'
+    });
+  } catch (error) {
+    console.error('Error eliminando video:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

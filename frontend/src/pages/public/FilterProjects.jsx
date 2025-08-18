@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   MagnifyingGlassIcon,
   ChevronDownIcon,
@@ -225,26 +226,37 @@ const FilterProjects = () => {
 
 // ProjectCard Component
 const ProjectCard = ({ project }) => {
+  // 🔍 DEBUG: Agregar logs para debuggear imágenes
   const mainImage = project.media?.find(m => m.isMain) || project.media?.[0];
   
   return (
-    <div className="group cursor-pointer">
+    <Link to={`/proyectos/${project.slug}`} className="group cursor-pointer block">
       {/* Image Container */}
       <div className="relative aspect-[4/3] mb-4 overflow-hidden rounded-lg bg-gray-100">
         {mainImage ? (
-          <img
-            src={mainImage.urls?.desktop || mainImage.urls?.main || mainImage.cloudinaryData?.desktop?.url}
-            alt={project.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            onError={(e) => {
-              e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f5f5f5'/%3E%3Ctext x='200' y='140' text-anchor='middle' fill='%23999' font-size='16' font-family='Arial'%3E${encodeURIComponent(project.title)}%3C/text%3E%3Ctext x='200' y='160' text-anchor='middle' fill='%23666' font-size='12' font-family='Arial'%3E${encodeURIComponent(project.projectType)}%3C/text%3E%3C/svg%3E`;
-            }}
-          />
+          (() => {
+            const imageUrl = mainImage.urls?.desktop || mainImage.urls?.main || mainImage.cloudinaryData?.desktop?.url || mainImage.url;
+            
+            return imageUrl ? (
+              <img
+                src={imageUrl}
+                alt={project.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-2"></div>
+                  <p className="text-gray-400 text-sm">Sin imagen</p>
+                </div>
+              </div>
+            );
+          })()
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="w-12 h-12 bg-gray-200 rounded-lg mx-auto mb-2"></div>
-              <p className="text-gray-400 text-sm">No image</p>
+              <p className="text-gray-400 text-sm">Sin imagen</p>
             </div>
           </div>
         )}
@@ -310,7 +322,7 @@ const ProjectCard = ({ project }) => {
           </div>
         )}
       </div>
-    </div>
+    </Link>
   );
 };
 
