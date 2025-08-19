@@ -1,4 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import { Navigation } from 'swiper/modules';
 
 import { Link } from 'react-router-dom';
 import { useGetFeaturedBlogPostsQuery } from '../../../features/blog';
@@ -8,6 +12,12 @@ const BlogSection = () => {
 
   const blogPosts = blogResponse?.data || [];
   console.log("📝 blogPosts:", blogPosts); // <-- Ahora siempre se ejecuta
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalImages, setModalImages] = useState([]);
+  const [modalTitle, setModalTitle] = useState("");
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -30,7 +40,60 @@ const BlogSection = () => {
   }
 
   return (
-    <section className="py-16 lg:py-24 bg-white">
+    <>
+      {/* Modal Galería */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+          <div className="bg-white rounded-lg shadow-lg max-w-2xl w-full p-4 relative">
+            <button onClick={() => setModalOpen(false)} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold">×</button>
+            <h3 className="text-lg font-semibold mb-4">{modalTitle}</h3>
+            {modalImages && modalImages.length > 0 ? (
+              <>
+                {/* Imagen grande seleccionada */}
+                <div className="w-full flex items-center justify-center mb-4">
+                  <img
+                    src={modalImages[selectedImageIdx]?.desktop?.url || modalImages[selectedImageIdx]?.mobile?.url || modalImages[selectedImageIdx]?.thumbnail?.url}
+                    alt={modalTitle}
+                    className="w-full max-h-80 object-contain rounded select-none"
+                    style={{ cursor: 'default', maxWidth: '100%' }}
+                    draggable={false}
+                    tabIndex={-1}
+                    onPointerDown={e => { e.preventDefault(); e.stopPropagation(); }}
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); }}
+                  />
+                </div>
+                {/* Carrusel de miniaturas */}
+                <Swiper
+                  slidesPerView={Math.min(5, modalImages.length)}
+                  spaceBetween={10}
+                  navigation
+                  modules={[Navigation]}
+                  className="w-full h-24"
+                >
+                  {modalImages.map((img, idx) => (
+                    <SwiperSlide key={idx}>
+                      <img
+                        src={img.thumbnail?.url || img.desktop?.url || img.mobile?.url}
+                        alt={modalTitle + ' miniatura ' + (idx + 1)}
+                        className={`h-20 w-28 object-cover rounded cursor-pointer border-2 ${selectedImageIdx === idx ? 'border-blue-600' : 'border-transparent'}`}
+                        style={{ maxWidth: '100%' }}
+                        draggable={false}
+                        tabIndex={-1}
+                        onPointerDown={e => { e.preventDefault(); e.stopPropagation(); }}
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setSelectedImageIdx(idx); }}
+                      />
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </>
+            ) : (
+              <div className="w-full h-80 flex items-center justify-center text-gray-400">No hay imágenes para mostrar.</div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <section className="py-16 lg:py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 lg:mb-16">
@@ -149,9 +212,9 @@ const BlogSection = () => {
                   </div>
                 </div>
 
-                {/* Image Column - 4 columnas */}
-                <div className="col-span-4">
-                  <div className="relative overflow-hidden bg-gray-100">
+                {/* Image Column - 4 columnas + Botón Ver más */}
+                <div className="col-span-4 flex flex-col items-center justify-center gap-4">
+                  <div className="relative overflow-hidden bg-gray-100 w-full">
                     <div className="aspect-[4/3] bg-gray-200">
                       <img
                         src={getImageUrl(post)}
@@ -163,6 +226,19 @@ const BlogSection = () => {
                       />
                     </div>
                   </div>
+                  {post.images && post.images.length > 0 && (
+                    <button
+                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                      onClick={() => {
+                        setModalImages(post.images);
+                        setModalTitle(post.title);
+                        setSelectedImageIdx(0);
+                        setModalOpen(true);
+                      }}
+                    >
+                      Ver galería
+                    </button>
+                  )}
                 </div>
 
               </div>
@@ -180,7 +256,8 @@ const BlogSection = () => {
           </Link>
         </div>
       </div>
-    </section>
+      </section>
+    </>
   );
 };
 

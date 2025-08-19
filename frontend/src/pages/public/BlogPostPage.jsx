@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { useGetBlogPostBySlugQuery, useGetBlogPostsQuery } from '../../features/blog';
 import { Helmet } from 'react-helmet-async';
 // import { VideoGallery } from '../../components/ui/VideoPlayer';
 import { Calendar, User, Tag, Eye, ArrowLeft, Share2 } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 const BlogPostPage = () => {
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const { slug } = useParams();
   const { 
     data: postResponse, 
@@ -179,13 +186,55 @@ const BlogPostPage = () => {
                       alt={image.alt || `Imagen ${index + 1}`}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-200 cursor-pointer"
                       onClick={() => {
-                        window.open(imgUrl, '_blank');
+                        setGalleryIndex(index);
+                        setGalleryOpen(true);
                       }}
                     />
                   </div>
                 );
               })}
             </div>
+
+            {/* Modal Gallery */}
+            {galleryOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
+                <div className="absolute inset-0" onClick={() => setGalleryOpen(false)} />
+                <div className="relative max-w-3xl w-full mx-4">
+                  <button
+                    className="absolute top-2 right-2 z-10 bg-white bg-opacity-80 rounded-full p-2 shadow hover:bg-opacity-100 transition"
+                    onClick={() => setGalleryOpen(false)}
+                    aria-label="Cerrar galería"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6 text-gray-700">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <Swiper
+                    modules={[Navigation, Pagination]}
+                    navigation
+                    pagination={{ clickable: true }}
+                    keyboard={{ enabled: true }}
+                    initialSlide={galleryIndex}
+                    className="rounded-lg bg-white"
+                  >
+                    {post.images.map((image, idx) => {
+                      const imgUrl = image.desktop?.url || image.mobile?.url || image.thumbnail?.url || '/images/blog/default-blog.jpg';
+                      return (
+                        <SwiperSlide key={idx}>
+                          <div className="flex items-center justify-center min-h-[60vw] max-h-[80vh]">
+                            <img
+                              src={imgUrl}
+                              alt={image.alt || `Imagen ${idx + 1}`}
+                              className="max-h-[80vh] w-auto max-w-full object-contain mx-auto"
+                            />
+                          </div>
+                        </SwiperSlide>
+                      );
+                    })}
+                  </Swiper>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
