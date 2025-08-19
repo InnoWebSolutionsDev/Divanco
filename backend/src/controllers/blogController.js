@@ -7,8 +7,7 @@ import { Op } from 'sequelize';
 export const getAllBlogPosts = async (req, res) => {
   try {
     const { 
-      status = 'published',
-      author,
+      status ,
       project,
       tags,
       featured = false,
@@ -18,8 +17,7 @@ export const getAllBlogPosts = async (req, res) => {
 
     const whereClause = {};
     
-    if (status) whereClause.status = status;
-    if (author) whereClause.authorId = author;
+   if (status && status !== 'all') whereClause.status = status;
     if (project) whereClause.projectId = project;
     if (featured === 'true') whereClause.isFeatured = true;
     if (tags) {
@@ -34,11 +32,7 @@ export const getAllBlogPosts = async (req, res) => {
     const { count, rows: posts } = await BlogPost.findAndCountAll({
       where: whereClause,
       include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name']
-        },
+        
         {
           model: Project,
           as: 'project',
@@ -78,19 +72,18 @@ export const getAllBlogPosts = async (req, res) => {
 export const getBlogPostBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
+    const { status } = req.query; // permite filtrar opcionalmente
+
+    const whereClause = { slug };
+    if (status && status !== 'all') whereClause.status = status;
 
     const post = await BlogPost.findOne({
-      where: { slug, status: 'published' },
+      where: whereClause,
       include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name']
-        },
         {
           model: Project,
           as: 'project',
-          attributes: ['id', 'title', 'slug', 'year', 'featuredImage'],
+          attributes: ['id', 'title', 'slug', 'year'],
           required: false
         }
       ]
@@ -103,29 +96,24 @@ export const getBlogPostBySlug = async (req, res) => {
       });
     }
 
-    // Incrementar contador de vistas
-    await post.increment('viewCount');
+    // Incrementar contador de vistas solo si está publicado
+    if (post.status === 'published') {
+      await post.increment('viewCount');
+    }
 
-    // Obtener posts relacionados
-    const relatedPosts = await BlogPost.findAll({
-      where: {
-        id: { [Op.ne]: post.id },
-        status: 'published',
-        [Op.or]: [
-          { projectId: post.projectId },
-          { tags: { [Op.overlap]: post.tags || [] } }
-        ]
-      },
-      include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name']
-        }
-      ],
-      limit: 3,
-      order: [['publishedAt', 'DESC']]
-    });
+    // Obtener posts relacionados solo si está publicado
+    let relatedPosts = [];
+    if (post.status === 'published') {
+      relatedPosts = await BlogPost.findAll({
+        where: {
+          id: { [Op.ne]: post.id },
+          status: 'published',
+          
+        },
+        limit: 3,
+        order: [['publishedAt', 'DESC']]
+      });
+    }
 
     res.json({
       success: true,
@@ -149,8 +137,8 @@ export const createBlogPost = async (req, res) => {
     const {
       title,
       content,
+      slug,
       excerpt,
-      authorId,
       projectId,
       tags = [],
       status = 'draft',
@@ -173,22 +161,7 @@ export const createBlogPost = async (req, res) => {
       });
     }
 
-    if (!authorId) {
-      return res.status(400).json({
-        success: false,
-        message: 'El autor es requerido'
-      });
-    }
-
-    // Verificar que el autor existe
-    const author = await User.findByPk(authorId);
-    if (!author) {
-      return res.status(400).json({
-        success: false,
-        message: 'El autor especificado no existe'
-      });
-    }
-
+    
     // Verificar proyecto si se especifica
     if (projectId) {
       const project = await Project.findByPk(projectId);
@@ -202,10 +175,10 @@ export const createBlogPost = async (req, res) => {
 
     // Crear el post
     const postData = {
+      slug,
       title: title.trim(),
       content: content.trim(),
       excerpt: excerpt?.trim(),
-      authorId,
       projectId: projectId || null,
       tags: Array.isArray(tags) ? tags : [],
       status,
@@ -218,11 +191,7 @@ export const createBlogPost = async (req, res) => {
     // Recargar con relaciones
     await post.reload({
       include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name']
-        },
+        
         {
           model: Project,
           as: 'project',
@@ -273,7 +242,12 @@ export const createBlogPost = async (req, res) => {
 export const updateBlogPost = async (req, res) => {
   try {
     const { id } = req.params;
+
     const updateData = req.body;
+    // Si projectId viene como string vacío, convertir a null
+    if (updateData.projectId === '') {
+      updateData.projectId = null;
+    }
 
     const post = await BlogPost.findByPk(id);
 
@@ -297,11 +271,7 @@ export const updateBlogPost = async (req, res) => {
     // Recargar con relaciones
     await post.reload({
       include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name']
-        },
+       
         {
           model: Project,
           as: 'project',
@@ -625,11 +595,7 @@ export const getFeaturedBlogPosts = async (req, res) => {
         isFeatured: true 
       },
       include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name']
-        },
+       
         {
           model: Project,
           as: 'project',
@@ -661,13 +627,7 @@ export const getRecentBlogPosts = async (req, res) => {
 
     const posts = await BlogPost.findAll({
       where: { status: 'published' },
-      include: [
-        {
-          model: User,
-          as: 'author',
-          attributes: ['id', 'name']
-        }
-      ],
+      
       order: [['publishedAt', 'DESC']],
       limit: parseInt(limit)
     });

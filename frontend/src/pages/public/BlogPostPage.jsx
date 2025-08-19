@@ -32,9 +32,9 @@ const BlogPostPage = () => {
   };
 
   const getImageUrl = (post) => {
-    return post.featuredImage?.urls?.desktop || 
-           post.featuredImage?.urls?.mobile || 
-           post.featuredImage?.url || 
+    return post.featuredImage?.desktop?.url ||
+           post.featuredImage?.mobile?.url ||
+           post.featuredImage?.thumbnail?.url ||
            '/images/blog/default-blog.jpg';
   };
 
@@ -170,19 +170,21 @@ const BlogPostPage = () => {
               post.images.length === 2 ? 'grid-cols-1 md:grid-cols-2' :
               'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
             }`}>
-              {post.images.map((image, index) => (
-                <div key={image.id || index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                  <img
-                    src={image.url}
-                    alt={image.alt || `Imagen ${index + 1}`}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-200 cursor-pointer"
-                    onClick={() => {
-                      // TODO: Implementar modal de imagen ampliada
-                      window.open(image.url, '_blank');
-                    }}
-                  />
-                </div>
-              ))}
+              {post.images.map((image, index) => {
+                const imgUrl = image.desktop?.url || image.mobile?.url || image.thumbnail?.url || '/images/blog/default-blog.jpg';
+                return (
+                  <div key={index} className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                    <img
+                      src={imgUrl}
+                      alt={image.alt || `Imagen ${index + 1}`}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-200 cursor-pointer"
+                      onClick={() => {
+                        window.open(imgUrl, '_blank');
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

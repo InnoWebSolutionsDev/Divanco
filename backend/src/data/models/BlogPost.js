@@ -41,15 +41,8 @@ BlogPost.init({
   videos: {
     type: DataTypes.JSON,
   },
-  // Relación con autor
-  authorId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Users',
-      key: 'id',
-    },
-  },
+  
+ 
   // Relación opcional con proyecto
   projectId: {
     type: DataTypes.INTEGER,
@@ -98,9 +91,7 @@ BlogPost.init({
     {
       fields: ['slug']
     },
-    {
-      fields: ['authorId']
-    },
+   
     {
       fields: ['projectId']
     },

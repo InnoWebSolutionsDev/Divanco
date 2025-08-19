@@ -11,7 +11,7 @@ export const blogApi = baseApi.injectEndpoints({
         });
         
         if (featured !== undefined) params.append('featured', featured.toString());
-        if (author) params.append('author', author);
+        
         
         return `/blog?${params}`;
       },
@@ -56,13 +56,13 @@ export const blogApi = baseApi.injectEndpoints({
 
     // Admin: Actualizar post
     updateBlogPost: builder.mutation({
-      query: ({ slug, ...data }) => ({
-        url: `/blog/${slug}`,
+      query: ({ id, ...data }) => ({
+        url: `/blog/${id}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { slug }) => [
-        { type: 'BlogPost', id: slug },
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'BlogPost', id: id },
         'BlogPost'
       ],
     }),

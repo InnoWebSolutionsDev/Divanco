@@ -9,9 +9,10 @@ const MediaUploader = ({
   images = [], 
   videos = [], 
   isUploading = false,
+  imageType = 'gallery',
   acceptedImageTypes = "image/jpeg,image/jpg,image/png,image/webp",
   acceptedVideoTypes = "video/mp4,video/avi,video/mov,video/wmv,video/flv,video/mkv",
-  maxImageSize = 10 * 1024 * 1024, // 10MB
+  maxImageSize = 30 * 1024 * 1024,
   maxVideoSize = 100 * 1024 * 1024 // 100MB
 }) => {
   const [dragActive, setDragActive] = useState(false);
@@ -46,16 +47,23 @@ const MediaUploader = ({
   const handleFiles = (files) => {
     files.forEach(file => {
       if (uploadType === 'image') {
-        if (file.type.startsWith('image/') && file.size <= maxImageSize) {
-          onImageUpload(file);
+        if (file.type.startsWith('image/')) {
+          if (file.size > maxImageSize) {
+            // Solo advertir, no bloquear
+            alert(`Advertencia: El archivo es grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Se optimizará automáticamente en el servidor.`);
+          }
+          onImageUpload(file, imageType); // Permite subir igual
         } else {
-          alert(`Error: El archivo debe ser una imagen menor a ${maxImageSize / (1024 * 1024)}MB`);
+          alert('Error: El archivo debe ser una imagen.');
         }
       } else {
-        if (file.type.startsWith('video/') && file.size <= maxVideoSize) {
+        if (file.type.startsWith('video/')) {
+          if (file.size > maxVideoSize) {
+            alert(`Advertencia: El video es grande (${(file.size / 1024 / 1024).toFixed(2)} MB).`);
+          }
           onVideoUpload(file);
         } else {
-          alert(`Error: El archivo debe ser un video menor a ${maxVideoSize / (1024 * 1024)}MB`);
+          alert('Error: El archivo debe ser un video.');
         }
       }
     });

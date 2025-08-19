@@ -37,7 +37,7 @@ const upload = multer({
 const uploadImage = multer({
   dest: 'uploads/temp/',
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB máximo para imágenes
+    fileSize: 30 * 1024 * 1024 // 30MB máximo para imágenes
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -70,21 +70,21 @@ router.get('/recent', getRecentBlogPosts);
 router.get('/:slug', getBlogPostBySlug);
 
 // Rutas protegidas (solo autores y admins pueden crear/editar)
-router.post('/', authenticateToken, requireRole(['admin', 'author']), createBlogPost);
-router.put('/:id', authenticateToken, requireRole(['admin', 'author']), updateBlogPost);
+router.post('/', authenticateToken, requireRole(['admin']), createBlogPost);
+router.put('/:id', authenticateToken, requireRole(['admin']), updateBlogPost);
 router.delete('/:id', authenticateToken, requireRole(['admin']), deleteBlogPost);
 
 // Subida de archivos
 router.post('/:id/upload-image', 
   authenticateToken, 
-  requireRole(['admin', 'author']), 
+  requireRole(['admin']), 
   uploadImage.single('image'), 
   uploadBlogPostImage
 );
 
 router.post('/:id/upload-video', 
   authenticateToken, 
-  requireRole(['admin', 'author']), 
+  requireRole(['admin']), 
   uploadVideo.single('video'), 
   uploadBlogPostVideo
 );
@@ -92,13 +92,13 @@ router.post('/:id/upload-video',
 // Eliminación de archivos
 router.delete('/:id/images/:imageId', 
   authenticateToken, 
-  requireRole(['admin', 'author']), 
+  requireRole(['admin']), 
   deleteBlogPostImage
 );
 
 router.delete('/:id/videos/:videoId', 
   authenticateToken, 
-  requireRole(['admin', 'author']), 
+  requireRole(['admin']), 
   deleteBlogPostVideo
 );
 

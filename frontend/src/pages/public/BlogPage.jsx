@@ -36,9 +36,9 @@ const BlogPage = () => {
   };
 
   const getImageUrl = (post) => {
-    return post.featuredImage?.urls?.desktop || 
-           post.featuredImage?.urls?.mobile || 
-           post.featuredImage?.url || 
+    return post.featuredImage?.desktop?.url ||
+           post.featuredImage?.mobile?.url ||
+           post.featuredImage?.thumbnail?.url ||
            '/images/blog/default-blog.jpg';
   };
 

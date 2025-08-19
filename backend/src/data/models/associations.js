@@ -2,8 +2,7 @@ import Category from './Category.js';
 import Subcategory from './Subcategory.js';
 import Project from './Project.js';
 import BlogPost from './BlogPost.js';
-import User from './User.js';
-import Subscriber from './Subscriber.js';
+
 import MediaFile from './MediaFile.js'; // ✅ Nuevo import
 
 // Definir todas las relaciones aquí
@@ -18,18 +17,6 @@ export function defineAssociations() {
   Subcategory.belongsTo(Category, { 
     foreignKey: 'categoryId', 
     as: 'category' 
-  });
-
-  // Relaciones Blog
-  User.hasMany(BlogPost, { 
-    foreignKey: 'authorId', 
-    as: 'blogPosts',
-    onDelete: 'SET NULL'
-  });
-  
-  BlogPost.belongsTo(User, { 
-    foreignKey: 'authorId', 
-    as: 'author' 
   });
 
   // Relación Blog con Proyectos (opcional)

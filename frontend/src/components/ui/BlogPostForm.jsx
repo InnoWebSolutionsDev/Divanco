@@ -1,36 +1,39 @@
-import React, { useState, useEffect } from 'react';
-import { X, Upload, Save, Eye, EyeOff } from 'lucide-react';
-import MediaUploader from '../ui/MediaUploader';
-import { 
-  useCreateBlogPostMutation, 
+import React, { useState, useEffect } from "react";
+import { X, Upload, Save, Eye, EyeOff, Star } from "lucide-react";
+import MediaUploader from "../ui/MediaUploader";
+import {
+  useCreateBlogPostMutation,
   useUpdateBlogPostMutation,
   useUploadBlogPostImageMutation,
   useUploadBlogPostVideoMutation,
   useDeleteBlogPostImageMutation,
-  useDeleteBlogPostVideoMutation
-} from '../../features/blog/blogApi';
-import { useSelector } from 'react-redux';
+  useDeleteBlogPostVideoMutation,
+  useGetBlogPostBySlugQuery,
+} from "../../features/blog/blogApi";
+import { useSelector } from "react-redux";
 
 const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
-  const { user } = useSelector(state => state.auth);
-  
+  const { user } = useSelector((state) => state.auth);
+const MAX_FILE_SIZE = 30 * 1024 * 1024
   const [formData, setFormData] = useState({
-    title: '',
-    content: '',
-    excerpt: '',
-    tags: '',
-    status: 'draft',
-    featuredImage: '',
+    title: "",
+    content: "",
+    excerpt: "",
+    slug: "",
+    tags: "",
+    status: "draft",
     images: [],
     videos: [],
-    projectId: '',
-    categoryId: '',
-    subcategoryId: ''
+    projectId: "",
+    categoryId: "",
+    subcategoryId: "",
+    isFeatured: false,
   });
 
   const [showPreview, setShowPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [featuredImage, setFeaturedImage] = useState(null);
 
   const [createBlogPost] = useCreateBlogPostMutation();
   const [updateBlogPost] = useUpdateBlogPostMutation();
@@ -39,83 +42,137 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
   const [deleteImage] = useDeleteBlogPostImageMutation();
   const [deleteVideo] = useDeleteBlogPostVideoMutation();
 
+  // Refresca datos del post tras subir/eliminar medios
+  const [refreshKey, setRefreshKey] = useState(0);
+  const { data: freshPost } = useGetBlogPostBySlugQuery(post?.slug, {
+    skip: !post?.slug || !post?.id,
+    refetchOnMountOrArgChange: true,
+  });
+
   useEffect(() => {
     if (post) {
       setFormData({
-        title: post.title || '',
-        content: post.content || '',
-        excerpt: post.excerpt || '',
-        tags: Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || ''),
-        status: post.status || 'draft',
-        featuredImage: post.featuredImage || '',
+        title: post.title || "",
+        slug: post.slug || "", // <-- AGREGAR
+        content: post.content || "",
+        excerpt: post.excerpt || "",
+        tags: Array.isArray(post.tags) ? post.tags.join(", ") : post.tags || "",
+        status: post.status || "draft",
         images: post.images || [],
         videos: post.videos || [],
-        projectId: post.projectId || '',
-        categoryId: post.categoryId || '',
-        subcategoryId: post.subcategoryId || ''
+        projectId: post.projectId || "",
+        categoryId: post.categoryId || "",
+        subcategoryId: post.subcategoryId || "",
+        isFeatured: !!post.isFeatured,
       });
+      setFeaturedImage(post.featuredImage || null);
     }
   }, [post]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleImageUpload = async (file) => {
-    if (!post?.id) {
-      alert('Primero debes guardar el post antes de subir imágenes');
-      return;
-    }
-
-    try {
-      setIsUploadingMedia(true);
-      const formDataToUpload = new FormData();
-      formDataToUpload.append('image', file);
-      
-      const result = await uploadImage({ 
-        postId: post.id, 
-        formData: formDataToUpload 
-      }).unwrap();
-      
-      setFormData(prev => ({
+  // Refresca datos tras subir/eliminar medios
+  useEffect(() => {
+    if (freshPost?.data?.post) {
+      setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, result.image]
+        images: freshPost.data.post.images || [],
+        videos: freshPost.data.post.videos || [],
       }));
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Error al subir la imagen');
-    } finally {
-      setIsUploadingMedia(false);
+      setFeaturedImage(freshPost.data.post.featuredImage || null);
     }
+    // eslint-disable-next-line
+  }, [freshPost, refreshKey]);
+
+  const generateSlug = (title) => {
+    if (!title) return "";
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "")
+      .replace(/\s+/g, "-");
   };
 
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => {
+      // Si cambia el título, actualiza el slug automáticamente
+      if (name === "title") {
+        return {
+          ...prev,
+          title: value,
+          slug: generateSlug(value),
+        };
+      }
+      return {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
+    });
+  };
+
+  // Imagen destacada
+const handleFeaturedImageUpload = async (file, type) => {
+  if (!post?.id) {
+    alert("Primero debes guardar el post antes de subir la imagen destacada");
+    return;
+  }
+  // Solo advertir, no bloquear
+  if (file.size > MAX_FILE_SIZE) {
+    alert(`El archivo es grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Se optimizará automáticamente en el servidor.`);
+    // Continúa igual, el backend lo manejará
+  }
+  try {
+    setIsUploadingMedia(true);
+    const formDataToUpload = new FormData();
+    formDataToUpload.append("image", file);
+    formDataToUpload.append("type", "featured");
+    await uploadImage({ id: post.id, formData: formDataToUpload }).unwrap();
+    setRefreshKey((k) => k + 1);
+  } catch (error) {
+    console.error("Error uploading featured image:", error);
+    alert("Error al subir la imagen destacada");
+  } finally {
+    setIsUploadingMedia(false);
+  }
+};
+
+  // Galería
+  const handleImageUpload = async (file, type) => {
+  if (!post?.id) {
+    alert("Primero debes guardar el post antes de subir imágenes");
+    return;
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    alert(`El archivo es grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Se optimizará automáticamente en el servidor.`);
+  }
+  try {
+    setIsUploadingMedia(true);
+    const formDataToUpload = new FormData();
+    formDataToUpload.append("image", file);
+    formDataToUpload.append("type", "gallery");
+    await uploadImage({ id: post.id, formData: formDataToUpload }).unwrap();
+    setRefreshKey((k) => k + 1);
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    alert("Error al subir la imagen");
+  } finally {
+    setIsUploadingMedia(false);
+  }
+};
+
+  // Video
   const handleVideoUpload = async (file) => {
     if (!post?.id) {
-      alert('Primero debes guardar el post antes de subir videos');
+      alert("Primero debes guardar el post antes de subir videos");
       return;
     }
-
     try {
       setIsUploadingMedia(true);
       const formDataToUpload = new FormData();
-      formDataToUpload.append('video', file);
-      
-      const result = await uploadVideo({ 
-        postId: post.id, 
-        formData: formDataToUpload 
-      }).unwrap();
-      
-      setFormData(prev => ({
-        ...prev,
-        videos: [...prev.videos, result.video]
-      }));
+      formDataToUpload.append("video", file);
+      await uploadVideo({ id: post.id, formData: formDataToUpload }).unwrap();
+      setRefreshKey((k) => k + 1);
     } catch (error) {
-      console.error('Error uploading video:', error);
-      alert('Error al subir el video');
+      console.error("Error uploading video:", error);
+      alert("Error al subir el video");
     } finally {
       setIsUploadingMedia(false);
     }
@@ -123,57 +180,51 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
 
   const handleImageDelete = async (imageId) => {
     if (!post?.id) return;
-
     try {
-      await deleteImage({ postId: post.id, imageId }).unwrap();
-      setFormData(prev => ({
-        ...prev,
-        images: prev.images.filter(img => img.id !== imageId)
-      }));
+      await deleteImage({ id: post.id, imageId }).unwrap();
+      setRefreshKey((k) => k + 1);
     } catch (error) {
-      console.error('Error deleting image:', error);
-      alert('Error al eliminar la imagen');
+      console.error("Error deleting image:", error);
+      alert("Error al eliminar la imagen");
     }
   };
 
   const handleVideoDelete = async (videoId) => {
     if (!post?.id) return;
-
     try {
-      await deleteVideo({ postId: post.id, videoId }).unwrap();
-      setFormData(prev => ({
-        ...prev,
-        videos: prev.videos.filter(video => video.id !== videoId)
-      }));
+      await deleteVideo({ id: post.id, videoId }).unwrap();
+      setRefreshKey((k) => k + 1);
     } catch (error) {
-      console.error('Error deleting video:', error);
-      alert('Error al eliminar el video');
+      console.error("Error deleting video:", error);
+      alert("Error al eliminar el video");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       setIsSubmitting(true);
-      
       const submitData = {
         ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag),
+        isFeatured: !!formData.isFeatured,
       };
-
       let result;
-      if (post) {
-        result = await updateBlogPost({ id: post.id, ...submitData }).unwrap();
-      } else {
+     if (post) {
+  console.log("Editando post:", post);
+  console.log("ID enviado:", post.id);
+  result = await updateBlogPost({ id: post.id, ...submitData }).unwrap();
+} else {
         result = await createBlogPost(submitData).unwrap();
       }
-
       onSuccess?.(result);
       onClose();
     } catch (error) {
-      console.error('Error saving blog post:', error);
-      alert(`Error al ${post ? 'actualizar' : 'crear'} el post`);
+      console.error("Error saving blog post:", error);
+      alert(`Error al ${post ? "actualizar" : "crear"} el post`);
     } finally {
       setIsSubmitting(false);
     }
@@ -181,11 +232,11 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
 
   const renderPreview = () => (
     <div className="prose max-w-none">
-      <h1>{formData.title || 'Título del post'}</h1>
-      {formData.featuredImage && (
-        <img 
-          src={formData.featuredImage} 
-          alt="Imagen destacada" 
+      <h1>{formData.title || "Título del post"}</h1>
+      {featuredImage && (
+        <img
+          src={featuredImage.url || featuredImage.secure_url || featuredImage}
+          alt="Imagen destacada"
           className="w-full h-64 object-cover rounded-lg"
         />
       )}
@@ -193,15 +244,14 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
         <p className="text-lg text-gray-600 italic">{formData.excerpt}</p>
       )}
       <div dangerouslySetInnerHTML={{ __html: formData.content }} />
-      
       {formData.images.length > 0 && (
         <div className="mt-8">
           <h3>Galería de imágenes</h3>
           <div className="grid grid-cols-2 gap-4">
             {formData.images.map((image, index) => (
-              <img 
-                key={index} 
-                src={image.url} 
+              <img
+                key={index}
+                src={image.url || image.secure_url}
                 alt={image.alt || `Imagen ${index + 1}`}
                 className="w-full h-48 object-cover rounded-lg"
               />
@@ -209,16 +259,15 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
           </div>
         </div>
       )}
-      
       {formData.videos.length > 0 && (
         <div className="mt-8">
           <h3>Videos</h3>
           <div className="space-y-4">
             {formData.videos.map((video, index) => (
-              <video 
-                key={index} 
-                src={video.url} 
-                controls 
+              <video
+                key={index}
+                src={video.url}
+                controls
                 className="w-full rounded-lg"
               />
             ))}
@@ -230,11 +279,11 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold">
-            {post ? 'Editar Post' : 'Nuevo Post'}
+            {post ? "Editar Post" : "Nuevo Post"}
           </h2>
           <div className="flex items-center space-x-2">
             <button
@@ -243,7 +292,7 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
               className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
             >
               {showPreview ? <EyeOff size={20} /> : <Eye size={20} />}
-              <span>{showPreview ? 'Editar' : 'Vista previa'}</span>
+              <span>{showPreview ? "Editar" : "Vista previa"}</span>
             </button>
             <button
               onClick={onClose}
@@ -276,7 +325,18 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Slug (URL única)
+                    </label>
+                    <input
+                      type="text"
+                      name="slug"
+                      value={formData.slug}
+                      readOnly // <-- SOLO LECTURA
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Resumen
@@ -320,17 +380,21 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      URL de imagen destacada
-                    </label>
+                  <div className="flex items-center space-x-2">
                     <input
-                      type="url"
-                      name="featuredImage"
-                      value={formData.featuredImage}
+                      type="checkbox"
+                      name="isFeatured"
+                      checked={formData.isFeatured}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      id="isFeatured"
                     />
+                    <label
+                      htmlFor="isFeatured"
+                      className="text-sm text-gray-700 flex items-center"
+                    >
+                      <Star size={16} className="mr-1 text-yellow-400" />
+                      Post destacado
+                    </label>
                   </div>
                 </div>
 
@@ -354,10 +418,41 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
 
               {/* Media Upload Section */}
               {post?.id && (
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">
+                <div className="border-t pt-6 space-y-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
                     Gestión de Medios
                   </h3>
+
+                  {/* Imagen destacada */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Imagen destacada
+                    </label>
+                    <div className="flex items-center space-x-4">
+                      {featuredImage && (
+                        <img
+                          src={
+                            featuredImage.url ||
+                            featuredImage.secure_url ||
+                            featuredImage
+                          }
+                          alt="Imagen destacada"
+                          className="w-32 h-20 object-cover rounded"
+                        />
+                      )}
+                      <MediaUploader
+                        accept="image/*"
+                        multiple={false}
+                        onImageUpload={handleFeaturedImageUpload}
+                        isUploading={isUploadingMedia}
+                        label="Subir imagen destacada"
+                        onlyButton
+                        imageType="featured" // <-- AGREGA ESTA LÍNEA
+                      />
+                    </div>
+                  </div>
+
+                  {/* Galería y videos */}
                   <MediaUploader
                     onImageUpload={handleImageUpload}
                     onVideoUpload={handleVideoUpload}
@@ -366,6 +461,7 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
                     images={formData.images}
                     videos={formData.videos}
                     isUploading={isUploadingMedia}
+                    imageType="gallery"
                   />
                 </div>
               )}
@@ -373,7 +469,8 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
               {!post?.id && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-blue-800 text-sm">
-                    💡 <strong>Tip:</strong> Guarda el post primero para poder subir imágenes y videos.
+                    💡 <strong>Tip:</strong> Guarda el post primero para poder
+                    subir imágenes y videos.
                   </p>
                 </div>
               )}
@@ -404,7 +501,7 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
               ) : (
                 <>
                   <Save size={16} />
-                  <span>{post ? 'Actualizar' : 'Crear'} Post</span>
+                  <span>{post ? "Actualizar" : "Crear"} Post</span>
                 </>
               )}
             </button>

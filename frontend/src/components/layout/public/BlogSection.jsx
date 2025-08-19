@@ -1,3 +1,5 @@
+import React from 'react';
+
 import { Link } from 'react-router-dom';
 import { useGetFeaturedBlogPostsQuery } from '../../../features/blog';
 
@@ -12,9 +14,11 @@ const BlogSection = () => {
   };
 
   const getImageUrl = (post) => {
-    return post.featuredImage?.urls?.desktop || 
-           post.featuredImage?.urls?.mobile || 
-           post.featuredImage?.url || 
+    // Debug: ver la estructura real de featuredImage
+    console.log('🖼️ post.featuredImage:', post.featuredImage);
+    return post.featuredImage?.desktop?.url ||
+           post.featuredImage?.mobile?.url ||
+           post.featuredImage?.thumbnail?.url ||
            '/images/blog/default-blog.jpg';
   };
 
