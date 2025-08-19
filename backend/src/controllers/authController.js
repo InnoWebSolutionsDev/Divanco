@@ -1,3 +1,9 @@
+import User from '../data/models/User.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { Op } from 'sequelize';
+import { sendRegistrationMail } from '../utils/mailer.js';
+
 export const resetPassword = async (req, res, next) => {
   try {
     const { token, password } = req.body;
@@ -62,11 +68,6 @@ export const recoverPassword = async (req, res, next) => {
   }
 };
 
-import User from '../data/models/user.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import { Op } from 'sequelize';
-import { sendRegistrationMail } from '../utils/mailer.js';
 export const register = async (req, res, next) => {
   try {
     const { name, email, username, password, role } = req.body;
