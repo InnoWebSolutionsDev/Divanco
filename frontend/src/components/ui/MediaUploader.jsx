@@ -45,18 +45,23 @@ const MediaUploader = ({
   };
 
   const handleFiles = (files) => {
-    files.forEach(file => {
-      if (uploadType === 'image') {
-        if (file.type.startsWith('image/')) {
-          if (file.size > maxImageSize) {
-            // Solo advertir, no bloquear
-            alert(`Advertencia: El archivo es grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Se optimizará automáticamente en el servidor.`);
-          }
-          onImageUpload(file, imageType); // Permite subir igual
-        } else {
+    if (uploadType === 'image') {
+      // Filter valid images
+      const validImages = files.filter(file => {
+        if (!file.type.startsWith('image/')) {
           alert('Error: El archivo debe ser una imagen.');
+          return false;
         }
-      } else {
+        if (file.size > maxImageSize) {
+          alert(`Advertencia: El archivo es grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Se optimizará automáticamente en el servidor.`);
+        }
+        return true;
+      });
+      if (validImages.length > 0) {
+        onImageUpload(validImages, imageType); // Pass array
+      }
+    } else {
+      files.forEach(file => {
         if (file.type.startsWith('video/')) {
           if (file.size > maxVideoSize) {
             alert(`Advertencia: El video es grande (${(file.size / 1024 / 1024).toFixed(2)} MB).`);
@@ -65,8 +70,8 @@ const MediaUploader = ({
         } else {
           alert('Error: El archivo debe ser un video.');
         }
-      }
-    });
+      });
+    }
   };
 
   const openFileDialog = () => {

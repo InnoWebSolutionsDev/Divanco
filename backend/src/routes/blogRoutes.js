@@ -78,7 +78,7 @@ router.delete('/:id', authenticateToken, requireRole(['admin']), deleteBlogPost)
 router.post('/:id/upload-image', 
   authenticateToken, 
   requireRole(['admin']), 
-  uploadImage.single('image'), 
+  uploadImage.array('image', 10), 
   uploadBlogPostImage
 );
 

@@ -135,28 +135,29 @@ const handleFeaturedImageUpload = async (file, type) => {
 };
 
   // Galería
-  const handleImageUpload = async (file, type) => {
-  if (!post?.id) {
-    alert("Primero debes guardar el post antes de subir imágenes");
-    return;
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    alert(`El archivo es grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Se optimizará automáticamente en el servidor.`);
-  }
-  try {
-    setIsUploadingMedia(true);
-    const formDataToUpload = new FormData();
-    formDataToUpload.append("image", file);
-    formDataToUpload.append("type", "gallery");
-    await uploadImage({ id: post.id, formData: formDataToUpload }).unwrap();
-    setRefreshKey((k) => k + 1);
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    alert("Error al subir la imagen");
-  } finally {
-    setIsUploadingMedia(false);
-  }
-};
+  const handleImageUpload = async (files, type) => {
+    if (!post?.id) {
+      alert("Primero debes guardar el post antes de subir imágenes");
+      return;
+    }
+    // files is an array
+    console.log("[FRONTEND] handleImageUpload - Archivos recibidos:", files);
+    try {
+      setIsUploadingMedia(true);
+      const formDataToUpload = new FormData();
+      files.forEach(file => {
+        formDataToUpload.append("image", file);
+      });
+      formDataToUpload.append("type", "gallery");
+      await uploadImage({ id: post.id, formData: formDataToUpload }).unwrap();
+      setRefreshKey((k) => k + 1);
+    } catch (error) {
+      console.error("Error uploading image(s):", error);
+      alert("Error al subir la(s) imagen(es)");
+    } finally {
+      setIsUploadingMedia(false);
+    }
+  };
 
   // Video
   const handleVideoUpload = async (file) => {

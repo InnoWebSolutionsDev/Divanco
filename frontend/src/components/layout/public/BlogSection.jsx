@@ -5,7 +5,9 @@ import { useGetFeaturedBlogPostsQuery } from '../../../features/blog';
 
 const BlogSection = () => {
   const { data: blogResponse, isLoading, error } = useGetFeaturedBlogPostsQuery(3);
+
   const blogPosts = blogResponse?.data || [];
+  console.log("📝 blogPosts:", blogPosts); // <-- Ahora siempre se ejecuta
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

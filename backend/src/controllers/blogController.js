@@ -315,8 +315,11 @@ export const uploadBlogPostImage = async (req, res) => {
   try {
     const { id } = req.params;
     const { type = 'featured' } = req.body; // 'featured' o 'gallery'
-    
-    if (!req.file) {
+
+    // Soportar tanto single como multiple
+    const files = req.files && req.files.length > 0 ? req.files : (req.file ? [req.file] : []);
+    console.log('[BACKEND] uploadBlogPostImage - Archivos recibidos:', files.length);
+    if (!files.length) {
       return res.status(400).json({
         success: false,
         message: 'No se proporcionó ningún archivo'
@@ -324,7 +327,6 @@ export const uploadBlogPostImage = async (req, res) => {
     }
 
     const post = await BlogPost.findByPk(id);
-    
     if (!post) {
       return res.status(404).json({
         success: false,
@@ -332,14 +334,16 @@ export const uploadBlogPostImage = async (req, res) => {
       });
     }
 
-    // Subir imagen
     const folder = `blog/${new Date().getFullYear()}/${post.slug}`;
-    const images = await uploadResponsiveImage(req.file.path, folder);
+    let newImages = [];
+    for (const file of files) {
+      const img = await uploadResponsiveImage(file.path, folder);
+      newImages.push(img);
+    }
 
     let updateData = {};
-
     if (type === 'featured') {
-      // Eliminar imagen anterior si existe
+      // Solo tomar la primera imagen
       if (post.featuredImage) {
         try {
           await deleteResponsiveImages(post.featuredImage);
@@ -347,22 +351,21 @@ export const uploadBlogPostImage = async (req, res) => {
           console.warn('Error eliminando imagen anterior:', deleteError);
         }
       }
-      updateData.featuredImage = images;
+      updateData.featuredImage = newImages[0];
     } else if (type === 'gallery') {
-      // Agregar a la galería
+      // Acumular todas las imágenes nuevas
       const currentImages = post.images || [];
-      updateData.images = [...currentImages, images];
+      updateData.images = [...currentImages, ...newImages];
     }
 
-    // Actualizar post
     await post.update(updateData);
 
     res.json({
       success: true,
-      message: 'Imagen subida exitosamente',
+      message: 'Imagen(es) subida(s) exitosamente',
       data: {
         post: post,
-        newImages: images
+        newImages: newImages
       }
     });
   } catch (error) {
