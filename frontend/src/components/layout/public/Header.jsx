@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../../hooks';
-import logoCompleto from '../../../assets/images/DIVANCO HV3.PNG'
+import logoCompleto from '../../../assets/images/DIVANCO HV3.PNG';
+import { useGetRecentProjectsQuery } from '../../../features/projects/projectsApi';
+import { useGetRecentBlogPostsQuery } from '../../../features/blog/blogApi';
 
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState(null); // 'proyectos' | 'blog' | null
+
+  // Consultar últimos 5 proyectos y posts
+  const { data: recentProjects } = useGetRecentProjectsQuery(5);
+  const { data: recentBlogPosts } = useGetRecentBlogPostsQuery(5);
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -121,27 +128,116 @@ const Header = () => {
 
         {/* Navegación Desplegable (Desktop y Mobile) */}
         {mobileMenuOpen && (
-          <div className={`px-6 pt-6 pb-8 space-y-6 border-t transition-all duration-300 ${
-            isHomepage 
+          <div className={`fixed top-0 right-0 h-full w-1/2 max-w-xs px-6 pt-6 pb-8 space-y-6 border-t transition-all duration-300 z-50
+            ${isHomepage 
               ? 'border-white/20 bg-black/80 backdrop-blur-md' 
-              : 'border-white/20 bg-gray-800/90 backdrop-blur-md'
-          }`}>
+              : 'border-white/20 bg-gray-800/90 backdrop-blur-md'}
+          `}>
+            {/* Botón cerrar menú lateral */}
+            <button
+              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-label="Cerrar menú"
+            >
+              <XMarkIcon className="h-7 w-7" />
+            </button>
             
             {/* Enlaces de navegación */}
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`block text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
-                  isActive(item.href)
-                    ? 'text-white border-l-2 border-white pl-4'
-                    : 'text-white/90 hover:text-white hover:pl-2'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
+            {navigation.map((item) => {
+              // Submenú para Proyectos
+              if (item.name === 'Proyectos') {
+                return (
+                  <div key={item.name} className="relative">
+                    <button
+                      className={`flex items-center w-full text-left text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
+                        isActive(item.href)
+                          ? 'text-white border-l-2 border-white pl-4'
+                          : 'text-white/90 hover:text-white hover:pl-2'
+                      }`}
+                      onClick={() => setOpenSubmenu(openSubmenu === 'proyectos' ? null : 'proyectos')}
+                    >
+                      {item.name}
+                      {openSubmenu === 'proyectos' ? (
+                        <ChevronUpIcon className="ml-2 h-5 w-5" />
+                      ) : (
+                        <ChevronDownIcon className="ml-2 h-5 w-5" />
+                      )}
+                    </button>
+                    {openSubmenu === 'proyectos' && (
+                      <div className="ml-6 mt-2 space-y-1 animate-fade-in">
+                        {(recentProjects?.data || []).slice(0, 5).map((project) => (
+                          <Link
+                            key={project.slug || project.id}
+                            to={`/proyectos/${project.slug || project.id}`}
+                            className="block text-base text-white/80 hover:text-white transition-colors duration-200 py-1"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {project.title || project.name}
+                          </Link>
+                        ))}
+                        {(!recentProjects?.data || recentProjects.data.length === 0) && (
+                          <span className="block text-sm text-white/50">No hay proyectos recientes</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              // Submenú para Blog
+              if (item.name === 'Blog') {
+                return (
+                  <div key={item.name} className="relative">
+                    <button
+                      className={`flex items-center w-full text-left text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
+                        isActive(item.href)
+                          ? 'text-white border-l-2 border-white pl-4'
+                          : 'text-white/90 hover:text-white hover:pl-2'
+                      }`}
+                      onClick={() => setOpenSubmenu(openSubmenu === 'blog' ? null : 'blog')}
+                    >
+                      {item.name}
+                      {openSubmenu === 'blog' ? (
+                        <ChevronUpIcon className="ml-2 h-5 w-5" />
+                      ) : (
+                        <ChevronDownIcon className="ml-2 h-5 w-5" />
+                      )}
+                    </button>
+                    {openSubmenu === 'blog' && (
+                      <div className="ml-6 mt-2 space-y-1 animate-fade-in">
+                        {(recentBlogPosts?.data || []).slice(0, 5).map((post) => (
+                          <Link
+                            key={post.slug || post.id}
+                            to={`/blog/${post.slug || post.id}`}
+                            className="block text-base text-white/80 hover:text-white transition-colors duration-200 py-1"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            {post.title}
+                          </Link>
+                        ))}
+                        {(!recentBlogPosts?.data || recentBlogPosts.data.length === 0) && (
+                          <span className="block text-sm text-white/50">No hay posts recientes</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              // Enlaces normales
+              return (
+                <Link
+                  key={item.name}
+                  to={item.href}
+                  className={`block text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
+                    isActive(item.href)
+                      ? 'text-white border-l-2 border-white pl-4'
+                      : 'text-white/90 hover:text-white hover:pl-2'
+                  }`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              );
+            })}
             
             {/* Buscar */}
             <Link 

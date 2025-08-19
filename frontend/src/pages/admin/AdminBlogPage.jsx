@@ -160,7 +160,12 @@ const AdminBlogPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Post
                     </th>
-                    
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Galería
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      Videos
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                       Estado
                     </th>
@@ -174,14 +179,14 @@ const AdminBlogPage = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {posts.map((post) => {
-                    console.log('📝 Rendering post:', post);
                     return (
                       <tr key={post.id} className="hover:bg-gray-50">
+                        {/* Post info + imagen destacada */}
                         <td className="px-6 py-4">
                           <div className="flex items-center">
                             {post.featuredImage && post.featuredImage.desktop && (
                               <img
-                                className="h-12 w-12 rounded-lg object-cover mr-4"
+                                className="h-12 w-12 rounded-lg object-cover mr-2"
                                 src={post.featuredImage.desktop.url}
                                 alt={post.title}
                               />
@@ -198,13 +203,44 @@ const AdminBlogPage = () => {
                             </div>
                           </div>
                         </td>
-                        
+                        {/* Miniaturas galería */}
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {(post.images || []).slice(0, 3).map((img, idx) => (
+                              <img
+                                key={idx}
+                                src={img.thumbnail?.url || img.url || img.desktop?.url || '/images/blog/default-blog.jpg'}
+                                alt={`Miniatura galería ${idx + 1}`}
+                                className="h-10 w-10 object-cover rounded border"
+                              />
+                            ))}
+                            {post.images && post.images.length > 3 && (
+                              <span className="text-xs text-gray-400 ml-1">+{post.images.length - 3}</span>
+                            )}
+                          </div>
+                        </td>
+                        {/* Videos */}
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-1">
+                            {(post.videos || []).slice(0, 2).map((video, idx) => (
+                              <span key={idx} title={video.url} className="inline-block">
+                                <svg className="h-7 w-7 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5zm3 2v6l5-3-5-3z" /></svg>
+                              </span>
+                            ))}
+                            {post.videos && post.videos.length > 2 && (
+                              <span className="text-xs text-gray-400 ml-1">+{post.videos.length - 2}</span>
+                            )}
+                          </div>
+                        </td>
+                        {/* Estado */}
                         <td className="px-6 py-4">
                           {getStatusBadge(post.status)}
                         </td>
+                        {/* Fecha */}
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {formatDate(post.publishedAt || post.createdAt)}
                         </td>
+                        {/* Acciones */}
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end space-x-2">
                             <button
