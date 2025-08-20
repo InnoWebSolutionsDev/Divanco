@@ -30,10 +30,12 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 // 🎛️ Admin Pages
 import DashboardPage from '../pages/admin/DashboardPage';
 import UsersPage from '../pages/admin/UsersPage';
-import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
+// import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
+import CategoryAdminPage from '../pages/admin/categories/CategoryAdminPage';
 import ProjectUpload from '../pages/admin/ProjectUpload';
 import AdminBlogPage from '../pages/admin/AdminBlogPage.jsx';
 import AdminSubscribersPage from '../pages/admin/AdminSubscribersPage';
+import AdminProjectPage from '../pages/admin/AdminProjectPage.jsx';
 
 export const router = createBrowserRouter([
   // 🌐 PUBLIC ROUTES (Landing Page)
@@ -58,8 +60,12 @@ export const router = createBrowserRouter([
         element: <SubCategoryPage />,
       },
       {
-        path: 'proyectos',
-        element: <ProjectsPage />,
+        path: '/admin/proyectosEdit',
+        element: <AdminProjectPage />,
+      },
+      {
+        path: 'proyectos/',
+        element: <ProjectsPage />, // Filtrada por año con ruta específica
       },
       {
         path: 'proyectos/año/:year',
@@ -147,7 +153,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'categories',
-        element: <AdminCategoriesPage />,
+        element: <CategoryAdminPage />,
       },
       {
         path: 'projects',

@@ -47,15 +47,15 @@ export const categoriesApi = baseApi.injectEndpoints({
       ],
     }),
 
-    // Admin: Subir imagen a categoría
+    // Admin: Subir imagen a categoría (por ID)
     uploadCategoryImage: builder.mutation({
-      query: ({ slug, formData }) => ({
-        url: `/categories/${slug}/upload-image`,
+      query: ({ id, formData }) => ({
+        url: `/categories/${id}/upload-image`,
         method: 'POST',
         body: formData,
       }),
-      invalidatesTags: (result, error, { slug }) => [
-        { type: 'Category', id: slug }
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Category', id }
       ],
     }),
 

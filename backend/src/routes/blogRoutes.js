@@ -74,11 +74,16 @@ router.post('/', authenticateToken, requireRole(['admin']), createBlogPost);
 router.put('/:id', authenticateToken, requireRole(['admin']), updateBlogPost);
 router.delete('/:id', authenticateToken, requireRole(['admin']), deleteBlogPost);
 
-// Subida de archivos
+
+// Middleware dinámico para aceptar single o array de imágenes
+function dynamicImageUpload(req, res, next) {
+  uploadImage.any()(req, res, next);
+}
+
 router.post('/:id/upload-image', 
   authenticateToken, 
   requireRole(['admin']), 
-  uploadImage.array('image', 10), 
+  dynamicImageUpload, 
   uploadBlogPostImage
 );
 

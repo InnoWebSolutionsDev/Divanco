@@ -228,7 +228,7 @@ const BlogSection = () => {
                   </div>
                   {post.images && post.images.length > 0 && (
                     <button
-                      className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                      className="mt-2 px-4 py-2 bg-naranjaDivanco text-white rounded hover:bg-naranjaDivanco transition-colors"
                       onClick={() => {
                         setModalImages(post.images);
                         setModalTitle(post.title);

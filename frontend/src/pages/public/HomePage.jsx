@@ -1,6 +1,7 @@
 
 import { EdicionesPage, Hero, BlogSection, SloganPage } from '../../components/layout/public';
-
+import ProjectSection from '../../components/layout/public/ProjectSection';
+import ShowroomSection from '../../components/ShowroomSection';
 
 
 const HomePage = () => {
@@ -12,6 +13,9 @@ const HomePage = () => {
       <SloganPage />
       <EdicionesPage />
       <BlogSection />
+      <ProjectSection/>
+      <ShowroomSection />
+
       
 
 

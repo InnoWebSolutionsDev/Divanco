@@ -26,7 +26,7 @@ Category.init({
     type: DataTypes.STRING(120),
     allowNull: false,
     unique: true,
-    // Ejemplo: "ceramicas-y-porcelanatos"
+   
   },
   // Contenido completo de la categoría
   content: {

@@ -4,7 +4,7 @@ export const blogApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Obtener posts del blog
     getBlogPosts: builder.query({
-      query: ({ limit = 10, page = 1, featured, author } = {}) => {
+      query: ({ limit = 10, page = 1, featured } = {}) => {
         const params = new URLSearchParams({
           limit: limit.toString(),
           page: page.toString(),
@@ -91,6 +91,15 @@ export const blogApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // Admin: Eliminar post
+    deleteBlogPost: builder.mutation({
+      query: (id) => ({
+        url: `/blog/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['BlogPost'],
+    }),
+
     // Admin: Eliminar imagen de post
     deleteBlogPostImage: builder.mutation({
       query: ({ id, imageId }) => ({
@@ -125,6 +134,7 @@ export const {
   useUpdateBlogPostMutation,
   useUploadBlogPostImageMutation,
   useUploadBlogPostVideoMutation,
+  useDeleteBlogPostMutation,
   useDeleteBlogPostImageMutation,
   useDeleteBlogPostVideoMutation,
 } = blogApi;

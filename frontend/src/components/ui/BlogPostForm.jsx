@@ -34,6 +34,7 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [featuredImage, setFeaturedImage] = useState(null);
+  const [featuredImageIndex, setFeaturedImageIndex] = useState(null);
 
   const [createBlogPost] = useCreateBlogPostMutation();
   const [updateBlogPost] = useUpdateBlogPostMutation();
@@ -53,7 +54,7 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024
     if (post) {
       setFormData({
         title: post.title || "",
-        slug: post.slug || "", // <-- AGREGAR
+        slug: post.slug || "",
         content: post.content || "",
         excerpt: post.excerpt || "",
         tags: Array.isArray(post.tags) ? post.tags.join(", ") : post.tags || "",
@@ -65,6 +66,16 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024
         subcategoryId: post.subcategoryId || "",
         isFeatured: !!post.isFeatured,
       });
+      // Buscar el índice de la imagen destacada en la galería
+      if (post.featuredImage && post.images && post.images.length > 0) {
+        const idx = post.images.findIndex(img =>
+          img.desktop?.url === post.featuredImage.desktop?.url ||
+          img.url === post.featuredImage.url
+        );
+        setFeaturedImageIndex(idx >= 0 ? idx : null);
+      } else {
+        setFeaturedImageIndex(null);
+      }
       setFeaturedImage(post.featuredImage || null);
     }
   }, [post]);
@@ -78,6 +89,20 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024
         videos: freshPost.data.post.videos || [],
       }));
       setFeaturedImage(freshPost.data.post.featuredImage || null);
+      // Siempre seleccionar la primera imagen como destacada si no hay ninguna
+      if (freshPost.data.post.images && freshPost.data.post.images.length > 0) {
+        let idx = 0;
+        if (freshPost.data.post.featuredImage) {
+          idx = freshPost.data.post.images.findIndex(img =>
+            img.desktop?.url === freshPost.data.post.featuredImage.desktop?.url ||
+            img.url === freshPost.data.post.featuredImage.url
+          );
+          if (idx < 0) idx = 0;
+        }
+        setFeaturedImageIndex(idx);
+      } else {
+        setFeaturedImageIndex(null);
+      }
     }
     // eslint-disable-next-line
   }, [freshPost, refreshKey]);
@@ -110,6 +135,7 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024
 
   // Imagen destacada
 const handleFeaturedImageUpload = async (file, type) => {
+  console.log('[FRONTEND] handleFeaturedImageUpload - file:', file, 'type:', type);
   if (!post?.id) {
     alert("Primero debes guardar el post antes de subir la imagen destacada");
     return;
@@ -144,11 +170,11 @@ const handleFeaturedImageUpload = async (file, type) => {
     console.log("[FRONTEND] handleImageUpload - Archivos recibidos:", files);
     try {
       setIsUploadingMedia(true);
-      const formDataToUpload = new FormData();
-      files.forEach(file => {
-        formDataToUpload.append("image", file);
-      });
-      formDataToUpload.append("type", "gallery");
+        const formDataToUpload = new FormData();
+        files.forEach(file => {
+          formDataToUpload.append("image", file);
+        });
+        formDataToUpload.append("type", "gallery");
       await uploadImage({ id: post.id, formData: formDataToUpload }).unwrap();
       setRefreshKey((k) => k + 1);
     } catch (error) {
@@ -212,13 +238,12 @@ const handleFeaturedImageUpload = async (file, type) => {
           .map((tag) => tag.trim())
           .filter((tag) => tag),
         isFeatured: !!formData.isFeatured,
+        featuredImageIndex: featuredImageIndex,
       };
       let result;
-     if (post) {
-  console.log("Editando post:", post);
-  console.log("ID enviado:", post.id);
-  result = await updateBlogPost({ id: post.id, ...submitData }).unwrap();
-} else {
+      if (post) {
+        result = await updateBlogPost({ id: post.id, ...submitData }).unwrap();
+      } else {
         result = await createBlogPost(submitData).unwrap();
       }
       onSuccess?.(result);
@@ -250,14 +275,29 @@ const handleFeaturedImageUpload = async (file, type) => {
           <h3>Galería de imágenes</h3>
           <div className="grid grid-cols-2 gap-4">
             {formData.images.map((image, index) => (
-              <img
-                key={index}
-                src={image.url || image.secure_url}
-                alt={image.alt || `Imagen ${index + 1}`}
-                className="w-full h-48 object-cover rounded-lg"
-              />
+              <div key={index} className="relative group">
+                <img
+                  src={image.url || image.secure_url}
+                  alt={image.alt || `Imagen ${index + 1}`}
+                  className={`w-full h-48 object-cover rounded-lg border-4 transition-all duration-200 ${featuredImageIndex === index ? 'border-yellow-400 ring-4 ring-yellow-300' : 'border-gray-200 hover:border-blue-400'}`}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setFeaturedImageIndex(index)}
+                  title={featuredImageIndex === index ? 'Imagen destacada' : 'Marcar como destacada'}
+                />
+                {featuredImageIndex === index && (
+                  <span className="absolute top-2 left-2 bg-yellow-400 text-white px-2 py-1 text-xs rounded shadow">Destacada</span>
+                )}
+                <button
+                  type="button"
+                  className={`absolute top-2 right-2 px-2 py-1 text-xs rounded ${featuredImageIndex === index ? 'bg-yellow-400 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-500 hover:text-white'}`}
+                  onClick={() => setFeaturedImageIndex(index)}
+                >
+                  {featuredImageIndex === index ? 'Destacada' : 'Destacar'}
+                </button>
+              </div>
             ))}
           </div>
+          <p className="text-xs text-gray-500 mt-2">Haz click en una imagen o el botón "Destacar" para marcarla como destacada.</p>
         </div>
       )}
       {formData.videos.length > 0 && (
@@ -424,34 +464,8 @@ const handleFeaturedImageUpload = async (file, type) => {
                     Gestión de Medios
                   </h3>
 
-                  {/* Imagen destacada */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Imagen destacada
-                    </label>
-                    <div className="flex items-center space-x-4">
-                      {featuredImage && (
-                        <img
-                          src={
-                            featuredImage.url ||
-                            featuredImage.secure_url ||
-                            featuredImage
-                          }
-                          alt="Imagen destacada"
-                          className="w-32 h-20 object-cover rounded"
-                        />
-                      )}
-                      <MediaUploader
-                        accept="image/*"
-                        multiple={false}
-                        onImageUpload={handleFeaturedImageUpload}
-                        isUploading={isUploadingMedia}
-                        label="Subir imagen destacada"
-                        onlyButton
-                        imageType="featured" // <-- AGREGA ESTA LÍNEA
-                      />
-                    </div>
-                  </div>
+
+                  {/* Imagen destacada ahora se elige desde la galería, sección eliminada */}
 
                   {/* Galería y videos */}
                   <MediaUploader

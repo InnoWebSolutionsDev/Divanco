@@ -24,7 +24,7 @@ const DashboardPage = () => {
       borderColor: 'border-blue-200 hover:border-blue-300',
       actions: [
         { label: 'Crear', icon: PlusIcon, href: '/admin/projects' }, // ✅ Corregido
-        { label: 'Ver todos', icon: EyeIcon, href: '/admin/projects' }, // ✅ Corregido
+    { label: 'Ver todos', icon: EyeIcon, href: '/admin/proyectosEdit' }, // ✅ Corregido
       ]
     },
     {

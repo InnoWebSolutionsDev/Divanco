@@ -243,10 +243,25 @@ export const updateBlogPost = async (req, res) => {
   try {
     const { id } = req.params;
 
+
     const updateData = req.body;
     // Si projectId viene como string vacío, convertir a null
     if (updateData.projectId === '') {
       updateData.projectId = null;
+    }
+
+    // Si se envía featuredImageIndex, copiar la imagen correspondiente
+    if (
+      typeof updateData.featuredImageIndex !== 'undefined' &&
+      updateData.images &&
+      Array.isArray(updateData.images)
+    ) {
+      const idx = parseInt(updateData.featuredImageIndex);
+      if (!isNaN(idx) && idx >= 0 && idx < updateData.images.length) {
+        updateData.featuredImage = updateData.images[idx];
+      }
+      // Elimina el índice del update para no guardarlo en la DB
+      delete updateData.featuredImageIndex;
     }
 
     const post = await BlogPost.findByPk(id);
@@ -319,7 +334,10 @@ export const uploadBlogPostImage = async (req, res) => {
     // Soportar tanto single como multiple
     const files = req.files && req.files.length > 0 ? req.files : (req.file ? [req.file] : []);
     console.log('[BACKEND] uploadBlogPostImage - Archivos recibidos:', files.length);
+    console.log('[BACKEND] req.files:', req.files);
+    console.log('[BACKEND] req.body:', req.body);
     if (!files.length) {
+      console.warn('[BACKEND] No se proporcionó ningún archivo');
       return res.status(400).json({
         success: false,
         message: 'No se proporcionó ningún archivo'
@@ -328,6 +346,7 @@ export const uploadBlogPostImage = async (req, res) => {
 
     const post = await BlogPost.findByPk(id);
     if (!post) {
+      console.warn('[BACKEND] Post no encontrado para id:', id);
       return res.status(404).json({
         success: false,
         message: 'Post no encontrado'
@@ -344,6 +363,7 @@ export const uploadBlogPostImage = async (req, res) => {
     let updateData = {};
     if (type === 'featured') {
       // Solo tomar la primera imagen
+      console.log('[BACKEND] Guardando como imagen destacada:', newImages[0]);
       if (post.featuredImage) {
         try {
           await deleteResponsiveImages(post.featuredImage);
@@ -355,9 +375,11 @@ export const uploadBlogPostImage = async (req, res) => {
     } else if (type === 'gallery') {
       // Acumular todas las imágenes nuevas
       const currentImages = post.images || [];
+      console.log('[BACKEND] Agregando a galería. Imágenes actuales:', currentImages.length, 'Nuevas:', newImages.length);
       updateData.images = [...currentImages, ...newImages];
     }
 
+    console.log('[BACKEND] updateData a guardar:', updateData);
     await post.update(updateData);
 
     res.json({

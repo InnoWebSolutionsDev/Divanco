@@ -529,11 +529,7 @@ export const getProjectBySlug = async (req, res) => {
           as: 'blogPosts',
           where: { status: 'published' },
           required: false,
-          include: [{
-            model: User,
-            as: 'author',
-            attributes: ['id', 'name']
-          }],
+          
           order: [['publishedAt', 'DESC']]
         }
       ]

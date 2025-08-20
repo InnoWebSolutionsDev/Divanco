@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
-import { useGetBlogPostsQuery } from '../../features/blog/blogApi';
+import { useGetBlogPostsQuery, useDeleteBlogPostMutation } from '../../features/blog/blogApi';
 import { useSelector } from 'react-redux';
 import BlogPostForm from '../../components/ui/BlogPostForm';
 
@@ -11,6 +11,19 @@ const AdminBlogPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
+  const [deleteBlogPost, { isLoading: isDeleting }] = useDeleteBlogPostMutation();
+  // Handler for deleting a post
+  const handleDeletePost = async (postId) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar este post? Esta acción no se puede deshacer.')) {
+      try {
+        await deleteBlogPost(postId).unwrap();
+        refetch();
+      } catch (err) {
+        alert('Error al eliminar el post.');
+        console.error('Delete post error:', err);
+      }
+    }
+  };
 
   const { 
     data: postsData, 
@@ -260,8 +273,10 @@ const AdminBlogPage = () => {
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-900 disabled:opacity-50"
                               title="Eliminar post"
+                              onClick={() => handleDeletePost(post.id)}
+                              disabled={isDeleting}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

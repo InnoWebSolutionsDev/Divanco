@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bars3Icon, XMarkIcon, MagnifyingGlassIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../../hooks';
 import logoCompleto from '../../../assets/images/DIVANCO HV3.PNG';
 import { useGetRecentProjectsQuery } from '../../../features/projects/projectsApi';
 import { useGetRecentBlogPostsQuery } from '../../../features/blog/blogApi';
+import { useGetCategoriesQuery } from '../../../features/categories/categoriesApi';
+import { useGetSubcategoriesByCategoryQuery } from '../../../features/subcategories/subcategoriesApi';
 
 
 const Header = () => {
@@ -128,138 +130,15 @@ const Header = () => {
 
         {/* Navegación Desplegable (Desktop y Mobile) */}
         {mobileMenuOpen && (
-          <div className={`fixed top-0 right-0 h-full w-1/2 max-w-xs px-6 pt-6 pb-8 space-y-6 border-t transition-all duration-300 z-50
-            ${isHomepage 
-              ? 'border-white/20 bg-black/80 backdrop-blur-md' 
-              : 'border-white/20 bg-gray-800/90 backdrop-blur-md'}
-          `}>
-            {/* Botón cerrar menú lateral */}
-            <button
-              className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50"
-              onClick={() => setMobileMenuOpen(false)}
-              aria-label="Cerrar menú"
-            >
-              <XMarkIcon className="h-7 w-7" />
-            </button>
-            
-            {/* Enlaces de navegación */}
-            {navigation.map((item) => {
-              // Submenú para Proyectos
-              if (item.name === 'Proyectos') {
-                return (
-                  <div key={item.name} className="relative">
-                    <button
-                      className={`flex items-center w-full text-left text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
-                        isActive(item.href)
-                          ? 'text-white border-l-2 border-white pl-4'
-                          : 'text-white/90 hover:text-white hover:pl-2'
-                      }`}
-                      onClick={() => setOpenSubmenu(openSubmenu === 'proyectos' ? null : 'proyectos')}
-                    >
-                      {item.name}
-                      {openSubmenu === 'proyectos' ? (
-                        <ChevronUpIcon className="ml-2 h-5 w-5" />
-                      ) : (
-                        <ChevronDownIcon className="ml-2 h-5 w-5" />
-                      )}
-                    </button>
-                    {openSubmenu === 'proyectos' && (
-                      <div className="ml-6 mt-2 space-y-1 animate-fade-in">
-                        {(recentProjects?.data || []).slice(0, 5).map((project) => (
-                          <Link
-                            key={project.slug || project.id}
-                            to={`/proyectos/${project.slug || project.id}`}
-                            className="block text-base text-white/80 hover:text-white transition-colors duration-200 py-1"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            {project.title || project.name}
-                          </Link>
-                        ))}
-                        {(!recentProjects?.data || recentProjects.data.length === 0) && (
-                          <span className="block text-sm text-white/50">No hay proyectos recientes</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              // Submenú para Blog
-              if (item.name === 'Blog') {
-                return (
-                  <div key={item.name} className="relative">
-                    <button
-                      className={`flex items-center w-full text-left text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
-                        isActive(item.href)
-                          ? 'text-white border-l-2 border-white pl-4'
-                          : 'text-white/90 hover:text-white hover:pl-2'
-                      }`}
-                      onClick={() => setOpenSubmenu(openSubmenu === 'blog' ? null : 'blog')}
-                    >
-                      {item.name}
-                      {openSubmenu === 'blog' ? (
-                        <ChevronUpIcon className="ml-2 h-5 w-5" />
-                      ) : (
-                        <ChevronDownIcon className="ml-2 h-5 w-5" />
-                      )}
-                    </button>
-                    {openSubmenu === 'blog' && (
-                      <div className="ml-6 mt-2 space-y-1 animate-fade-in">
-                        {(recentBlogPosts?.data || []).slice(0, 5).map((post) => (
-                          <Link
-                            key={post.slug || post.id}
-                            to={`/blog/${post.slug || post.id}`}
-                            className="block text-base text-white/80 hover:text-white transition-colors duration-200 py-1"
-                            onClick={() => setMobileMenuOpen(false)}
-                          >
-                            {post.title}
-                          </Link>
-                        ))}
-                        {(!recentBlogPosts?.data || recentBlogPosts.data.length === 0) && (
-                          <span className="block text-sm text-white/50">No hay posts recientes</span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-              // Enlaces normales
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`block text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 ${
-                    isActive(item.href)
-                      ? 'text-white border-l-2 border-white pl-4'
-                      : 'text-white/90 hover:text-white hover:pl-2'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {item.name}
-                </Link>
-              );
-            })}
-            
-            {/* Buscar */}
-            <Link 
-              to="/buscar"
-              className="flex items-center space-x-2 text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 text-white/90 hover:text-white hover:pl-2"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <MagnifyingGlassIcon className="h-5 w-5" />
-              <span>Buscar</span>
-            </Link>
-
-            {/* Perfil si está autenticado */}
-            {isAuthenticated && (
-              <Link
-                to="/profile"
-                className="block text-lg font-light uppercase tracking-wider transition-all duration-300 hover:translate-x-2 text-white/90 hover:text-white hover:pl-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {user?.name || 'Profile'}
-              </Link>
-            )}
-          </div>
+          <MinimalMobileMenu
+            navigation={navigation}
+            openSubmenu={openSubmenu}
+            setOpenSubmenu={setOpenSubmenu}
+            setMobileMenuOpen={setMobileMenuOpen}
+            isActive={isActive}
+            isAuthenticated={isAuthenticated}
+            user={user}
+          />
         )}
       </nav>
     </header>
@@ -267,4 +146,216 @@ const Header = () => {
 };
 
 export default Header;
+
+const MinimalMobileMenu = ({ navigation, openSubmenu, setOpenSubmenu, setMobileMenuOpen, isActive, isAuthenticated, user }) => {
+  const { data: categoriesData } = useGetCategoriesQuery({ limit: 50, page: 1, active: true });
+  const [openCat, setOpenCat] = useState(null);
+  const { data: recentProjects } = useGetRecentProjectsQuery(5);
+  const { data: recentBlogPosts } = useGetRecentBlogPostsQuery(5);
+  
+  React.useEffect(() => {
+    console.log('categoriesData:', categoriesData);
+  }, [categoriesData]);
+
+  return (
+    <div className="fixed top-0 right-0 h-full w-4/5 max-w-xs px-6 pt-8 pb-8 space-y-4 bg-gray-900/90 backdrop-blur-lg z-50 shadow-2xl animate-fade-in border-l border-white/10">
+      {navigation.map((item) => {
+        // SHOWROOMS: anidado
+        if (item.name === 'Showrooms') {
+          return (
+            <div key={item.name} className="">
+              <button
+                className={`flex items-center w-full text-left text-base font-light tracking-widest uppercase py-3 px-2 rounded transition-all duration-200 group ${
+                  openSubmenu === 'showrooms' ? 'text-naranjaDivanco bg-white/5' : 'text-white/80 hover:text-naranjaDivanco'
+                }`}
+                onClick={() => setOpenSubmenu(openSubmenu === 'showrooms' ? null : 'showrooms')}
+              >
+                {item.name}
+                <span className="ml-auto">
+                  {openSubmenu === 'showrooms' ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+                </span>
+              </button>
+              {openSubmenu === 'showrooms' && (
+                <div className="pl-2 border-l border-white/10 mt-1 space-y-1 animate-fade-in">
+                  {(categoriesData?.data || []).map((cat) => (
+                    <div key={cat.slug}>
+                      <button
+                        className={`flex items-center w-full text-left text-sm font-medium py-2 px-2 rounded transition-all duration-200 group ${
+                          openCat === cat.slug ? 'text-naranjaDivanco bg-white/5' : 'text-white/70 hover:text-naranjaDivanco'
+                        }`}
+                        onClick={() => setOpenCat(openCat === cat.slug ? null : cat.slug)}
+                      >
+                        {cat.name}
+                        <span className="ml-auto">
+                          {openCat === cat.slug ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+                        </span>
+                      </button>
+                      {openCat === cat.slug && (
+                        <ShowroomSubcategories categorySlug={cat.slug} setMobileMenuOpen={setMobileMenuOpen} />
+                      )}
+                    </div>
+                  ))}
+                  {(!categoriesData?.data || categoriesData.data.length === 0) && (
+                    <span className="block text-xs text-white/40">No hay categorías</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        }
+        // PROYECTOS: lista de proyectos recientes
+        if (item.name === 'Proyectos') {
+          return (
+            <div key={item.name}>
+              <button
+                className={`flex items-center w-full text-left text-base font-light tracking-widest uppercase py-3 px-2 rounded transition-all duration-200 group ${
+                  openSubmenu === 'proyectos' ? 'text-naranjaDivanco bg-white/5' : 'text-white/80 hover:text-naranjaDivanco'
+                }`}
+                onClick={() => setOpenSubmenu(openSubmenu === 'proyectos' ? null : 'proyectos')}
+              >
+                {item.name}
+                <span className="ml-auto">
+                  {openSubmenu === 'proyectos' ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+                </span>
+              </button>
+              {openSubmenu === 'proyectos' && (
+                <div className="pl-2 border-l border-white/10 mt-1 space-y-1 animate-fade-in">
+                  {(recentProjects?.data || []).slice(0, 5).map((project) => (
+                    <Link
+                      key={project.slug || project.id}
+                      to={`/proyectos/${project.slug || project.id}`}
+                      className="block text-sm text-white/70 hover:text-naranjaDivanco py-2 px-2 rounded transition-all duration-200"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {project.title || project.name}
+                    </Link>
+                  ))}
+                  {(!recentProjects?.data || recentProjects.data.length === 0) && (
+                    <span className="block text-xs text-white/40">No hay proyectos recientes</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        }
+        // BLOG: lista de posts recientes
+        if (item.name === 'Blog') {
+          return (
+            <div key={item.name}>
+              <button
+                className={`flex items-center w-full text-left text-base font-light tracking-widest uppercase py-3 px-2 rounded transition-all duration-200 group ${
+                  openSubmenu === 'blog' ? 'text-naranjaDivanco bg-white/5' : 'text-white/80 hover:text-naranjaDivanco'
+                }`}
+                onClick={() => setOpenSubmenu(openSubmenu === 'blog' ? null : 'blog')}
+              >
+                {item.name}
+                <span className="ml-auto">
+                  {openSubmenu === 'blog' ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+                </span>
+              </button>
+              {openSubmenu === 'blog' && (
+                <div className="pl-2 border-l border-white/10 mt-1 space-y-1 animate-fade-in">
+                  {(recentBlogPosts?.data || []).slice(0, 5).map((post) => (
+                    <Link
+                      key={post.slug || post.id}
+                      to={`/blog/${post.slug || post.id}`}
+                      className="block text-sm text-white/70 hover:text-naranjaDivanco py-2 px-2 rounded transition-all duration-200"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {post.title}
+                    </Link>
+                  ))}
+                  {(!recentBlogPosts?.data || recentBlogPosts.data.length === 0) && (
+                    <span className="block text-xs text-white/40">No hay posts recientes</span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        }
+        // Otros ítems: desplegables simples
+        return (
+          <div key={item.name}>
+            <button
+              className={`flex items-center w-full text-left text-base font-light tracking-widest uppercase py-3 px-2 rounded transition-all duration-200 group ${
+                openSubmenu === item.name.toLowerCase() ? 'text-naranjaDivanco bg-white/5' : 'text-white/80 hover:text-naranjaDivanco'
+              }`}
+              onClick={() => setOpenSubmenu(openSubmenu === item.name.toLowerCase() ? null : item.name.toLowerCase())}
+            >
+              {item.name}
+              <span className="ml-auto">
+                {openSubmenu === item.name.toLowerCase() ? <ChevronUpIcon className="h-5 w-5" /> : <ChevronDownIcon className="h-5 w-5" />}
+              </span>
+            </button>
+            {openSubmenu === item.name.toLowerCase() && (
+              <div className="pl-2 border-l border-white/10 mt-1 space-y-1 animate-fade-in">
+                <Link
+                  to={item.href}
+                  className="block text-sm text-white/70 hover:text-naranjaDivanco py-2 px-2 rounded transition-all duration-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Ir a {item.name}
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {/* Buscar y perfil */}
+      <Link 
+        to="/buscar"
+        className="flex items-center space-x-2 text-base font-light uppercase tracking-widest text-white/80 hover:text-naranjaDivanco py-3 px-2 rounded transition-all duration-200"
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        <MagnifyingGlassIcon className="h-5 w-5" />
+        <span>Buscar</span>
+      </Link>
+      {isAuthenticated && (
+        <Link
+          to="/profile"
+          className="block text-base font-light uppercase tracking-widest text-white/80 hover:text-naranjaDivanco py-3 px-2 rounded transition-all duration-200"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          {user?.name || 'Profile'}
+        </Link>
+      )}
+    </div>
+  );
+};
+
+function ShowroomSubcategories({ categorySlug, setMobileMenuOpen }) {
+  const { data: subcatData } = useGetSubcategoriesByCategoryQuery({ categorySlug, limit: 20, page: 1 });
+  if (!subcatData?.data) return null;
+  const { category, subcategories } = subcatData.data;
+  // Debug: loguear el content de cada subcategoría
+  if (subcategories && subcategories.length > 0) {
+    subcategories.forEach(subcat => {
+      console.log(`Subcat: ${subcat.name}, content:`, subcat.content);
+    });
+  }
+  return (
+    <div className="ml-3 border-l border-white/5">
+      {subcategories && subcategories.length > 0 ? (
+        subcategories.map((subcat) => (
+          <div key={subcat.slug}>
+            <Link
+              to={`/showrooms/${categorySlug}/${subcat.slug}`}
+              className="block text-xs text-white/60 hover:text-naranjaDivanco py-1 px-2 rounded transition-all duration-200"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              {subcat.name}
+            </Link>
+            {subcat.content && (
+              <div className="ml-2 text-[10px] text-white/40 py-0.5 px-2">{subcat.content}</div>
+            )}
+          </div>
+        ))
+      ) : (
+        category?.content && (
+          <div className="ml-2 text-xs text-white/40 py-1 px-2">{category.content}</div>
+        )
+      )}
+    </div>
+  );
+}
 

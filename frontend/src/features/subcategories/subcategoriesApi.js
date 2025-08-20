@@ -32,7 +32,7 @@ export const subcategoriesApi = baseApi.injectEndpoints({
           limit: limit.toString(),
           page: page.toString(),
         });
-        return `/categories/${categorySlug}/subcategories?${params}`;
+        return `/subcategories/category/${categorySlug}?${params}`;
       },
       providesTags: ['Subcategory'],
     }),

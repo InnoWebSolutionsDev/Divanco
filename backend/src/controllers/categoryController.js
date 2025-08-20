@@ -100,12 +100,13 @@ export const createCategory = async (req, res) => {
 
     // Crear la categoría
     const categoryData = {
-      name: name.trim(),
-      description: description?.trim(),
-      content: content?.trim(),
-      order: parseInt(order),
-      isShowInHome: Boolean(isShowInHome)
-    };
+  name: name.trim(),
+  description: description?.trim(),
+  content: content?.trim(),
+  order: parseInt(order),
+  isShowInHome: Boolean(isShowInHome),
+  slug: req.body.slug?.trim(), // <-- AGREGAR ESTA LÍNEA
+};
 
     const category = await Category.create(categoryData);
 
