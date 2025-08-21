@@ -130,15 +130,23 @@ const Header = () => {
 
         {/* Navegación Desplegable (Desktop y Mobile) */}
         {mobileMenuOpen && (
-          <MinimalMobileMenu
-            navigation={navigation}
-            openSubmenu={openSubmenu}
-            setOpenSubmenu={setOpenSubmenu}
-            setMobileMenuOpen={setMobileMenuOpen}
-            isActive={isActive}
-            isAuthenticated={isAuthenticated}
-            user={user}
-          />
+          <>
+            {/* Overlay oscuro detrás del menú */}
+            <div
+              className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm transition-opacity animate-fade-in"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <MinimalMobileMenu
+              navigation={navigation}
+              openSubmenu={openSubmenu}
+              setOpenSubmenu={setOpenSubmenu}
+              setMobileMenuOpen={setMobileMenuOpen}
+              isActive={isActive}
+              isAuthenticated={isAuthenticated}
+              user={user}
+              zIndex={1200}
+            />
+          </>
         )}
       </nav>
     </header>
@@ -147,18 +155,28 @@ const Header = () => {
 
 export default Header;
 
-const MinimalMobileMenu = ({ navigation, openSubmenu, setOpenSubmenu, setMobileMenuOpen, isActive, isAuthenticated, user }) => {
+const MinimalMobileMenu = ({ navigation, openSubmenu, setOpenSubmenu, setMobileMenuOpen, isActive, isAuthenticated, user, zIndex = 50 }) => {
   const { data: categoriesData } = useGetCategoriesQuery({ limit: 50, page: 1, active: true });
   const [openCat, setOpenCat] = useState(null);
   const { data: recentProjects } = useGetRecentProjectsQuery(5);
   const { data: recentBlogPosts } = useGetRecentBlogPostsQuery(5);
-  
+
   React.useEffect(() => {
     console.log('categoriesData:', categoriesData);
   }, [categoriesData]);
 
   return (
-    <div className="fixed top-0 right-0 h-full w-4/5 max-w-xs px-6 pt-8 pb-8 space-y-4 bg-gray-900/90 backdrop-blur-lg z-50 shadow-2xl animate-fade-in border-l border-white/10">
+  <div className="fixed top-0 right-0 h-full w-4/5 max-w-xs px-6 pt-8 pb-8 space-y-4 backdrop-blur-lg shadow-2xl animate-fade-in border-l border-white/10"
+    style={{ backgroundColor: 'rgba(0,0,0,0.98)', zIndex }}>
+      {/* Botón X para cerrar menú */}
+      <button
+        className="absolute top-4 right-4 text-white/80 hover:text-naranjaDivanco transition-all z-50 p-2 rounded-full bg-black/30 backdrop-blur-md"
+        style={{ fontSize: 28, lineHeight: 1 }}
+        aria-label="Cerrar menú"
+        onClick={() => setMobileMenuOpen(false)}
+      >
+        <XMarkIcon className="h-8 w-8" />
+      </button>
       {navigation.map((item) => {
         // SHOWROOMS: anidado
         if (item.name === 'Showrooms') {

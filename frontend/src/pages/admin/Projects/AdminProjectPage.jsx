@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Plus, Edit, Trash2, Eye, Star, SlidersHorizontal, Image as ImageIcon } from 'lucide-react';
-import { useGetProjectsQuery, useDeleteProjectMutation, useUpdateProjectMutation, useToggleSliderImageMutation } from '../../features/projects/projectsApi';
+import { useGetProjectsQuery, useDeleteProjectMutation, useUpdateProjectMutation, useToggleSliderImageMutation } from '../../../features/projects/projectsApi';
 import ProjectUpload from './ProjectUpload';
 
 const AdminProjectPage = () => {

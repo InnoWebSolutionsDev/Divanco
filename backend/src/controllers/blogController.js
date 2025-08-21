@@ -154,10 +154,21 @@ export const createBlogPost = async (req, res) => {
       });
     }
 
-    if (!content || content.trim().length < 10) {
+    // Validación para array de bloques
+    if (!Array.isArray(content) || content.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'El contenido es requerido'
+        message: 'El contenido es requerido y debe tener al menos un bloque.'
+      });
+    }
+    // Al menos un bloque de texto con más de 10 caracteres
+    const hasValidTextBlock = content.some(
+      block => block.type === 'text' && typeof block.value === 'string' && block.value.trim().length >= 10
+    );
+    if (!hasValidTextBlock) {
+      return res.status(400).json({
+        success: false,
+        message: 'El contenido debe incluir al menos un bloque de texto con 10 caracteres o más.'
       });
     }
 
@@ -177,7 +188,8 @@ export const createBlogPost = async (req, res) => {
     const postData = {
       slug,
       title: title.trim(),
-      content: content.trim(),
+      author: author?.trim() || null,
+      content, // array de bloques
       excerpt: excerpt?.trim(),
       projectId: projectId || null,
       tags: Array.isArray(tags) ? tags : [],
@@ -242,9 +254,8 @@ export const createBlogPost = async (req, res) => {
 export const updateBlogPost = async (req, res) => {
   try {
     const { id } = req.params;
-
-
     const updateData = req.body;
+
     // Si projectId viene como string vacío, convertir a null
     if (updateData.projectId === '') {
       updateData.projectId = null;
@@ -265,12 +276,49 @@ export const updateBlogPost = async (req, res) => {
     }
 
     const post = await BlogPost.findByPk(id);
-
     if (!post) {
       return res.status(404).json({
         success: false,
         message: 'Post no encontrado'
       });
+    }
+
+    // Validaciones robustas solo sobre los campos enviados
+    if (updateData.title && updateData.title.trim().length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'El título debe tener al menos 5 caracteres'
+      });
+    }
+
+    if (updateData.content) {
+      if (!Array.isArray(updateData.content) || updateData.content.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'El contenido debe ser un array de bloques y tener al menos un bloque.'
+        });
+      }
+      const hasValidTextBlock = updateData.content.some(
+        block => block.type === 'text' && typeof block.value === 'string' && block.value.trim().length >= 10
+      );
+      if (!hasValidTextBlock) {
+        return res.status(400).json({
+          success: false,
+          message: 'El contenido debe incluir al menos un bloque de texto con 10 caracteres o más.'
+        });
+      }
+    }
+
+    if (typeof updateData.author !== 'undefined' && updateData.author !== null) {
+      if (typeof updateData.author !== 'string' || updateData.author.trim().length === 0) {
+        updateData.author = null;
+      } else {
+        updateData.author = updateData.author.trim();
+      }
+    }
+
+    if (typeof updateData.excerpt !== 'undefined' && updateData.excerpt !== null) {
+      updateData.excerpt = updateData.excerpt.trim();
     }
 
     // Si se está publicando por primera vez
@@ -286,7 +334,6 @@ export const updateBlogPost = async (req, res) => {
     // Recargar con relaciones
     await post.reload({
       include: [
-       
         {
           model: Project,
           as: 'project',
@@ -302,7 +349,6 @@ export const updateBlogPost = async (req, res) => {
         const subscribers = await Subscriber.findAll({
           where: { isActive: true }
         });
-        
         if (subscribers.length > 0) {
           await sendBlogNotification(subscribers, post);
         }

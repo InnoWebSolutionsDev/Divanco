@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Upload, Save, Eye, EyeOff, Star } from "lucide-react";
-import MediaUploader from "../ui/MediaUploader";
+import MediaUploader from "../../../components/ui/MediaUploader";
 import {
   useCreateBlogPostMutation,
   useUpdateBlogPostMutation,
@@ -9,7 +9,7 @@ import {
   useDeleteBlogPostImageMutation,
   useDeleteBlogPostVideoMutation,
   useGetBlogPostBySlugQuery,
-} from "../../features/blog/blogApi";
+} from "../../../features/blog/blogApi";
 import { useSelector } from "react-redux";
 
 const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
@@ -17,6 +17,7 @@ const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
 const MAX_FILE_SIZE = 30 * 1024 * 1024
   const [formData, setFormData] = useState({
     title: "",
+    author: "",
     content: "",
     excerpt: "",
     slug: "",
@@ -54,8 +55,12 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024
     if (post) {
       setFormData({
         title: post.title || "",
+        author: post.author || "",
         slug: post.slug || "",
-        content: post.content || "",
+        // Si el content es array, mostrar solo el primer bloque de texto (para edición simple)
+        content: Array.isArray(post.content)
+          ? (post.content.find(b => b.type === 'text')?.value || "")
+          : (post.content || ""),
         excerpt: post.excerpt || "",
         tags: Array.isArray(post.tags) ? post.tags.join(", ") : post.tags || "",
         status: post.status || "draft",
@@ -118,7 +123,6 @@ const MAX_FILE_SIZE = 30 * 1024 * 1024
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => {
-      // Si cambia el título, actualiza el slug automáticamente
       if (name === "title") {
         return {
           ...prev,
@@ -231,8 +235,14 @@ const handleFeaturedImageUpload = async (file, type) => {
     e.preventDefault();
     try {
       setIsSubmitting(true);
+      // Convertir content a array de bloques (solo texto por ahora)
+      const contentBlocks = formData.content && formData.content.trim().length > 0
+        ? [{ type: 'text', value: formData.content.trim() }]
+        : [];
       const submitData = {
         ...formData,
+        author: formData.author?.trim() || null,
+        content: contentBlocks,
         tags: formData.tags
           .split(",")
           .map((tag) => tag.trim())
@@ -353,6 +363,19 @@ const handleFeaturedImageUpload = async (file, type) => {
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column */}
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Autor (firma del post)
+                    </label>
+                    <input
+                      type="text"
+                      name="author"
+                      value={formData.author}
+                      onChange={handleInputChange}
+                      placeholder="Nombre del autor"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Título *

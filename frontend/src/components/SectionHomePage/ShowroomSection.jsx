@@ -1,5 +1,5 @@
 import React from 'react';
-import { useGetCategoriesQuery } from '../features/categories/categoriesApi';
+import { useGetCategoriesQuery } from '../../features/categories/categoriesApi';
 
 const ShowroomSection = () => {
   const { data, isLoading } = useGetCategoriesQuery({ includeSubcategories: true, activeOnly: true });

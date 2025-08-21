@@ -16,9 +16,14 @@ BlogPost.init({
       len: [5, 200]
     }
   },
+  author: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   content: {
-    type: DataTypes.TEXT,
+    type: DataTypes.JSON, 
     allowNull: false,
+    
   },
   excerpt: {
     type: DataTypes.TEXT(500),

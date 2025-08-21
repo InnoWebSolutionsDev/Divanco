@@ -9,24 +9,19 @@ if (env === 'production' && process.env.DB_DEPLOY) {
   sequelize = new Sequelize(process.env.DB_DEPLOY, {
     // ✅ CAMBIO: Habilitar logging en desarrollo para debugging
     logging: env === 'development' ? (sql, timing) => {
-      // ✅ ALERTAS para queries de actualización
+      // Solo mostrar advertencias para queries realmente críticas
       if (sql.toLowerCase().includes('update') && sql.toLowerCase().includes('projects')) {
         console.warn('⚠️  UPDATE en Projects detectado');
         console.warn('⚠️  SQL completo:', sql);
       }
-
-      // ✅ ALERTAS para queries de eliminación
       if (sql.toLowerCase().includes('delete') || sql.toLowerCase().includes('truncate')) {
-        
-        console.trace();
+        console.warn('⚠️  DELETE/TRUNCATE ejecutado:', sql);
       }
-      
       if (sql.toLowerCase().includes('drop table') || sql.toLowerCase().includes('drop cascade')) {
-       
-        console.trace();
+        console.warn('⚠️  DROP TABLE ejecutado:', sql);
       }
-      
-      console.log('=== FIN SQL ===\n');
+      // Puedes comentar la siguiente línea si no quieres ver todos los SQL
+      // console.log('SQL:', sql);
     } : false,
     dialect: 'postgres',
   });
@@ -42,17 +37,15 @@ if (env === 'production' && process.env.DB_DEPLOY) {
       logging: env === 'development' ? (sql, timing) => {
         
         
-        // ✅ ALERTAS para queries críticas
+        // Solo mostrar advertencias para queries realmente críticas
         if (sql.toLowerCase().includes('delete')) {
-          
-          console.trace();
+          console.warn('⚠️  DELETE ejecutado:', sql);
         }
-        
         if (sql.toLowerCase().includes('update') && sql.toLowerCase().includes('projects')) {
-          
+          console.warn('⚠️  UPDATE en Projects detectado:', sql);
         }
-        
-       
+        // Puedes comentar la siguiente línea si no quieres ver todos los SQL
+        // console.log('SQL:', sql);
       } : false,
     }
   );

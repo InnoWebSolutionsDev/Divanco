@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useGetFeaturedBlogPostsQuery } from '../../../features/blog';
+import { useGetFeaturedBlogPostsQuery } from '../../features/blog';
 
 const BlogSection = () => {
   const { data: blogResponse, isLoading, error } = useGetFeaturedBlogPostsQuery(3);

@@ -1,8 +1,8 @@
 
-import { EdicionesPage, Hero, BlogSection, SloganPage } from '../../components/layout/public';
+import { EdicionesPage, Hero,  SloganPage } from '../../components/layout/public';
 import ProjectSection from '../../components/layout/public/ProjectSection';
-import ShowroomSection from '../../components/ShowroomSection';
-
+import ShowroomSection from '../../components/SectionHomePage/ShowroomSection';
+import BlogSection from '../../components/SectionHomePage/BlogSection';
 
 const HomePage = () => {
   return (
@@ -13,13 +13,10 @@ const HomePage = () => {
       <SloganPage />
       <EdicionesPage />
       <BlogSection />
-      <ProjectSection/>
       <ShowroomSection />
+      <ProjectSection />
 
       
-
-
-      {/* Otras secciones de la página */}
       <section className="py-20 px-4 sm:px-6 lg:px-8"></section>
     </div>
   );

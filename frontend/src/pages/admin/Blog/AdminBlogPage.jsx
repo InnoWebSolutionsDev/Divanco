@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
-import { useGetBlogPostsQuery, useDeleteBlogPostMutation } from '../../features/blog/blogApi';
+import { useGetBlogPostsQuery, useDeleteBlogPostMutation } from '../../../features/blog/blogApi';
 import { useSelector } from 'react-redux';
-import BlogPostForm from '../../components/ui/BlogPostForm';
+import BlogPostForm from './BlogPostForm';
 
 const AdminBlogPage = () => {
   const { user } = useSelector(state => state.auth);
