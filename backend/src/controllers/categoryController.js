@@ -4,14 +4,32 @@ import { uploadResponsiveImage, deleteResponsiveImages } from '../config/cloudin
 // Obtener todas las categorías
 export const getAllCategories = async (req, res) => {
   try {
-    const { includeSubcategories = false, activeOnly = true } = req.query;
+    const { 
+      includeSubcategories = false, 
+      activeOnly = true,
+      limit = 50,
+      page = 1,
+      active = true
+    } = req.query;
+
+    // Convertir strings a boolean
+    const isActiveOnly = activeOnly === 'true' || active === 'true';
+    const includeSubcat = includeSubcategories === 'true';
 
     const queryOptions = {
-      where: activeOnly === 'true' ? { isActive: true } : {},
+      where: isActiveOnly ? { isActive: true } : {},
       order: [['order', 'ASC'], ['name', 'ASC']],
     };
 
-    if (includeSubcategories === 'true') {
+    // Agregar paginación si se especifica un limit válido
+    if (limit && limit !== 'all') {
+      const limitNum = parseInt(limit);
+      const pageNum = parseInt(page);
+      queryOptions.limit = limitNum;
+      queryOptions.offset = (pageNum - 1) * limitNum;
+    }
+
+    if (includeSubcat) {
       queryOptions.include = [{
         model: Subcategory,
         as: 'subcategories',

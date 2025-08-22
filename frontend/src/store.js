@@ -15,8 +15,10 @@ import { combineReducers } from '@reduxjs/toolkit';
 // APIs
 import { baseApi } from './services/api';
 import { authApi } from './features/auth/authApi';
-
 import { usersApi } from './features/users/usersApi';
+
+// Importar el índice de servicios para registrar todos los endpoints
+import './services/index';
 
 // Slices
 import authReducer from './features/auth/authSlice';
@@ -42,7 +44,7 @@ const rootReducer = combineReducers({
   categories: categoriesReducer, 
   projects: projectsReducer,
   
-  // APIs
+  // APIs - baseApi incluye categories, subcategories, products
   [baseApi.reducerPath]: baseApi.reducer,
   [authApi.reducerPath]: authApi.reducer,
   [usersApi.reducerPath]: usersApi.reducer,

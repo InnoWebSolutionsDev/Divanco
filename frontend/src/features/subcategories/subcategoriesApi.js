@@ -63,21 +63,21 @@ export const subcategoriesApi = baseApi.injectEndpoints({
 
     // Admin: Actualizar subcategoría
     updateSubcategory: builder.mutation({
-      query: ({ slug, ...data }) => ({
-        url: `/subcategories/${slug}`,
+      query: ({ slug, id, ...data }) => ({
+        url: id ? `/subcategories/id/${id}` : `/subcategories/${slug}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { slug }) => [
-        { type: 'Subcategory', id: slug },
+      invalidatesTags: (result, error, { slug, id }) => [
+        { type: 'Subcategory', id: slug || id },
         'Subcategory'
       ],
     }),
 
     // Admin: Eliminar subcategoría
     deleteSubcategory: builder.mutation({
-      query: (slug) => ({
-        url: `/subcategories/${slug}`,
+      query: ({ slug, permanent = false }) => ({
+        url: `/subcategories/${slug}${permanent ? '?permanent=true' : ''}`,
         method: 'DELETE',
       }),
       invalidatesTags: ['Subcategory', 'Category'],
@@ -91,7 +91,8 @@ export const subcategoriesApi = baseApi.injectEndpoints({
         body: formData,
       }),
       invalidatesTags: (result, error, { slug }) => [
-        { type: 'Subcategory', id: slug }
+        { type: 'Subcategory', id: slug },
+        'Subcategory'  // Invalidar toda la lista de subcategorías
       ],
     }),
 

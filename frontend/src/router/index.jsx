@@ -30,8 +30,8 @@ import ResetPasswordPage from '../pages/auth/ResetPasswordPage';
 // 🎛️ Admin Pages
 import DashboardPage from '../pages/admin/DashboardPage';
 import UsersPage from '../pages/admin/UsersPage';
-// import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage';
-import CategoryAdminPage from '../pages/admin/categories/CategoryAdminPage';
+// Nuevo sistema unificado de administración
+import ShowroomAdminPage from '../pages/admin/showroom/ShowroomAdminPage';
 import ProjectUpload from '../pages/admin/Projects/ProjectUpload.jsx';
 import AdminBlogPage from '../pages/admin/Blog/AdminBlogPage.jsx';
 import AdminSubscribersPage from '../pages/admin/AdminSubscribersPage';
@@ -153,7 +153,11 @@ export const router = createBrowserRouter([
       },
       {
         path: 'categories',
-        element: <CategoryAdminPage />,
+        element: <ShowroomAdminPage />,
+      },
+      {
+        path: 'showroom',
+        element: <ShowroomAdminPage />,
       },
       {
         path: 'projects',
@@ -186,6 +190,10 @@ export const router = createBrowserRouter([
   {
     path: '/register',
     element: <Navigate to="/auth/register" replace />,
+  },
+  {
+    path: '/admin/categories',
+    element: <Navigate to="/admin/showroom" replace />,
   },
 
   // 🚫 404 - Página no encontrada

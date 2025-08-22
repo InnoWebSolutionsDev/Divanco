@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { Suspense } from 'react';
 import AdminHeader from './AdminHeader';
+import AdminNavigation from './AdminNavigation';
 import AdminSidebar from './AdminSidebar';
 import LoadingBoundary from '../shared/LoadingBoundary';
 import { useUI } from '../../../hooks';
@@ -13,9 +14,10 @@ const AdminLayout = () => {
       {/* <AdminSidebar /> */}
       
       <div className={`transition-all duration-300 ${
-        sidebarOpen ? 'ml-64' : 'ml-16'
+        sidebarOpen ? 'ml-64' : 'ml-0'
       }`}>
         <AdminHeader />
+        <AdminNavigation />
         
         <main className="p-6">
           <Suspense fallback={<LoadingBoundary />}>

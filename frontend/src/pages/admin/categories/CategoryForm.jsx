@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useCreateCategoryMutation, useUpdateCategoryMutation, useUploadCategoryImageMutation } from '../../../features/categories/categoriesApi';
+import { 
+  useCreateCategoryMutation, 
+  useUpdateCategoryMutation, 
+  useUploadCategoryImageMutation,
+  useGetCategoriesQuery 
+} from '../../../features/categories/categoriesApi';
 
 const initialState = {
   name: '',
@@ -11,6 +16,8 @@ const initialState = {
 
 
 const CategoryForm = ({ category, onClose }) => {
+  console.log('[CategoryForm] *** COMPONENTE INICIADO ***', { category, onClose });
+  
   const [form, setForm] = useState(initialState);
   const [error, setError] = useState(null);
   const [createCategory, { isLoading: isCreating }] = useCreateCategoryMutation();
@@ -19,6 +26,19 @@ const CategoryForm = ({ category, onClose }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [imageFile, setImageFile] = useState(null);
   const fileInputRef = useRef();
+
+  // Hook para refrescar la lista de categorías después de cambios
+  const { refetch: refetchCategories, data: categoriesData } = useGetCategoriesQuery({ limit: 100 });
+
+  // Log para debugging - verificar los datos que llegan
+  useEffect(() => {
+    if (categoriesData) {
+      console.log('[CategoryForm] Datos de categorías recibidos:', categoriesData);
+      console.log('[CategoryForm] Primera categoría:', categoriesData?.data?.[0]);
+      const categoryWithImage = categoriesData?.data?.find(cat => cat.featuredImage);
+      console.log('[CategoryForm] Categoría con imagen encontrada:', categoryWithImage);
+    }
+  }, [categoriesData]);
 
 
   // Generador de slug: "categoria-" + primera palabra del nombre (limpia)
@@ -29,7 +49,9 @@ const CategoryForm = ({ category, onClose }) => {
   };
 
   useEffect(() => {
+    console.log('[CategoryForm] useEffect ejecutado, categoría:', category);
     if (category) {
+      console.log('[CategoryForm] Categoría tiene featuredImage:', category.featuredImage);
       setForm({
         name: category.name || '',
         description: category.description || '',
@@ -38,7 +60,9 @@ const CategoryForm = ({ category, onClose }) => {
         isShowInHome: category.isShowInHome || false,
         slug: category.slug || '',
       });
-      setImagePreview(category.featuredImage?.md || null);
+      const imageUrl = category.featuredImage?.thumbnail?.url || category.featuredImage?.desktop?.url || null;
+      console.log('[CategoryForm] Estableciendo imagePreview a:', imageUrl);
+      setImagePreview(imageUrl);
     } else {
       setForm({ ...initialState, slug: '' });
       setImagePreview(null);
@@ -91,6 +115,8 @@ const CategoryForm = ({ category, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    console.log('[CategoryForm] Iniciando submit del formulario');
+    
     if (!form.name.trim()) {
       setError('El nombre es obligatorio');
       return;
@@ -99,25 +125,81 @@ const CategoryForm = ({ category, onClose }) => {
       setError('El slug no puede estar vacío');
       return;
     }
+    
     try {
       console.log('[CategoryForm] Payload enviado:', form);
       let savedCategory = category;
+      
       if (category) {
+        console.log('[CategoryForm] Actualizando categoría existente...');
         await updateCategory({ id: category.id, ...form }).unwrap();
+        console.log('[CategoryForm] Categoría actualizada exitosamente');
       } else {
+        console.log('[CategoryForm] Creando nueva categoría...');
         savedCategory = await createCategory(form).unwrap();
+        console.log('[CategoryForm] Categoría creada exitosamente:', savedCategory);
       }
+      
       // Si hay imagen seleccionada y es edición o ya se creó la categoría
       if (imageFile && (category || savedCategory)) {
-        const slug = (category?.slug || savedCategory?.slug);
+        const categoryId = category?.id || savedCategory?.data?.id;
+        console.log('[CategoryForm] Datos para upload:', {
+          category,
+          savedCategory,
+          categoryId,
+          imageFile: imageFile?.name
+        });
+        
+        if (!categoryId) {
+          console.error('[CategoryForm] No se pudo obtener el ID de la categoría');
+          setError('Error: No se pudo obtener el ID de la categoría para subir la imagen');
+          return;
+        }
+        
         const formData = new FormData();
         formData.append('image', imageFile);
-        await uploadCategoryImage({ id: category?.id || savedCategory?.id, formData }).unwrap();
-        setImageFile(null);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        
+        console.log('[CategoryForm] Enviando imagen a ID:', categoryId);
+        
+        try {
+          const uploadResult = await uploadCategoryImage({ id: categoryId, formData }).unwrap();
+          console.log('[CategoryForm] Upload exitoso:', uploadResult);
+          
+          setImageFile(null);
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          
+          // Refrescar los datos para mostrar la imagen
+          console.log('[CategoryForm] Refrescando lista de categorías...');
+          const refreshResult = await refetchCategories();
+          console.log('[CategoryForm] Lista refrescada exitosamente');
+          console.log('[CategoryForm] Datos refrescados:', refreshResult);
+          
+          // Buscar la categoría actualizada en los datos refrescados
+          if (refreshResult?.data?.data) {
+            const updatedCategory = refreshResult.data.data.find(cat => cat.id === categoryId);
+            console.log('[CategoryForm] Categoría actualizada encontrada:', updatedCategory);
+            console.log('[CategoryForm] featuredImage de la categoría:', updatedCategory?.featuredImage);
+            
+            // Actualizar la vista previa con la nueva imagen
+            if (updatedCategory?.featuredImage) {
+              const newImageUrl = updatedCategory.featuredImage.thumbnail?.url || updatedCategory.featuredImage.desktop?.url;
+              console.log('[CategoryForm] Actualizando vista previa con:', newImageUrl);
+              setImagePreview(newImageUrl);
+            }
+          }
+        } catch (uploadError) {
+          console.error('[CategoryForm] Error subiendo imagen:', uploadError);
+          setError('Error al subir la imagen: ' + (uploadError?.data?.message || uploadError.message));
+          return;
+        }
+      } else {
+        console.log('[CategoryForm] No hay imagen para subir o no se cumplieron las condiciones');
       }
+      
+      console.log('[CategoryForm] Proceso completado, cerrando formulario');
       onClose();
     } catch (err) {
+      console.error('[CategoryForm] Error en handleSubmit:', err);
       setError(err?.data?.message || 'Error al guardar la categoría');
     }
   };

@@ -4,6 +4,7 @@ import sequelize from '../config/sequelize.js';
 import User from './User.js';
 import Category from './Category.js';
 import Subcategory from './Subcategory.js';
+import Product from './Product.js'; // ← Nuevo import
 import Project from './Project.js';
 import BlogPost from './BlogPost.js';
 import Subscriber from './Subscriber.js';
@@ -21,29 +22,27 @@ export {
   User,
   Category,
   Subcategory,
+  Product, // ← Nueva exportación
   Project,
   BlogPost,
   Subscriber,
   MediaFile
-
 };
 
 // Función para sincronizar todos los modelos
 export async function syncAllModels(force = false) {
-  // ✅ CAMBIO: Detectar entorno para decidir estrategia de sincronización
   const env = process.env.NODE_ENV || 'development';
   const useAlter = env === 'development' && !force;
   
   try {
     console.log('🔧 Sincronizando modelos con la base de datos...');
 
-    // ✅ NUEVO: Función para limpiar ENUMs problemáticos
+    // Función para limpiar ENUMs problemáticos
     async function cleanupEnumTypes() {
       if (useAlter) {
         try {
           console.log('🧹 Limpiando tipos ENUM problemáticos...');
 
-          // Verificar y limpiar enum_Projects_tags si existe
           const enumExistsQuery = `
             SELECT 1 FROM pg_type WHERE typname = 'enum_Projects_tags';
           `;
@@ -53,10 +52,7 @@ export async function syncAllModels(force = false) {
           if (enumExists && enumExists.length > 0) {
             console.log('🗑️  Eliminando tipo ENUM anterior: enum_Projects_tags');
 
-            // Primero, eliminar la columna que usa el ENUM
             await sequelize.query('ALTER TABLE "Projects" DROP COLUMN IF EXISTS "tags" CASCADE;');
-
-            // Luego eliminar el tipo ENUM
             await sequelize.query('DROP TYPE IF EXISTS "enum_Projects_tags" CASCADE;');
 
             console.log('✅ Tipo ENUM eliminado exitosamente');
@@ -68,16 +64,15 @@ export async function syncAllModels(force = false) {
       }
     }
 
-    // Ejecutar limpieza antes de la sincronización
     await cleanupEnumTypes();
 
     if (force) {
       console.log('⚠️  MODO FORCE: Recreando todas las tablas (SE PERDERÁN LOS DATOS)');
 
-      // Eliminar tablas en orden inverso para evitar conflictos de FK
       console.log('🗑️  Eliminando tablas existentes...');
 
-      const tablesToDrop = ['BlogPosts', 'Subcategories', 'Projects', 'Subscribers', 'Categories', 'Users', 'MediaFiles'];
+      // ← Actualizar lista con Products
+      const tablesToDrop = ['BlogPosts', 'Products', 'Subcategories', 'Projects', 'Subscribers', 'Categories', 'Users', 'MediaFiles'];
 
       for (const tableName of tablesToDrop) {
         try {
@@ -93,13 +88,11 @@ export async function syncAllModels(force = false) {
       console.log('🔄 MODO PRODUCCIÓN: Sincronización segura sin ALTER');
     }
 
-    // Sincronizar modelos en orden correcto
     console.log('🔄 Creando/actualizando tablas en orden...');
 
-    // Configurar opciones de sincronización
     const syncOptions = {
       force: force,
-      alter: useAlter // Usar ALTER en desarrollo para preservar datos
+      alter: useAlter
     };
 
     // 1. Tablas independientes primero
@@ -115,9 +108,13 @@ export async function syncAllModels(force = false) {
     await Project.sync(syncOptions);
     console.log('✅ Tabla Projects sincronizada');
 
-    // 2. Tablas con dependencias
+    // 2. Tablas con dependencias (orden importante)
     await Subcategory.sync(syncOptions);
     console.log('✅ Tabla Subcategories sincronizada');
+
+    // ← Sincronizar Products después de Subcategories
+    await Product.sync(syncOptions);
+    console.log('✅ Tabla Products sincronizada');
 
     await BlogPost.sync(syncOptions);
     console.log('✅ Tabla BlogPosts sincronizada');
@@ -129,8 +126,6 @@ export async function syncAllModels(force = false) {
     return true;
   } catch (error) {
     console.error('❌ Error al sincronizar modelos:', error.message);
-    // Eliminar fallback peligroso: NO intentar sequelize.sync global si falla la sincronización ordenada
-    // Así evitamos pérdida de datos accidental
     throw error;
   }
 }
@@ -140,6 +135,7 @@ export default {
   User,
   Category,
   Subcategory,
+  Product, 
   Project,
   BlogPost,
   Subscriber,

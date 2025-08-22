@@ -1,14 +1,18 @@
 import { Subcategory, Category } from '../data/models/index.js';
 import { uploadResponsiveImage, deleteResponsiveImages } from '../config/cloudinary.js';
+import { generateSlug } from '../utils/slugify.js';
 
 // Obtener todas las subcategorías
 export const getAllSubcategories = async (req, res) => {
   try {
-    const { categoryId, activeOnly = true, featured = false } = req.query;
+    const { categoryId, activeOnly = true, active = true, featured = false } = req.query;
 
     const whereClause = {};
     
-    if (activeOnly === 'true') whereClause.isActive = true;
+    // Usar el parámetro 'active' si se proporciona, sino usar 'activeOnly'
+    const shouldFilterActive = active !== undefined ? active === 'true' : activeOnly === 'true';
+    if (shouldFilterActive) whereClause.isActive = true;
+    
     if (categoryId) whereClause.categoryId = categoryId;
     if (featured === 'true') whereClause.isFeatured = true;
 
@@ -158,6 +162,7 @@ export const createSubcategory = async (req, res) => {
     // Crear la subcategoría
     const subcategoryData = {
       name: name.trim(),
+      slug: generateSlug(name.trim()),
       description: description?.trim(),
       content: content?.trim(),
       categoryId,
@@ -206,10 +211,19 @@ export const createSubcategory = async (req, res) => {
 // Actualizar subcategoría
 export const updateSubcategory = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { slug, id } = req.params;
     const updateData = req.body;
 
-    const subcategory = await Subcategory.findByPk(id);
+    let subcategory;
+    
+    // Buscar por ID o por slug dependiendo de qué parámetro se proporcionó
+    if (id) {
+      subcategory = await Subcategory.findByPk(id);
+    } else if (slug) {
+      subcategory = await Subcategory.findOne({
+        where: { slug: slug }
+      });
+    }
 
     if (!subcategory) {
       return res.status(404).json({
@@ -227,6 +241,11 @@ export const updateSubcategory = async (req, res) => {
           message: 'La categoría especificada no existe'
         });
       }
+    }
+
+    // Si se está actualizando el nombre, generar nuevo slug
+    if (updateData.name && updateData.name.trim() !== subcategory.name) {
+      updateData.slug = generateSlug(updateData.name.trim());
     }
 
     await subcategory.update(updateData);
@@ -257,7 +276,7 @@ export const updateSubcategory = async (req, res) => {
 // Subir imagen destacada para subcategoría
 export const uploadSubcategoryImage = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { slug } = req.params;
     const { type = 'featured' } = req.body; // 'featured' o 'gallery'
     
     if (!req.file) {
@@ -267,7 +286,8 @@ export const uploadSubcategoryImage = async (req, res) => {
       });
     }
 
-    const subcategory = await Subcategory.findByPk(id, {
+    const subcategory = await Subcategory.findOne({
+      where: { slug: slug },
       include: [{
         model: Category,
         as: 'category',
@@ -324,12 +344,15 @@ export const uploadSubcategoryImage = async (req, res) => {
   }
 };
 
-// Eliminar subcategoría (soft delete)
+// Eliminar subcategoría (soft delete por defecto, hard delete opcional)
 export const deleteSubcategory = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { slug } = req.params;
+    const { permanent = false } = req.query; // Nuevo parámetro para hard delete
 
-    const subcategory = await Subcategory.findByPk(id);
+    const subcategory = await Subcategory.findOne({
+      where: { slug: slug }
+    });
 
     if (!subcategory) {
       return res.status(404).json({
@@ -338,13 +361,33 @@ export const deleteSubcategory = async (req, res) => {
       });
     }
 
-    // Soft delete
-    await subcategory.update({ isActive: false });
+    if (permanent === 'true') {
+      // Hard delete - eliminar completamente
+      // Primero eliminar imágenes de Cloudinary si existen
+      if (subcategory.featuredImage) {
+        try {
+          await deleteResponsiveImages(subcategory.featuredImage);
+        } catch (cloudinaryError) {
+          console.error('Error eliminando imágenes de Cloudinary:', cloudinaryError);
+          // Continuar con la eliminación aunque falle Cloudinary
+        }
+      }
+      
+      await subcategory.destroy();
+      
+      res.json({
+        success: true,
+        message: 'Subcategoría eliminada permanentemente'
+      });
+    } else {
+      // Soft delete
+      await subcategory.update({ isActive: false });
 
-    res.json({
-      success: true,
-      message: 'Subcategoría eliminada exitosamente'
-    });
+      res.json({
+        success: true,
+        message: 'Subcategoría eliminada exitosamente'
+      });
+    }
   } catch (error) {
     console.error('Error eliminando subcategoría:', error);
     res.status(500).json({

@@ -1,6 +1,6 @@
 
 import { EdicionesPage, Hero,  SloganPage } from '../../components/layout/public';
-import ProjectSection from '../../components/layout/public/ProjectSection';
+import ProjectSection from '../../components/SectionHomePage/ProjectSection';
 import ShowroomSection from '../../components/SectionHomePage/ShowroomSection';
 import BlogSection from '../../components/SectionHomePage/BlogSection';
 
