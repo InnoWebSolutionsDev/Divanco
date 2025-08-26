@@ -24,7 +24,7 @@ const DashboardPage = () => {
       borderColor: 'border-blue-200 hover:border-blue-300',
       actions: [
         { label: 'Crear', icon: PlusIcon, href: '/admin/projects' }, // ✅ Corregido
-        { label: 'Ver todos', icon: EyeIcon, href: '/admin/projects' }, // ✅ Corregido
+    { label: 'Ver todos', icon: EyeIcon, href: '/admin/proyectosEdit' }, // ✅ Corregido
       ]
     },
     {
@@ -42,30 +42,18 @@ const DashboardPage = () => {
     },
     {
       id: 'categories',
-      title: 'Categorías',
+      title: 'Showroom',
       description: 'Categorías del showroom',
       icon: TagIcon,
       count: 8,
       color: 'bg-purple-50 text-purple-600',
       borderColor: 'border-purple-200 hover:border-purple-300',
       actions: [
-        { label: 'Crear', icon: PlusIcon, href: '/admin/categories' }, // ✅ Corregido
-        { label: 'Organizar', icon: Squares2X2Icon, href: '/admin/categories' }, // ✅ Corregido
+        { label: 'Crear', icon: PlusIcon, href: '/admin/showroom' }, // ✅ Actualizado a nueva ruta
+        { label: 'Organizar', icon: Squares2X2Icon, href: '/admin/showroom' }, // ✅ Actualizado a nueva ruta
       ]
     },
-    {
-      id: 'subcategories',
-      title: 'Materiales', // ✅ Cambié el nombre para que sea más claro
-      description: 'Materiales del showroom',
-      icon: Squares2X2Icon,
-      count: 15,
-      color: 'bg-orange-50 text-orange-600',
-      borderColor: 'border-orange-200 hover:border-orange-300',
-      actions: [
-        { label: 'Crear', icon: PlusIcon, href: '/admin/categories' }, // ✅ Apunta a categorías (materiales)
-        { label: 'Ver todos', icon: EyeIcon, href: '/admin/categories' }, // ✅ Apunta a categorías
-      ]
-    }
+   
   ];
 
   // ✅ Función mejorada para navegación
@@ -174,10 +162,7 @@ const DashboardPage = () => {
             <div className="text-sm text-gray-500">Entradas blog</div>
           </div>
           
-          <div className="text-center">
-            <div className="text-2xl font-light text-purple-600">23</div>
-            <div className="text-sm text-gray-500">Materiales totales</div> {/* ✅ Cambié a "Materiales" */}
-          </div>
+          
         </div>
       </div>
 

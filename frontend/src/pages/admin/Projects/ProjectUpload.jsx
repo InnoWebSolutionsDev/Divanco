@@ -16,13 +16,13 @@ import {
   useUploadProjectMediaMutation,
   useCreateProjectMutation,
   useToggleSliderImageMutation
-} from '../../features/projects/projectsApi';
+} from '../../../features/projects/projectsApi';
 import { 
   selectIsUploading, 
   selectUploadError,
   selectIsCreating,
   selectCreateError
-} from '../../features/projects/projectsSlice';
+} from '../../../features/projects/projectsSlice';
 
 const ProjectUpload = ({ projectId = null, onProjectCreated }) => {
   const dispatch = useDispatch();

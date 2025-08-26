@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Volume2, VolumeX, Maximize, RotateCcw } from 'lucide-react';
+import { MdPlayArrow, MdPause, MdVolumeUp, MdVolumeOff, MdFullscreen, MdRotateLeft } from 'react-icons/md';
 
 const VideoPlayer = ({ 
   video, 
@@ -136,7 +136,7 @@ const VideoPlayer = ({
           >
             {!isPlaying && (
               <div className="bg-black bg-opacity-50 rounded-full p-4 transition-all hover:bg-opacity-70">
-                <Play className="w-8 h-8 text-white fill-current" />
+                <MdPlayArrow className="w-8 h-8 text-white fill-current" />
               </div>
             )}
           </div>
@@ -161,14 +161,14 @@ const VideoPlayer = ({
                   onClick={togglePlay}
                   className="text-white hover:text-blue-400 transition-colors"
                 >
-                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                  {isPlaying ? <MdPause className="w-5 h-5" /> : <MdPlayArrow className="w-5 h-5" />}
                 </button>
 
                 <button
                   onClick={toggleMute}
                   className="text-white hover:text-blue-400 transition-colors"
                 >
-                  {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  {isMuted ? <MdVolumeOff className="w-5 h-5" /> : <MdVolumeUp className="w-5 h-5" />}
                 </button>
 
                 <div className="text-white text-sm">
@@ -187,7 +187,7 @@ const VideoPlayer = ({
                   className="text-white hover:text-blue-400 transition-colors"
                   title="Reiniciar"
                 >
-                  <RotateCcw className="w-5 h-5" />
+                  <MdRotateLeft className="w-5 h-5" />
                 </button>
 
                 <button
@@ -195,7 +195,7 @@ const VideoPlayer = ({
                   className="text-white hover:text-blue-400 transition-colors"
                   title="Pantalla completa"
                 >
-                  <Maximize className="w-5 h-5" />
+                  <MdFullscreen className="w-5 h-5" />
                 </button>
               </div>
             </div>

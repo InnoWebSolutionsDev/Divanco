@@ -2,7 +2,7 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 // Base query con autenticación automática
 const baseQuery = fetchBaseQuery({
-  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api',
+  baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
   prepareHeaders: (headers, { getState, endpoint }) => {
     const token = getState().auth.token;
     if (token) {
@@ -30,14 +30,26 @@ const baseQueryWithReauth = async (args, api, extraOptions) => {
     args.headers['content-type'] = 'application/json';
   }
   
-  let result = await baseQuery(args, api, extraOptions);
-  
-  if (result.error && result.error.status === 401) {
-    // Token expirado, limpiar estado de auth
-    api.dispatch({ type: 'auth/logout' });
+  try {
+    let result = await baseQuery(args, api, extraOptions);
+    
+    if (result.error && result.error.status === 401) {
+      // Token expirado, limpiar estado de auth
+      api.dispatch({ type: 'auth/logout' });
+    }
+    
+    return result;
+  } catch (error) {
+    // Manejar errores de red y otros errores inesperados
+    console.error('[API] Error en baseQueryWithReauth:', error);
+    return {
+      error: {
+        status: 'CUSTOM_ERROR',
+        data: { message: 'Error de conexión con el servidor' },
+        error: error.message
+      }
+    };
   }
-  
-  return result;
 };
 
 // API base para todas las queries
@@ -49,6 +61,7 @@ export const baseApi = createApi({
     'Auth', 
     'Category', 
     'Subcategory', 
+    'Product', // ✅ Agregar Product
     'Project', 
     'BlogPost', 
     'Subscriber',

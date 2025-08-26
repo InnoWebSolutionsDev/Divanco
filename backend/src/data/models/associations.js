@@ -1,9 +1,9 @@
 import Category from './Category.js';
 import Subcategory from './Subcategory.js';
+import Product from './Product.js'; // ← Nuevo import
 import Project from './Project.js';
 import BlogPost from './BlogPost.js';
-
-import MediaFile from './MediaFile.js'; // ✅ Nuevo import
+import MediaFile from './MediaFile.js';
 
 // Definir todas las relaciones aquí
 export function defineAssociations() {
@@ -19,6 +19,18 @@ export function defineAssociations() {
     as: 'category' 
   });
 
+  // ← Nueva relación: Subcategoría → Productos
+  Subcategory.hasMany(Product, {
+    foreignKey: 'subcategoryId',
+    as: 'products',
+    onDelete: 'CASCADE'
+  });
+
+  Product.belongsTo(Subcategory, {
+    foreignKey: 'subcategoryId',
+    as: 'subcategory'
+  });
+
   // Relación Blog con Proyectos (opcional)
   Project.hasMany(BlogPost, { 
     foreignKey: 'projectId', 
@@ -31,19 +43,15 @@ export function defineAssociations() {
     as: 'project' 
   });
 
-  // ✅ Nuevas relaciones para MediaFiles
+  // Relaciones para MediaFiles
   Project.hasMany(MediaFile, {
     foreignKey: 'projectId',
     as: 'media',
-    onDelete: 'CASCADE' // Si se elimina el proyecto, se eliminan todos sus archivos
+    onDelete: 'CASCADE'
   });
 
   MediaFile.belongsTo(Project, {
     foreignKey: 'projectId',
     as: 'project'
   });
-
-  
-
- 
 }

@@ -7,7 +7,7 @@ import { Op } from 'sequelize';
 export const getAllBlogPosts = async (req, res) => {
   try {
     const { 
-      status ,
+      status = 'published', // Por defecto solo posts publicados
       project,
       tags,
       featured = false,
@@ -17,7 +17,8 @@ export const getAllBlogPosts = async (req, res) => {
 
     const whereClause = {};
     
-   if (status && status !== 'all') whereClause.status = status;
+    // Solo aplicar filtro de status si no es 'all' (para admin)
+    if (status && status !== 'all') whereClause.status = status;
     if (project) whereClause.projectId = project;
     if (featured === 'true') whereClause.isFeatured = true;
     if (tags) {
@@ -69,6 +70,7 @@ export const getAllBlogPosts = async (req, res) => {
 };
 
 // Obtener post por slug
+// Obtener un post del blog por slug (público)
 export const getBlogPostBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -131,11 +133,51 @@ export const getBlogPostBySlug = async (req, res) => {
   }
 };
 
+// Obtener un post del blog por ID (para edición - requiere autenticación)
+export const getBlogPostById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🔍 [BACKEND] Buscando post por ID:', id);
+
+    const post = await BlogPost.findByPk(id, {
+      include: [
+        {
+          model: Project,
+          as: 'project',
+          attributes: ['id', 'title', 'slug', 'year'],
+          required: false
+        }
+      ]
+    });
+
+    if (!post) {
+      console.warn('❌ [BACKEND] Post no encontrado para ID:', id);
+      return res.status(404).json({
+        success: false,
+        message: 'Post no encontrado'
+      });
+    }
+
+    console.log('✅ [BACKEND] Post encontrado:', post.title);
+    res.json({
+      success: true,
+      data: post
+    });
+  } catch (error) {
+    console.error('❌ [BACKEND] Error obteniendo post por ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
 // Crear nuevo post
 export const createBlogPost = async (req, res) => {
   try {
     const {
       title,
+      author,
       content,
       slug,
       excerpt,
@@ -154,10 +196,21 @@ export const createBlogPost = async (req, res) => {
       });
     }
 
-    if (!content || content.trim().length < 10) {
+    // Validación para array de bloques
+    if (!Array.isArray(content) || content.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'El contenido es requerido'
+        message: 'El contenido es requerido y debe tener al menos un bloque.'
+      });
+    }
+    // Al menos un bloque de texto con más de 10 caracteres
+    const hasValidTextBlock = content.some(
+      block => block.type === 'text' && typeof block.value === 'string' && block.value.trim().length >= 10
+    );
+    if (!hasValidTextBlock) {
+      return res.status(400).json({
+        success: false,
+        message: 'El contenido debe incluir al menos un bloque de texto con 10 caracteres o más.'
       });
     }
 
@@ -177,7 +230,8 @@ export const createBlogPost = async (req, res) => {
     const postData = {
       slug,
       title: title.trim(),
-      content: content.trim(),
+      author: author?.trim() || null,
+      content, // array de bloques
       excerpt: excerpt?.trim(),
       projectId: projectId || null,
       tags: Array.isArray(tags) ? tags : [],
@@ -242,20 +296,71 @@ export const createBlogPost = async (req, res) => {
 export const updateBlogPost = async (req, res) => {
   try {
     const { id } = req.params;
-
     const updateData = req.body;
+
     // Si projectId viene como string vacío, convertir a null
     if (updateData.projectId === '') {
       updateData.projectId = null;
     }
 
-    const post = await BlogPost.findByPk(id);
+    // Si se envía featuredImageIndex, copiar la imagen correspondiente
+    if (
+      typeof updateData.featuredImageIndex !== 'undefined' &&
+      updateData.images &&
+      Array.isArray(updateData.images)
+    ) {
+      const idx = parseInt(updateData.featuredImageIndex);
+      if (!isNaN(idx) && idx >= 0 && idx < updateData.images.length) {
+        updateData.featuredImage = updateData.images[idx];
+      }
+      // Elimina el índice del update para no guardarlo en la DB
+      delete updateData.featuredImageIndex;
+    }
 
+    const post = await BlogPost.findByPk(id);
     if (!post) {
       return res.status(404).json({
         success: false,
         message: 'Post no encontrado'
       });
+    }
+
+    // Validaciones robustas solo sobre los campos enviados
+    if (updateData.title && updateData.title.trim().length < 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'El título debe tener al menos 5 caracteres'
+      });
+    }
+
+    if (updateData.content) {
+      if (!Array.isArray(updateData.content) || updateData.content.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'El contenido debe ser un array de bloques y tener al menos un bloque.'
+        });
+      }
+      const hasValidTextBlock = updateData.content.some(
+        block => block.type === 'text' && typeof block.value === 'string' && block.value.trim().length >= 10
+      );
+      if (!hasValidTextBlock) {
+        return res.status(400).json({
+          success: false,
+          message: 'El contenido debe incluir al menos un bloque de texto con 10 caracteres o más.'
+        });
+      }
+    }
+
+    if (typeof updateData.author !== 'undefined' && updateData.author !== null) {
+      if (typeof updateData.author !== 'string' || updateData.author.trim().length === 0) {
+        updateData.author = null;
+      } else {
+        updateData.author = updateData.author.trim();
+      }
+    }
+
+    if (typeof updateData.excerpt !== 'undefined' && updateData.excerpt !== null) {
+      updateData.excerpt = updateData.excerpt.trim();
     }
 
     // Si se está publicando por primera vez
@@ -271,7 +376,6 @@ export const updateBlogPost = async (req, res) => {
     // Recargar con relaciones
     await post.reload({
       include: [
-       
         {
           model: Project,
           as: 'project',
@@ -287,7 +391,6 @@ export const updateBlogPost = async (req, res) => {
         const subscribers = await Subscriber.findAll({
           where: { isActive: true }
         });
-        
         if (subscribers.length > 0) {
           await sendBlogNotification(subscribers, post);
         }
@@ -310,6 +413,41 @@ export const updateBlogPost = async (req, res) => {
   }
 };
 
+// Subir imagen destacada (standalone)
+export const uploadFeaturedImage = async (req, res) => {
+  try {
+    console.log('[BACKEND] uploadFeaturedImage iniciado');
+    console.log('[BACKEND] req.file:', req.file);
+    console.log('[BACKEND] req.body:', req.body);
+    
+    if (!req.file) {
+      console.warn('[BACKEND] No se proporcionó ningún archivo');
+      return res.status(400).json({
+        success: false,
+        message: 'No se proporcionó ningún archivo'
+      });
+    }
+
+    // Usar la función uploadResponsiveImage de Cloudinary
+    const results = await uploadResponsiveImage(req.file.path, 'blog-featured');
+
+    console.log('[BACKEND] Imagen destacada subida exitosamente:', results);
+
+    res.json({
+      success: true,
+      message: 'Imagen subida exitosamente',
+      ...results
+    });
+
+  } catch (error) {
+    console.error('[BACKEND] Error en uploadFeaturedImage:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
 // Subir imagen para post
 export const uploadBlogPostImage = async (req, res) => {
   try {
@@ -319,15 +457,38 @@ export const uploadBlogPostImage = async (req, res) => {
     // Soportar tanto single como multiple
     const files = req.files && req.files.length > 0 ? req.files : (req.file ? [req.file] : []);
     console.log('[BACKEND] uploadBlogPostImage - Archivos recibidos:', files.length);
+    console.log('[BACKEND] req.files:', req.files);
+    console.log('[BACKEND] req.body:', req.body);
+    
     if (!files.length) {
+      console.warn('[BACKEND] No se proporcionó ningún archivo');
       return res.status(400).json({
         success: false,
         message: 'No se proporcionó ningún archivo'
       });
     }
 
+    // Si no hay ID, es una subida independiente (para imagen destacada antes de crear el post)
+    if (!id || id === 'new') {
+      console.log('[BACKEND] Subiendo imagen sin post específico');
+      const folder = `blog/${new Date().getFullYear()}/uploads`;
+      const file = files[0]; // Solo tomar el primer archivo
+      const imageResult = await uploadResponsiveImage(file.path, folder);
+      
+      return res.json({
+        success: true,
+        message: 'Imagen subida exitosamente',
+        data: imageResult,
+        // Para compatibilidad con el frontend
+        desktop: imageResult.desktop,
+        mobile: imageResult.mobile,
+        url: imageResult.desktop || imageResult.url
+      });
+    }
+
     const post = await BlogPost.findByPk(id);
     if (!post) {
+      console.warn('[BACKEND] Post no encontrado para id:', id);
       return res.status(404).json({
         success: false,
         message: 'Post no encontrado'
@@ -344,6 +505,7 @@ export const uploadBlogPostImage = async (req, res) => {
     let updateData = {};
     if (type === 'featured') {
       // Solo tomar la primera imagen
+      console.log('[BACKEND] Guardando como imagen destacada:', newImages[0]);
       if (post.featuredImage) {
         try {
           await deleteResponsiveImages(post.featuredImage);
@@ -355,9 +517,11 @@ export const uploadBlogPostImage = async (req, res) => {
     } else if (type === 'gallery') {
       // Acumular todas las imágenes nuevas
       const currentImages = post.images || [];
+      console.log('[BACKEND] Agregando a galería. Imágenes actuales:', currentImages.length, 'Nuevas:', newImages.length);
       updateData.images = [...currentImages, ...newImages];
     }
 
+    console.log('[BACKEND] updateData a guardar:', updateData);
     await post.update(updateData);
 
     res.json({

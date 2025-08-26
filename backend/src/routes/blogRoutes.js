@@ -3,10 +3,12 @@ import multer from 'multer';
 import {
   getAllBlogPosts,
   getBlogPostBySlug,
+  getBlogPostById,
   createBlogPost,
   updateBlogPost,
   deleteBlogPost,
   uploadBlogPostImage,
+  uploadFeaturedImage,
   uploadBlogPostVideo,
   deleteBlogPostImage,
   deleteBlogPostVideo,
@@ -67,6 +69,11 @@ const uploadVideo = multer({
 router.get('/', getAllBlogPosts);
 router.get('/featured', getFeaturedBlogPosts);
 router.get('/recent', getRecentBlogPosts);
+
+// Ruta protegida para obtener por ID (para edición)
+router.get('/id/:id', authenticateToken, requireRole(['admin']), getBlogPostById);
+
+// Ruta pública para obtener por slug (debe ir al final para evitar conflictos)
 router.get('/:slug', getBlogPostBySlug);
 
 // Rutas protegidas (solo autores y admins pueden crear/editar)
@@ -74,11 +81,23 @@ router.post('/', authenticateToken, requireRole(['admin']), createBlogPost);
 router.put('/:id', authenticateToken, requireRole(['admin']), updateBlogPost);
 router.delete('/:id', authenticateToken, requireRole(['admin']), deleteBlogPost);
 
-// Subida de archivos
+// Ruta específica para subir imagen destacada
+router.post('/upload-featured-image', 
+  authenticateToken, 
+  requireRole(['admin']), 
+  uploadImage.single('image'), 
+  uploadFeaturedImage
+);
+
+// Middleware dinámico para aceptar single o array de imágenes
+function dynamicImageUpload(req, res, next) {
+  uploadImage.any()(req, res, next);
+}
+
 router.post('/:id/upload-image', 
   authenticateToken, 
   requireRole(['admin']), 
-  uploadImage.array('image', 10), 
+  dynamicImageUpload, 
   uploadBlogPostImage
 );
 

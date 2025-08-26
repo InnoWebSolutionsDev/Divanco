@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useGetFeaturedBlogPostsQuery } from '../../../features/blog';
+import { useGetFeaturedBlogPostsQuery } from '../../features/blog';
 
 const BlogSection = () => {
   const { data: blogResponse, isLoading, error } = useGetFeaturedBlogPostsQuery(3);
@@ -64,7 +64,7 @@ const BlogSection = () => {
                 {/* Date */}
                 <div className="mb-4">
                   <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">
-                    {formatDate(post.publishedAt)}
+                    {post.date}
                   </span>
                 </div>
 
@@ -72,13 +72,19 @@ const BlogSection = () => {
                 <div className="relative mb-6 overflow-hidden bg-gray-100">
                   <div className="aspect-[4/3] bg-gray-200">
                     <img
-                      src={getImageUrl(post)}
+                      src={post.image}
                       alt={post.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => {
-                        e.target.src = '/images/blog/default-blog.jpg';
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
                       }}
                     />
+                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style={{display: 'none'}}>
+                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
 
@@ -114,7 +120,7 @@ const BlogSection = () => {
                 {/* Date Column - 2 columnas */}
                 <div className="col-span-2">
                   <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">
-                    {formatDate(post.publishedAt)}
+                    {post.date}
                   </span>
                 </div>
 
@@ -148,13 +154,19 @@ const BlogSection = () => {
                   <div className="relative overflow-hidden bg-gray-100">
                     <div className="aspect-[4/3] bg-gray-200">
                       <img
-                        src={getImageUrl(post)}
+                        src={post.image}
                         alt={post.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         onError={(e) => {
-                          e.target.src = '/images/blog/default-blog.jpg';
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
                         }}
                       />
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style={{display: 'none'}}>
+                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </div>

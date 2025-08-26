@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, Image, Video, Trash2 } from 'lucide-react';
+import { MdUpload, MdClose, MdImage, MdVideoLibrary, MdDelete } from 'react-icons/md';
 
 const MediaUploader = ({ 
   onImageUpload, 
@@ -99,7 +99,7 @@ const MediaUploader = ({
               : 'border-gray-300 hover:border-gray-400'
           }`}
         >
-          <Image size={20} />
+          <MdImage size={20} />
           <span>Imágenes</span>
         </button>
         <button
@@ -111,7 +111,7 @@ const MediaUploader = ({
               : 'border-gray-300 hover:border-gray-400'
           }`}
         >
-          <Video size={20} />
+          <MdVideoLibrary size={20} />
           <span>Videos</span>
         </button>
       </div>
@@ -143,9 +143,9 @@ const MediaUploader = ({
             uploadType === 'image' ? 'bg-blue-100' : 'bg-purple-100'
           }`}>
             {uploadType === 'image' ? (
-              <Image className={`w-8 h-8 ${uploadType === 'image' ? 'text-blue-600' : 'text-purple-600'}`} />
+              <MdImage className={`w-8 h-8 ${uploadType === 'image' ? 'text-blue-600' : 'text-purple-600'}`} />
             ) : (
-              <Video className={`w-8 h-8 ${uploadType === 'video' ? 'text-purple-600' : 'text-blue-600'}`} />
+              <MdVideoLibrary className={`w-8 h-8 ${uploadType === 'video' ? 'text-purple-600' : 'text-blue-600'}`} />
             )}
           </div>
           
@@ -203,7 +203,7 @@ const MediaUploader = ({
                         }}
                         className="opacity-0 group-hover:opacity-100 bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-all"
                       >
-                        <Trash2 size={16} />
+                        <MdDelete size={16} />
                       </button>
                     </div>
                     {image.caption && (
@@ -239,7 +239,7 @@ const MediaUploader = ({
                         }}
                         className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 transition-all opacity-75 hover:opacity-100"
                       >
-                        <Trash2 size={16} />
+                        <MdDelete size={16} />
                       </button>
                     </div>
                     <div className="mt-2 space-y-1">

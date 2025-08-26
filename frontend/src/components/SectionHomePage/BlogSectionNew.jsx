@@ -1,9 +1,27 @@
 import { Link } from 'react-router-dom';
-import { useGetFeaturedBlogPostsQuery } from '../../../features/blog';
+import { useGetFeaturedBlogPostsQuery, useGetRecentBlogPostsQuery } from '../../features/blog';
 
 const BlogSection = () => {
-  const { data: blogResponse, isLoading, error } = useGetFeaturedBlogPostsQuery(3);
-  const blogPosts = blogResponse?.data || [];
+  const { data: featuredResponse, isLoading: featuredLoading, error: featuredError } = useGetFeaturedBlogPostsQuery(3);
+  const { data: recentResponse, isLoading: recentLoading, error: recentError } = useGetRecentBlogPostsQuery(3);
+  
+  // Usar posts destacados si existen, si no usar posts recientes
+  const featuredPosts = featuredResponse?.data || [];
+  const recentPosts = recentResponse?.data || [];
+  const blogPosts = featuredPosts.length > 0 ? featuredPosts : recentPosts;
+  
+  const isLoading = featuredLoading || recentLoading;
+  const error = featuredError || recentError;
+
+  // Debug logs
+  console.log('🔍 [BlogSectionNew] Debug info:');
+  console.log('📊 featuredLoading:', featuredLoading, 'recentLoading:', recentLoading);
+  console.log('❌ featuredError:', featuredError, 'recentError:', recentError);
+  console.log('📝 featuredResponse:', featuredResponse);
+  console.log('📝 recentResponse:', recentResponse);
+  console.log('📋 featuredPosts:', featuredPosts, 'length:', featuredPosts.length);
+  console.log('📋 recentPosts:', recentPosts, 'length:', recentPosts.length);
+  console.log('� blogPosts (final):', blogPosts, 'length:', blogPosts.length);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -12,15 +30,68 @@ const BlogSection = () => {
   };
 
   const getImageUrl = (post) => {
-    return post.featuredImage?.urls?.desktop || 
-           post.featuredImage?.urls?.mobile || 
-           post.featuredImage?.url || 
-           '/images/blog/default-blog.jpg';
+    console.log('🖼️ [getImageUrl] Post:', post.title);
+    console.log('🖼️ [getImageUrl] featuredImage:', post.featuredImage);
+    
+    // Si es un objeto Cloudinary con variantes
+    if (post.featuredImage && typeof post.featuredImage === 'object') {
+      const imageUrl = post.featuredImage.desktop?.url || 
+                      post.featuredImage.mobile?.url || 
+                      post.featuredImage.thumbnail?.url ||
+                      post.featuredImage.url;
+      
+      console.log('🖼️ [getImageUrl] URL encontrada:', imageUrl);
+      return imageUrl || '/images/blog/default-blog.jpg';
+    }
+    
+    // Si es una URL directa (string)
+    if (typeof post.featuredImage === 'string') {
+      console.log('🖼️ [getImageUrl] URL directa:', post.featuredImage);
+      return post.featuredImage;
+    }
+    
+    console.log('🖼️ [getImageUrl] Usando imagen por defecto');
+    return '/images/blog/default-blog.jpg';
   };
 
-  // Si no hay posts o está cargando, no mostrar la sección
-  if (isLoading || error || !blogPosts.length) {
-    return null;
+  // Debug: mostrar siempre algo para ver si el componente se renderiza
+  if (isLoading) {
+    console.log('⏳ [BlogSectionNew] Está cargando...');
+    return (
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-gray-500">Cargando posts del blog...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error) {
+    console.log('❌ [BlogSectionNew] Error:', error);
+    return (
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-red-500">Error cargando posts del blog</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!blogPosts.length) {
+    console.log('📭 [BlogSectionNew] No hay posts disponibles');
+    return (
+      <section className="py-16 lg:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-gray-500">No hay posts del blog disponibles</p>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (
@@ -64,7 +135,7 @@ const BlogSection = () => {
                 {/* Date */}
                 <div className="mb-4">
                   <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">
-                    {post.date}
+                    {formatDate(post.publishedAt)}
                   </span>
                 </div>
 
@@ -72,19 +143,13 @@ const BlogSection = () => {
                 <div className="relative mb-6 overflow-hidden bg-gray-100">
                   <div className="aspect-[4/3] bg-gray-200">
                     <img
-                      src={post.image}
+                      src={getImageUrl(post)}
                       alt={post.title}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
+                        e.target.src = '/images/blog/default-blog.jpg';
                       }}
                     />
-                    <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style={{display: 'none'}}>
-                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                    </div>
                   </div>
                 </div>
 
@@ -120,7 +185,7 @@ const BlogSection = () => {
                 {/* Date Column - 2 columnas */}
                 <div className="col-span-2">
                   <span className="text-xs font-medium text-gray-500 tracking-wider uppercase">
-                    {post.date}
+                    {formatDate(post.publishedAt)}
                   </span>
                 </div>
 
@@ -154,19 +219,13 @@ const BlogSection = () => {
                   <div className="relative overflow-hidden bg-gray-100">
                     <div className="aspect-[4/3] bg-gray-200">
                       <img
-                        src={post.image}
+                        src={getImageUrl(post)}
                         alt={post.title}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
+                          e.target.src = '/images/blog/default-blog.jpg';
                         }}
                       />
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center" style={{display: 'none'}}>
-                        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      </div>
                     </div>
                   </div>
                 </div>

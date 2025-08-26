@@ -308,12 +308,7 @@ const ProjectsPage = () => {
       {/* Sección adicional */}
       <section className="py-12 md:py-16 px-4 sm:px-6 lg:px-8"> {/* ✅ Reducido padding */}
         <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-xl md:text-2xl font-light mb-4 uppercase tracking-wider text-gray-900"> {/* ✅ Reducido tamaño */}
-            Explora Nuestros Proyectos
-          </h2>
-          <p className="text-sm md:text-base text-gray-600 font-light max-w-2xl mx-auto"> {/* ✅ Reducido tamaño */}
-            Cada proyecto refleja nuestra pasión por el diseño excepcional y la atención al detalle.
-          </p>
+          
         </div>
 
         <FilterProjects />

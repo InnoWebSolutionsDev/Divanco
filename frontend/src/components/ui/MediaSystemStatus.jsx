@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Upload, Video, Image as ImageIcon } from 'lucide-react';
+import { MdCheckCircle, MdUpload, MdVideoLibrary, MdImage } from 'react-icons/md';
 
 const MediaSystemStatus = () => {
   const features = [
@@ -48,9 +48,9 @@ const MediaSystemStatus = () => {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'complete':
-        return <CheckCircle className="w-5 h-5 text-green-500" />;
+        return <MdCheckCircle className="w-5 h-5 text-green-500" />;
       case 'in-progress':
-        return <Upload className="w-5 h-5 text-yellow-500 animate-pulse" />;
+        return <MdUpload className="w-5 h-5 text-yellow-500 animate-pulse" />;
       default:
         return <div className="w-5 h-5 border-2 border-gray-300 rounded-full" />;
     }
@@ -60,8 +60,8 @@ const MediaSystemStatus = () => {
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="flex items-center space-x-3 mb-6">
         <div className="flex items-center space-x-2">
-          <ImageIcon className="w-6 h-6 text-blue-600" />
-          <Video className="w-6 h-6 text-purple-600" />
+          <MdImage className="w-6 h-6 text-blue-600" />
+          <MdVideoLibrary className="w-6 h-6 text-purple-600" />
         </div>
         <h2 className="text-2xl font-bold text-gray-900">
           Sistema de Medios para Blog - Estado Completo

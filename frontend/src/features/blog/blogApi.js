@@ -4,7 +4,7 @@ export const blogApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // Obtener posts del blog
     getBlogPosts: builder.query({
-      query: ({ limit = 10, page = 1, featured, author } = {}) => {
+      query: ({ limit = 10, page = 1, featured } = {}) => {
         const params = new URLSearchParams({
           limit: limit.toString(),
           page: page.toString(),
@@ -35,6 +35,14 @@ export const blogApi = baseApi.injectEndpoints({
       query: (slug) => `/blog/${slug}`,
       providesTags: (result, error, slug) => [
         { type: 'BlogPost', id: slug }
+      ],
+    }),
+
+    // Admin: Obtener post por ID (para edición)
+    getBlogPostById: builder.query({
+      query: (id) => `/blog/id/${id}`,
+      providesTags: (result, error, id) => [
+        { type: 'BlogPost', id: id }
       ],
     }),
 
@@ -91,6 +99,15 @@ export const blogApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // Admin: Eliminar post
+    deleteBlogPost: builder.mutation({
+      query: (id) => ({
+        url: `/blog/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['BlogPost'],
+    }),
+
     // Admin: Eliminar imagen de post
     deleteBlogPostImage: builder.mutation({
       query: ({ id, imageId }) => ({
@@ -120,11 +137,13 @@ export const {
   useGetFeaturedBlogPostsQuery,
   useGetRecentBlogPostsQuery,
   useGetBlogPostBySlugQuery,
+  useGetBlogPostByIdQuery,
   useGetRelatedBlogPostsQuery,
   useCreateBlogPostMutation,
   useUpdateBlogPostMutation,
   useUploadBlogPostImageMutation,
   useUploadBlogPostVideoMutation,
+  useDeleteBlogPostMutation,
   useDeleteBlogPostImageMutation,
   useDeleteBlogPostVideoMutation,
 } = blogApi;

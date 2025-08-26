@@ -20,6 +20,7 @@ const BlogPage = () => {
   } = useGetBlogPostsQuery({
     page: currentPage,
     limit: 9,
+    status: 'published', // Solo mostrar posts publicados
     ...filters
   });
 
@@ -36,10 +37,28 @@ const BlogPage = () => {
   };
 
   const getImageUrl = (post) => {
-    return post.featuredImage?.desktop?.url ||
-           post.featuredImage?.mobile?.url ||
-           post.featuredImage?.thumbnail?.url ||
-           '/images/blog/default-blog.jpg';
+    console.log('🖼️ [BlogPage getImageUrl] Post:', post.title);
+    console.log('🖼️ [BlogPage getImageUrl] featuredImage:', post.featuredImage);
+    
+    // Si es un objeto Cloudinary con variantes
+    if (post.featuredImage && typeof post.featuredImage === 'object') {
+      const imageUrl = post.featuredImage.desktop?.url || 
+                      post.featuredImage.mobile?.url || 
+                      post.featuredImage.thumbnail?.url ||
+                      post.featuredImage.url;
+      
+      console.log('🖼️ [BlogPage getImageUrl] URL encontrada:', imageUrl);
+      return imageUrl || '/images/blog/default-blog.jpg';
+    }
+    
+    // Si es una URL directa (string)
+    if (typeof post.featuredImage === 'string') {
+      console.log('🖼️ [BlogPage getImageUrl] URL directa:', post.featuredImage);
+      return post.featuredImage;
+    }
+    
+    console.log('🖼️ [BlogPage getImageUrl] Usando imagen por defecto');
+    return '/images/blog/default-blog.jpg';
   };
 
   if (postsLoading && !postsResponse) {

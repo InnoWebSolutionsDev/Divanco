@@ -36,37 +36,38 @@ export const categoriesApi = baseApi.injectEndpoints({
 
     // Admin: Actualizar categoría
     updateCategory: builder.mutation({
-      query: ({ slug, ...data }) => ({
-        url: `/categories/${slug}`,
+      query: ({ id, ...data }) => ({
+        url: `/categories/${id}`,
         method: 'PUT',
         body: data,
       }),
-      invalidatesTags: (result, error, { slug }) => [
-        { type: 'Category', id: slug },
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Category', id },
         'Category'
       ],
     }),
 
-    // Admin: Subir imagen a categoría
+    // Admin: Subir imagen a categoría (por ID)
     uploadCategoryImage: builder.mutation({
-      query: ({ slug, formData }) => ({
-        url: `/categories/${slug}/upload-image`,
+      query: ({ id, formData }) => ({
+        url: `/categories/${id}/upload-image`,
         method: 'POST',
         body: formData,
       }),
-      invalidatesTags: (result, error, { slug }) => [
-        { type: 'Category', id: slug }
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Category', id },
+        'Category'
       ],
     }),
 
-    // Admin: Toggle featured
-    toggleCategoryFeatured: builder.mutation({
-      query: (slug) => ({
-        url: `/categories/${slug}/toggle-featured`,
-        method: 'PATCH',
+    // Admin: Eliminar categoría
+    deleteCategory: builder.mutation({
+      query: (id) => ({
+        url: `/categories/${id}`,
+        method: 'DELETE',
       }),
-      invalidatesTags: (result, error, slug) => [
-        { type: 'Category', id: slug },
+      invalidatesTags: (result, error, id) => [
+        { type: 'Category', id },
         'Category'
       ],
     }),
@@ -80,5 +81,5 @@ export const {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useUploadCategoryImageMutation,
-  useToggleCategoryFeaturedMutation,
+  useDeleteCategoryMutation,
 } = categoriesApi;

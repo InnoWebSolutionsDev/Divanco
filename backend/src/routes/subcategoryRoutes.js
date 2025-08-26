@@ -38,9 +38,10 @@ router.get('/:categorySlug/:slug', getSubcategoryBySlug);
 
 // Rutas protegidas
 router.post('/', authenticateToken, requireRole(['admin']), createSubcategory);
-router.put('/:id', authenticateToken, requireRole(['admin']), updateSubcategory);
-router.delete('/:id', authenticateToken, requireRole(['admin']), deleteSubcategory);
-router.post('/:id/upload-image', 
+router.put('/:slug', authenticateToken, requireRole(['admin']), updateSubcategory);
+router.put('/id/:id', authenticateToken, requireRole(['admin']), updateSubcategory); // Nueva ruta por ID
+router.delete('/:slug', authenticateToken, requireRole(['admin']), deleteSubcategory);
+router.post('/:slug/upload-image', 
   authenticateToken, 
   requireRole(['admin']), 
   upload.single('image'), 
