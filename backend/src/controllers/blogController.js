@@ -7,7 +7,7 @@ import { Op } from 'sequelize';
 export const getAllBlogPosts = async (req, res) => {
   try {
     const { 
-      status ,
+      status = 'published', // Por defecto solo posts publicados
       project,
       tags,
       featured = false,
@@ -17,7 +17,8 @@ export const getAllBlogPosts = async (req, res) => {
 
     const whereClause = {};
     
-   if (status && status !== 'all') whereClause.status = status;
+    // Solo aplicar filtro de status si no es 'all' (para admin)
+    if (status && status !== 'all') whereClause.status = status;
     if (project) whereClause.projectId = project;
     if (featured === 'true') whereClause.isFeatured = true;
     if (tags) {

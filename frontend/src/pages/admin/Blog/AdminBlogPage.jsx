@@ -33,7 +33,7 @@ const AdminBlogPage = () => {
   } = useGetBlogPostsQuery({
     page: currentPage,
     limit: 10,
-    status: statusFilter === 'all' ? undefined : statusFilter,
+    status: statusFilter === 'all' ? 'all' : statusFilter, // Pasar 'all' explícitamente
     search: searchTerm || undefined
   });
 

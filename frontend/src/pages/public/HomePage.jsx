@@ -2,7 +2,7 @@
 import { EdicionesPage, Hero,  SloganPage } from '../../components/layout/public';
 import ProjectSection from '../../components/SectionHomePage/ProjectSection';
 import ShowroomSection from '../../components/SectionHomePage/ShowroomSection';
-import BlogSection from '../../components/SectionHomePage/BlogSection';
+import BlogSectionNew from '../../components/SectionHomePage/BlogSectionNew';
 
 const HomePage = () => {
   return (
@@ -12,7 +12,7 @@ const HomePage = () => {
       <Hero  />
       <SloganPage />
       <EdicionesPage />
-      <BlogSection />
+      <BlogSectionNew />
       <ShowroomSection />
       <ProjectSection />
 

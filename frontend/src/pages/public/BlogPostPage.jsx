@@ -45,6 +45,112 @@ const BlogPostPage = () => {
            '/images/blog/default-blog.jpg';
   };
 
+  // Función para renderizar el contenido de Editor.js
+  const renderContent = (content) => {
+    if (!content || !Array.isArray(content)) {
+      return <p className="text-gray-600">No hay contenido disponible.</p>;
+    }
+
+    return content.map((block, index) => {
+      switch (block.type) {
+        case 'text':
+          return (
+            <p key={index} className="mb-6 text-gray-700 leading-relaxed text-lg">
+              {block.value}
+            </p>
+          );
+        
+        case 'header':
+          const HeaderTag = `h${block.level || 2}`;
+          const headerClasses = {
+            1: 'text-4xl font-bold mb-8 mt-12',
+            2: 'text-3xl font-bold mb-6 mt-10',
+            3: 'text-2xl font-bold mb-4 mt-8',
+            4: 'text-xl font-bold mb-3 mt-6',
+            5: 'text-lg font-bold mb-2 mt-4',
+            6: 'text-base font-bold mb-2 mt-4'
+          };
+          return (
+            <HeaderTag key={index} className={`${headerClasses[block.level || 2]} text-gray-900`}>
+              {block.value}
+            </HeaderTag>
+          );
+        
+        case 'list':
+          const ListTag = block.style === 'ordered' ? 'ol' : 'ul';
+          const listClass = block.style === 'ordered' ? 'list-decimal' : 'list-disc';
+          return (
+            <ListTag key={index} className={`${listClass} pl-6 mb-6 space-y-2`}>
+              {Array.isArray(block.value) && block.value.map((item, idx) => (
+                <li key={idx} className="text-gray-700 text-lg leading-relaxed">{item}</li>
+              ))}
+            </ListTag>
+          );
+        
+        case 'quote':
+          return (
+            <blockquote key={index} className="border-l-4 border-blue-500 pl-6 py-4 mb-8 bg-gray-50">
+              <p className="text-gray-700 italic text-lg mb-2">{block.value}</p>
+              {block.caption && (
+                <cite className="text-sm text-gray-500">— {block.caption}</cite>
+              )}
+            </blockquote>
+          );
+        
+        case 'image':
+          return (
+            <figure key={index} className="mb-8">
+              <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                <img 
+                  src={block.value} 
+                  alt={block.caption || ''}
+                  className={`w-full h-full object-cover ${
+                    block.withBorder ? 'border border-gray-300' : ''
+                  } ${
+                    block.withBackground ? 'bg-gray-100 p-4' : ''
+                  }`}
+                  onError={(e) => {
+                    e.target.src = '/images/blog/default-blog.jpg';
+                  }}
+                />
+              </div>
+              {block.caption && (
+                <figcaption className="text-center text-sm text-gray-600 mt-3">
+                  {block.caption}
+                </figcaption>
+              )}
+            </figure>
+          );
+        
+        case 'delimiter':
+          return (
+            <div key={index} className="text-center my-12">
+              <span className="text-3xl text-gray-400">* * *</span>
+            </div>
+          );
+        
+        case 'embed':
+          return (
+            <div key={index} className="mb-8">
+              <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+                <p className="text-gray-500">Contenido embebido: {block.service}</p>
+              </div>
+              {block.caption && (
+                <p className="text-center text-sm text-gray-600 mt-3">{block.caption}</p>
+              )}
+            </div>
+          );
+        
+        default:
+          return (
+            <p key={index} className="mb-6 text-gray-700 leading-relaxed text-lg">
+              {block.value || ''}
+            </p>
+          );
+      }
+    });
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -162,10 +268,7 @@ const BlogPostPage = () => {
 
         {/* Content */}
         <div className="prose prose-lg prose-gray max-w-none">
-          <div 
-            className="whitespace-pre-wrap"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+          {renderContent(post.content)}
         </div>
 
         {/* Image Gallery */}
