@@ -3,7 +3,7 @@ import { useParams, Navigate, Link } from 'react-router-dom';
 import { useGetBlogPostBySlugQuery, useGetBlogPostsQuery } from '../../features/blog';
 import { Helmet } from 'react-helmet-async';
 // import { VideoGallery } from '../../components/ui/VideoPlayer';
-import { Calendar, User, Tag, Eye, ArrowLeft, Share2 } from 'lucide-react';
+import { MdDateRange, MdPerson, MdLocalOffer, MdVisibility, MdArrowBack, MdShare } from 'react-icons/md';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';

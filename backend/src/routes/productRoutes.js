@@ -8,6 +8,7 @@ import {
   deleteProduct,
   getFeaturedProducts,
   getProductsBySubcategory,
+  getProductsByCategory,
   uploadProductImage,
   deleteProductImage
 } from '../controllers/productController.js';
@@ -32,6 +33,9 @@ router.get('/', getProducts);
 
 // Obtener productos destacados
 router.get('/featured', getFeaturedProducts);
+
+// Obtener productos por categoría (slug)
+router.get('/category/:categorySlug', getProductsByCategory);
 
 // Obtener productos por subcategoría (slug)
 router.get('/subcategory/:subcategorySlug', getProductsBySubcategory);

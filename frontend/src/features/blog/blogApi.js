@@ -38,6 +38,14 @@ export const blogApi = baseApi.injectEndpoints({
       ],
     }),
 
+    // Admin: Obtener post por ID (para edición)
+    getBlogPostById: builder.query({
+      query: (id) => `/blog/id/${id}`,
+      providesTags: (result, error, id) => [
+        { type: 'BlogPost', id: id }
+      ],
+    }),
+
     // Posts relacionados
     getRelatedBlogPosts: builder.query({
       query: ({ slug, limit = 3 }) => `/blog/${slug}/related?limit=${limit}`,
@@ -129,6 +137,7 @@ export const {
   useGetFeaturedBlogPostsQuery,
   useGetRecentBlogPostsQuery,
   useGetBlogPostBySlugQuery,
+  useGetBlogPostByIdQuery,
   useGetRelatedBlogPostsQuery,
   useCreateBlogPostMutation,
   useUpdateBlogPostMutation,

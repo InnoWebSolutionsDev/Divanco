@@ -69,6 +69,7 @@ export const getAllBlogPosts = async (req, res) => {
 };
 
 // Obtener post por slug
+// Obtener un post del blog por slug (público)
 export const getBlogPostBySlug = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -131,11 +132,51 @@ export const getBlogPostBySlug = async (req, res) => {
   }
 };
 
+// Obtener un post del blog por ID (para edición - requiere autenticación)
+export const getBlogPostById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('🔍 [BACKEND] Buscando post por ID:', id);
+
+    const post = await BlogPost.findByPk(id, {
+      include: [
+        {
+          model: Project,
+          as: 'project',
+          attributes: ['id', 'title', 'slug', 'year'],
+          required: false
+        }
+      ]
+    });
+
+    if (!post) {
+      console.warn('❌ [BACKEND] Post no encontrado para ID:', id);
+      return res.status(404).json({
+        success: false,
+        message: 'Post no encontrado'
+      });
+    }
+
+    console.log('✅ [BACKEND] Post encontrado:', post.title);
+    res.json({
+      success: true,
+      data: post
+    });
+  } catch (error) {
+    console.error('❌ [BACKEND] Error obteniendo post por ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
 // Crear nuevo post
 export const createBlogPost = async (req, res) => {
   try {
     const {
       title,
+      author,
       content,
       slug,
       excerpt,
@@ -371,6 +412,41 @@ export const updateBlogPost = async (req, res) => {
   }
 };
 
+// Subir imagen destacada (standalone)
+export const uploadFeaturedImage = async (req, res) => {
+  try {
+    console.log('[BACKEND] uploadFeaturedImage iniciado');
+    console.log('[BACKEND] req.file:', req.file);
+    console.log('[BACKEND] req.body:', req.body);
+    
+    if (!req.file) {
+      console.warn('[BACKEND] No se proporcionó ningún archivo');
+      return res.status(400).json({
+        success: false,
+        message: 'No se proporcionó ningún archivo'
+      });
+    }
+
+    // Usar la función uploadResponsiveImage de Cloudinary
+    const results = await uploadResponsiveImage(req.file.path, 'blog-featured');
+
+    console.log('[BACKEND] Imagen destacada subida exitosamente:', results);
+
+    res.json({
+      success: true,
+      message: 'Imagen subida exitosamente',
+      ...results
+    });
+
+  } catch (error) {
+    console.error('[BACKEND] Error en uploadFeaturedImage:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
 // Subir imagen para post
 export const uploadBlogPostImage = async (req, res) => {
   try {
@@ -382,11 +458,30 @@ export const uploadBlogPostImage = async (req, res) => {
     console.log('[BACKEND] uploadBlogPostImage - Archivos recibidos:', files.length);
     console.log('[BACKEND] req.files:', req.files);
     console.log('[BACKEND] req.body:', req.body);
+    
     if (!files.length) {
       console.warn('[BACKEND] No se proporcionó ningún archivo');
       return res.status(400).json({
         success: false,
         message: 'No se proporcionó ningún archivo'
+      });
+    }
+
+    // Si no hay ID, es una subida independiente (para imagen destacada antes de crear el post)
+    if (!id || id === 'new') {
+      console.log('[BACKEND] Subiendo imagen sin post específico');
+      const folder = `blog/${new Date().getFullYear()}/uploads`;
+      const file = files[0]; // Solo tomar el primer archivo
+      const imageResult = await uploadResponsiveImage(file.path, folder);
+      
+      return res.json({
+        success: true,
+        message: 'Imagen subida exitosamente',
+        data: imageResult,
+        // Para compatibilidad con el frontend
+        desktop: imageResult.desktop,
+        mobile: imageResult.mobile,
+        url: imageResult.desktop || imageResult.url
       });
     }
 

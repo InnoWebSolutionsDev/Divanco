@@ -29,7 +29,39 @@ export default defineConfig({
     host: true, // Para Docker/containers
     open: true,
     proxy: {
-      '/api': {
+      '/projects': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/blog': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/categories': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/subcategories': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/products': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/auth': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/users': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/subscribers': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      },
+      '/search': {
         target: 'http://localhost:3001',
         changeOrigin: true,
       },

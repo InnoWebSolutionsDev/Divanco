@@ -87,7 +87,19 @@ BlogPost.init({
   hooks: {
     beforeSave: (post, options) => {
       const tagsText = post.tags ? post.tags.join(' ') : '';
-      const contentText = post.content ? post.content.replace(/<[^>]*>/g, '') : ''; // Remover HTML
+      
+      // Extraer texto de los bloques para hacer el contenido searchable
+      let contentText = '';
+      if (post.content && Array.isArray(post.content)) {
+        contentText = post.content
+          .filter(block => block.type === 'text' || block.type === 'header' || block.type === 'quote')
+          .map(block => block.value || '')
+          .join(' ')
+          .replace(/<[^>]*>/g, ''); // Remover cualquier HTML que pueda haber
+      } else if (typeof post.content === 'string') {
+        // Compatibilidad con formato anterior (por si acaso)
+        contentText = post.content.replace(/<[^>]*>/g, '');
+      }
       
       post.searchableText = `${post.title} ${post.excerpt || ''} ${contentText} ${tagsText}`.toLowerCase();
     }

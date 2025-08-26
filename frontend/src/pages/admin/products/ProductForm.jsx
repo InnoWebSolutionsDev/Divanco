@@ -9,6 +9,7 @@ const ProductForm = ({ subcategory, product, onClose, onSave }) => {
     model: product?.model || '',
     price: product?.price || '',
     salePrice: product?.salePrice || '',
+    stock: product?.stock || 0,
     specifications: product?.specifications || {},
     dimensions: product?.dimensions || {},
     order: product?.order || 0,
@@ -129,13 +130,17 @@ const ProductForm = ({ subcategory, product, onClose, onSave }) => {
     }
   };
 
-  const handleDeleteImage = async (imageId) => {
+  const handleDeleteImage = async (imageIndex) => {
     if (!product || !window.confirm('¿Estás seguro de que quieres eliminar esta imagen?')) {
       return;
     }
 
     try {
-      await deleteImage(product.id, imageId);
+      await deleteImage(product.id, imageIndex);
+      // Llamar a onSave para refrescar los datos del producto
+      if (onSave) {
+        onSave();
+      }
     } catch (error) {
       alert('Error al eliminar la imagen: ' + error.message);
     }
@@ -208,6 +213,7 @@ const ProductForm = ({ subcategory, product, onClose, onSave }) => {
           model: '',
           price: '',
           salePrice: '',
+          stock: 0,
           specifications: {},
           dimensions: {},
           order: 0,
@@ -341,37 +347,58 @@ const ProductForm = ({ subcategory, product, onClose, onSave }) => {
           <div className="space-y-6">
             <h3 className="text-lg font-medium text-gray-900">Precios</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Precio regular
+                  Precio regular (COP)
                 </label>
                 <input
                   type="number"
                   name="price"
                   value={form.price}
                   onChange={handleChange}
-                  step="0.01"
+                  step="100"
                   min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="$ 0"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Precio de oferta
+                  Precio de oferta (COP)
                 </label>
                 <input
                   type="number"
                   name="salePrice"
                   value={form.salePrice}
                   onChange={handleChange}
-                  step="0.01"
+                  step="100"
                   min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="$ 0"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Deja vacío si no hay oferta
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Stock disponible
+                </label>
+                <input
+                  type="number"
+                  name="stock"
+                  value={form.stock}
+                  onChange={handleChange}
+                  step="1"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="0 unidades"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Cantidad de unidades disponibles
                 </p>
               </div>
             </div>
@@ -546,6 +573,21 @@ const ProductForm = ({ subcategory, product, onClose, onSave }) => {
                     En oferta
                   </label>
                 </div>
+
+                {/* Stock Status Indicator */}
+                <div className="flex items-center">
+                  <div className={`w-3 h-3 rounded-full mr-2 ${
+                    form.stock > 10 ? 'bg-green-500' : 
+                    form.stock > 0 ? 'bg-yellow-500' : 
+                    'bg-red-500'
+                  }`}></div>
+                  <span className="text-sm text-gray-700">
+                    {form.stock > 10 ? 'En stock' :
+                     form.stock > 0 ? 'Stock bajo' :
+                     'Agotado'}
+                    {form.stock > 0 && ` (${form.stock} unidades)`}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -559,24 +601,28 @@ const ProductForm = ({ subcategory, product, onClose, onSave }) => {
               <div>
                 <h4 className="text-sm font-medium text-gray-700 mb-3">Imágenes actuales</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {product.images.map((image, index) => (
-                    <div key={image.id} className="relative group">
-                      <img
-                        src={image.url}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-24 object-cover rounded-lg border"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteImage(image.id)}
-                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
+                  {product.images.map((image, index) => {
+                    // Extract URL from the complex image structure
+                    const imageUrl = image?.thumbnail?.url || image?.desktop?.url || image?.mobile?.url || image?.url;
+                    return (
+                      <div key={index} className="relative group">
+                        <img
+                          src={imageUrl}
+                          alt={`${product.name} ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteImage(index)}
+                          className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

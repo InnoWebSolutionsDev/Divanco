@@ -580,3 +580,70 @@ export const getProductsBySubcategory = async (req, res) => {
     });
   }
 };
+
+// Obtener productos por categoría
+export const getProductsByCategory = async (req, res) => {
+  try {
+    const { categorySlug } = req.params;
+    const { page = 1, limit = 12, sortBy = 'order', sortOrder = 'ASC' } = req.query;
+
+    const offset = (page - 1) * limit;
+
+    // Buscar categoría por slug
+    const category = await Category.findOne({
+      where: { slug: categorySlug, isActive: true }
+    });
+
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'Categoría no encontrada'
+      });
+    }
+
+    // Obtener productos de la categoría (a través de subcategorías)
+    const { count, rows: products } = await Product.findAndCountAll({
+      where: { 
+        isActive: true 
+      },
+      include: [
+        {
+          model: Subcategory,
+          as: 'subcategory',
+          where: { categoryId: category.id, isActive: true },
+          include: [
+            {
+              model: Category,
+              as: 'category'
+            }
+          ]
+        }
+      ],
+      limit: parseInt(limit),
+      offset,
+      order: [[sortBy, sortOrder.toUpperCase()]],
+    });
+
+    res.json({
+      success: true,
+      data: {
+        category,
+        products,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(count / limit),
+          totalItems: count,
+          itemsPerPage: parseInt(limit)
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Error al obtener productos por categoría:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor',
+      error: error.message
+    });
+  }
+};

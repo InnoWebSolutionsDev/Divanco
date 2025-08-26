@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
+import { MdAdd, MdEdit, MdDelete, MdVisibility, MdSearch } from 'react-icons/md';
 import { useGetBlogPostsQuery, useDeleteBlogPostMutation } from '../../../features/blog/blogApi';
 import { useSelector } from 'react-redux';
 import BlogPostForm from './BlogPostForm';
@@ -107,7 +107,7 @@ const AdminBlogPage = () => {
                 onClick={() => setShowForm(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
               >
-                <Plus className="w-4 h-4 mr-2" />
+                <MdAdd className="w-4 h-4 mr-2" />
                 Nuevo Post
               </button>
             </div>
@@ -121,7 +121,7 @@ const AdminBlogPage = () => {
                 Buscar posts
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <MdSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
                   value={searchTerm}
@@ -260,7 +260,7 @@ const AdminBlogPage = () => {
                               className="text-blue-600 hover:text-blue-900"
                               title="Ver post"
                             >
-                              <Eye className="w-4 h-4" />
+                              <MdVisibility className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => {
@@ -270,7 +270,7 @@ const AdminBlogPage = () => {
                               className="text-indigo-600 hover:text-indigo-900"
                               title="Editar post"
                             >
-                              <Edit className="w-4 h-4" />
+                              <MdEdit className="w-4 h-4" />
                             </button>
                             <button
                               className="text-red-600 hover:text-red-900 disabled:opacity-50"
@@ -278,7 +278,7 @@ const AdminBlogPage = () => {
                               onClick={() => handleDeletePost(post.id)}
                               disabled={isDeleting}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <MdDelete className="w-4 h-4" />
                             </button>
                           </div>
                         </td>

@@ -1,548 +1,918 @@
-import React, { useState, useEffect } from "react";
-import { X, Upload, Save, Eye, EyeOff, Star } from "lucide-react";
-import MediaUploader from "../../../components/ui/MediaUploader";
-import {
-  useCreateBlogPostMutation,
-  useUpdateBlogPostMutation,
-  useUploadBlogPostImageMutation,
-  useUploadBlogPostVideoMutation,
-  useDeleteBlogPostImageMutation,
-  useDeleteBlogPostVideoMutation,
-  useGetBlogPostBySlugQuery,
-} from "../../../features/blog/blogApi";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { FiSave, FiEye, FiArrowLeft } from 'react-icons/fi';
+import { EditorJSComponent } from '../../../components/ui';
 
-const BlogPostForm = ({ post = null, onClose, onSuccess }) => {
-  const { user } = useSelector((state) => state.auth);
-const MAX_FILE_SIZE = 30 * 1024 * 1024
+const BlogPostForm = ({ post, onClose, onSuccess }) => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
+  // Determinar si estamos editando: puede ser por URL param o por prop post
+  const isEditing = Boolean(id) || Boolean(post?.id);
+  const editingId = id || post?.id;
+  
+  console.log('🔍 [BlogPostForm] Inicializando - URL ID:', id, 'Post ID:', post?.id, 'isEditing:', isEditing, 'editingId:', editingId);
+  
+  // Obtener token de Redux
+  const token = useSelector(state => state.auth.token);
+
   const [formData, setFormData] = useState({
-    title: "",
-    author: "",
-    content: "",
-    excerpt: "",
-    slug: "",
-    tags: "",
-    status: "draft",
-    images: [],
-    videos: [],
-    projectId: "",
-    categoryId: "",
-    subcategoryId: "",
-    isFeatured: false,
+    title: '',
+    author: 'Administrador', // Agregar autor por defecto
+    slug: '',
+    excerpt: '',
+    content: [],
+    featuredImage: '',
+    metaTitle: '',
+    metaDescription: '',
+    status: 'draft',
+    projectId: '' // Cambiar category por projectId
   });
 
-  const [showPreview, setShowPreview] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
-  const [featuredImage, setFeaturedImage] = useState(null);
-  const [featuredImageIndex, setFeaturedImageIndex] = useState(null);
-
-  const [createBlogPost] = useCreateBlogPostMutation();
-  const [updateBlogPost] = useUpdateBlogPostMutation();
-  const [uploadImage] = useUploadBlogPostImageMutation();
-  const [uploadVideo] = useUploadBlogPostVideoMutation();
-  const [deleteImage] = useDeleteBlogPostImageMutation();
-  const [deleteVideo] = useDeleteBlogPostVideoMutation();
-
-  // Refresca datos del post tras subir/eliminar medios
-  const [refreshKey, setRefreshKey] = useState(0);
-  const { data: freshPost } = useGetBlogPostBySlugQuery(post?.slug, {
-    skip: !post?.slug || !post?.id,
-    refetchOnMountOrArgChange: true,
-  });
-
-  useEffect(() => {
-    if (post) {
-      setFormData({
-        title: post.title || "",
-        author: post.author || "",
-        slug: post.slug || "",
-        // Si el content es array, mostrar solo el primer bloque de texto (para edición simple)
-        content: Array.isArray(post.content)
-          ? (post.content.find(b => b.type === 'text')?.value || "")
-          : (post.content || ""),
-        excerpt: post.excerpt || "",
-        tags: Array.isArray(post.tags) ? post.tags.join(", ") : post.tags || "",
-        status: post.status || "draft",
-        images: post.images || [],
-        videos: post.videos || [],
-        projectId: post.projectId || "",
-        categoryId: post.categoryId || "",
-        subcategoryId: post.subcategoryId || "",
-        isFeatured: !!post.isFeatured,
-      });
-      // Buscar el índice de la imagen destacada en la galería
-      if (post.featuredImage && post.images && post.images.length > 0) {
-        const idx = post.images.findIndex(img =>
-          img.desktop?.url === post.featuredImage.desktop?.url ||
-          img.url === post.featuredImage.url
-        );
-        setFeaturedImageIndex(idx >= 0 ? idx : null);
-      } else {
-        setFeaturedImageIndex(null);
-      }
-      setFeaturedImage(post.featuredImage || null);
+  // Función para manejar el cierre/navegación según el contexto
+  const handleClose = () => {
+    if (onClose) {
+      onClose(); // Si está en modo modal, usar la función de cierre
+    } else {
+      navigate('/admin/blog'); // Si está en página standalone, navegar
     }
-  }, [post]);
-
-  // Refresca datos tras subir/eliminar medios
-  useEffect(() => {
-    if (freshPost?.data?.post) {
-      setFormData((prev) => ({
-        ...prev,
-        images: freshPost.data.post.images || [],
-        videos: freshPost.data.post.videos || [],
-      }));
-      setFeaturedImage(freshPost.data.post.featuredImage || null);
-      // Siempre seleccionar la primera imagen como destacada si no hay ninguna
-      if (freshPost.data.post.images && freshPost.data.post.images.length > 0) {
-        let idx = 0;
-        if (freshPost.data.post.featuredImage) {
-          idx = freshPost.data.post.images.findIndex(img =>
-            img.desktop?.url === freshPost.data.post.featuredImage.desktop?.url ||
-            img.url === freshPost.data.post.featuredImage.url
-          );
-          if (idx < 0) idx = 0;
-        }
-        setFeaturedImageIndex(idx);
-      } else {
-        setFeaturedImageIndex(null);
-      }
-    }
-    // eslint-disable-next-line
-  }, [freshPost, refreshKey]);
-
-  const generateSlug = (title) => {
-    if (!title) return "";
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .replace(/\s+/g, "-");
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => {
-      if (name === "title") {
-        return {
-          ...prev,
-          title: value,
-          slug: generateSlug(value),
-        };
-      }
-      return {
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      };
+  // Función para manejar el éxito según el contexto
+  const handleSuccess = () => {
+    if (onSuccess) {
+      onSuccess(); // Si está en modo modal, usar la función de éxito
+    } else {
+      navigate('/admin/blog'); // Si está en página standalone, navegar
+    }
+  };
+  const [projects, setProjects] = useState([]); // Cambiar categories por projects
+  const [loading, setLoading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [editorInstance, setEditorInstance] = useState(null);
+  const [editorData, setEditorData] = useState({ blocks: [] });
+
+  // Función helper para hacer peticiones autenticadas
+  const authenticatedFetch = async (url, options = {}) => {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+    
+    if (token) {
+      headers['authorization'] = `Bearer ${token}`;
+    }
+    
+    return fetch(url, {
+      ...options,
+      headers
     });
   };
 
-  // Imagen destacada
-const handleFeaturedImageUpload = async (file, type) => {
-  console.log('[FRONTEND] handleFeaturedImageUpload - file:', file, 'type:', type);
-  if (!post?.id) {
-    alert("Primero debes guardar el post antes de subir la imagen destacada");
-    return;
-  }
-  // Solo advertir, no bloquear
-  if (file.size > MAX_FILE_SIZE) {
-    alert(`El archivo es grande (${(file.size / 1024 / 1024).toFixed(2)} MB). Se optimizará automáticamente en el servidor.`);
-    // Continúa igual, el backend lo manejará
-  }
-  try {
-    setIsUploadingMedia(true);
-    const formDataToUpload = new FormData();
-    formDataToUpload.append("image", file);
-    formDataToUpload.append("type", "featured");
-    await uploadImage({ id: post.id, formData: formDataToUpload }).unwrap();
-    setRefreshKey((k) => k + 1);
-  } catch (error) {
-    console.error("Error uploading featured image:", error);
-    alert("Error al subir la imagen destacada");
-  } finally {
-    setIsUploadingMedia(false);
-  }
-};
+  // Cargar proyectos (opcional)
+  useEffect(() => {
+    // Solo intentar cargar proyectos, no es crítico si falla
+    fetchProjects().catch(console.error);
+  }, []);
 
-  // Galería
-  const handleImageUpload = async (files, type) => {
-    if (!post?.id) {
-      alert("Primero debes guardar el post antes de subir imágenes");
-      return;
+  // Efecto separado para cargar datos del post al editar
+  useEffect(() => {
+    console.log('🔄 [BlogPostForm] useEffect disparado - isEditing:', isEditing, 'editingId:', editingId, 'post prop:', post);
+    
+    if (isEditing) {
+      // Si tenemos la prop post, usarla directamente
+      if (post) {
+        console.log('� [BlogPostForm] Usando post de prop:', post);
+        loadPostFromProp(post);
+      }
+      // Si no tenemos prop post pero sí ID de URL, cargar desde API
+      else if (editingId) {
+        console.log('📖 [BlogPostForm] Cargando post desde API, ID:', editingId);
+        fetchBlogPost();
+      }
+    } else {
+      console.log('⚠️ [BlogPostForm] Modo creación - no se carga post');
     }
-    // files is an array
-    console.log("[FRONTEND] handleImageUpload - Archivos recibidos:", files);
+  }, [isEditing, editingId, post]);
+
+  // Nueva función para cargar post desde prop
+  const loadPostFromProp = (postData) => {
+    console.log('📝 [BlogPostForm] Cargando datos desde prop:', postData);
+    
+    setFormData({
+      title: postData.title || '',
+      author: postData.author || 'Administrador',
+      slug: postData.slug || '',
+      excerpt: postData.excerpt || '',
+      content: postData.content || [],
+      featuredImage: postData.featuredImage || '',
+      metaTitle: postData.metaTitle || '',
+      metaDescription: postData.metaDescription || '',
+      status: postData.status || 'draft',
+      projectId: postData.projectId || ''
+    });
+
+    // Convertir contenido del post al formato de Editor.js
+    const editorContent = convertToEditorFormat(postData.content);
+    console.log('🔄 [BlogPostForm] Contenido convertido para editor desde prop:', editorContent);
+    setEditorData(editorContent);
+  };
+
+  const fetchProjects = async () => {
     try {
-      setIsUploadingMedia(true);
-        const formDataToUpload = new FormData();
-        files.forEach(file => {
-          formDataToUpload.append("image", file);
+      const response = await authenticatedFetch('/projects');
+      if (response.ok) {
+        const data = await response.json();
+        // Asegurar que data sea un array
+        setProjects(Array.isArray(data) ? data : []);
+      } else {
+        console.warn('No se pudieron cargar los proyectos');
+        setProjects([]);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      setProjects([]); // Asegurar que projects sea siempre un array
+    }
+  };
+
+  const fetchBlogPost = async () => {
+    try {
+      setLoading(true);
+      console.log('🔍 [BlogPostForm] Obteniendo post del backend, ID:', editingId);
+      
+      const response = await authenticatedFetch(`/blog/id/${editingId}`);
+      if (response.ok) {
+        const post = await response.json();
+        console.log('📝 [BlogPostForm] Post obtenido:', post);
+        
+        setFormData({
+          title: post.title || '',
+          author: post.author || 'Administrador',
+          slug: post.slug || '',
+          excerpt: post.excerpt || '',
+          content: post.content || [],
+          featuredImage: post.featuredImage || '',
+          metaTitle: post.metaTitle || '',
+          metaDescription: post.metaDescription || '',
+          status: post.status || 'draft',
+          projectId: post.projectId || '' // Cambiar category por projectId
         });
-        formDataToUpload.append("type", "gallery");
-      await uploadImage({ id: post.id, formData: formDataToUpload }).unwrap();
-      setRefreshKey((k) => k + 1);
+
+        // Convertir contenido del backend al formato de Editor.js
+        const editorContent = convertToEditorFormat(post.content);
+        console.log('🔄 [BlogPostForm] Contenido convertido para editor:', editorContent);
+        setEditorData(editorContent);
+      } else {
+        console.error('❌ [BlogPostForm] Error response:', response.status);
+        alert('Error al cargar el post');
+      }
     } catch (error) {
-      console.error("Error uploading image(s):", error);
-      alert("Error al subir la(s) imagen(es)");
+      console.error('❌ [BlogPostForm] Error fetching blog post:', error);
+      alert('Error al cargar el post');
     } finally {
-      setIsUploadingMedia(false);
+      setLoading(false);
     }
   };
 
-  // Video
-  const handleVideoUpload = async (file) => {
-    if (!post?.id) {
-      alert("Primero debes guardar el post antes de subir videos");
-      return;
+  // Convertir de formato backend a formato Editor.js
+  const convertToEditorFormat = (backendContent) => {
+    console.log('🔄 [BlogPostForm] Convirtiendo contenido backend:', backendContent);
+    
+    if (!backendContent || !Array.isArray(backendContent)) {
+      console.log('⚠️ [BlogPostForm] No hay contenido válido, usando bloques vacíos');
+      return { blocks: [] };
     }
+
+    const blocks = backendContent.map((block, index) => {
+      console.log(`🔄 [BlogPostForm] Procesando bloque ${index}:`, block);
+      
+      switch (block.type) {
+        case 'text':
+          return {
+            type: 'paragraph',
+            data: { text: block.value || '' }
+          };
+        case 'header':
+          return {
+            type: 'header',
+            data: { 
+              text: block.value || '',
+              level: block.level || 2
+            }
+          };
+        case 'list':
+          return {
+            type: 'list',
+            data: {
+              items: block.value || [],
+              style: block.style || 'unordered'
+            }
+          };
+        case 'quote':
+          return {
+            type: 'quote',
+            data: {
+              text: block.value || '',
+              caption: block.caption || ''
+            }
+          };
+        case 'image':
+          return {
+            type: 'image',
+            data: {
+              file: { url: block.value || '' },
+              caption: block.caption || '',
+              withBorder: block.withBorder || false,
+              withBackground: block.withBackground || false,
+              stretched: block.stretched || false
+            }
+          };
+        case 'delimiter':
+          return {
+            type: 'delimiter',
+            data: {}
+          };
+        case 'embed':
+          return {
+            type: 'embed',
+            data: {
+              source: block.value || '',
+              service: block.service || '',
+              caption: block.caption || ''
+            }
+          };
+        default:
+          return {
+            type: 'paragraph',
+            data: { text: block.value || '' }
+          };
+      }
+    });
+
+    const result = { blocks };
+    console.log('✅ [BlogPostForm] Contenido convertido:', result);
+    return result;
+  };
+
+  // Manejar cambios en Editor.js
+  const handleEditorChange = (data) => {
+    console.log('📝 Editor cambió:', data);
+    setEditorData(data);
+  };
+
+  // Efecto para debuggear cambios en editorData
+  useEffect(() => {
+    console.log('🔍 [BlogPostForm] editorData cambió:', editorData);
+  }, [editorData]);
+
+  // Función para limpiar HTML del texto
+  const stripHtml = (html) => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
+  // Convertir contenido del Editor.js al formato del backend
+  const convertToBackendFormat = (editorData) => {
+    if (!editorData?.blocks) return [];
+
+    return editorData.blocks.map(block => {
+      switch (block.type) {
+        case 'paragraph':
+          // Limpiar HTML del texto si existe
+          const cleanText = block.data?.text ? stripHtml(block.data.text) : '';
+          return {
+            type: 'text',
+            value: cleanText
+          };
+        case 'header':
+          const cleanHeaderText = block.data?.text ? stripHtml(block.data.text) : '';
+          return {
+            type: 'header',
+            value: cleanHeaderText,
+            level: block.data?.level || 2
+          };
+        case 'list':
+          return {
+            type: 'list',
+            value: block.data?.items || [],
+            style: block.data?.style || 'unordered'
+          };
+        case 'quote':
+          const cleanQuoteText = block.data?.text ? stripHtml(block.data.text) : '';
+          return {
+            type: 'quote',
+            value: cleanQuoteText,
+            caption: block.data?.caption || ''
+          };
+        case 'image':
+          return {
+            type: 'image',
+            value: block.data?.file?.url || '',
+            caption: block.data?.caption || '',
+            withBorder: block.data?.withBorder || false,
+            withBackground: block.data?.withBackground || false,
+            stretched: block.data?.stretched || false
+          };
+        case 'delimiter':
+          return {
+            type: 'delimiter',
+            value: ''
+          };
+        case 'embed':
+          return {
+            type: 'embed',
+            value: block.data?.source || '',
+            service: block.data?.service || '',
+            caption: block.data?.caption || ''
+          };
+        default:
+          const cleanDefaultText = block.data?.text ? stripHtml(block.data.text) : '';
+          return {
+            type: 'text',
+            value: cleanDefaultText
+          };
+      }
+    });
+  };
+
+  // Función para subir imagen destacada a Cloudinary
+  const handleFeaturedImageUpload = async (file) => {
     try {
-      setIsUploadingMedia(true);
-      const formDataToUpload = new FormData();
-      formDataToUpload.append("video", file);
-      await uploadVideo({ id: post.id, formData: formDataToUpload }).unwrap();
-      setRefreshKey((k) => k + 1);
+      setLoading(true);
+      console.log('📸 Subiendo imagen destacada a Cloudinary:', file.name);
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      // Para FormData, no usar authenticatedFetch porque agrega Content-Type: application/json
+      const headers = {};
+      if (token) {
+        headers['authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/blog/upload-featured-image', {
+        method: 'POST',
+        body: formData,
+        headers: headers // Sin Content-Type para que el browser lo establezca correctamente
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Imagen destacada subida:', result);
+        
+        // Extraer la URL correcta del resultado de Cloudinary
+        const imageUrl = result.desktop?.url || result.url || '';
+        console.log('🖼️ URL de imagen extraída:', imageUrl);
+        
+        // Actualizar el campo de imagen destacada con la URL de Cloudinary
+        setFormData(prev => ({
+          ...prev,
+          featuredImage: imageUrl
+        }));
+
+        alert('Imagen destacada subida exitosamente');
+        return result;
+      } else {
+        const error = await response.json();
+        console.error('❌ Error subiendo imagen:', error);
+        alert('Error al subir la imagen: ' + (error.message || 'Error desconocido'));
+      }
     } catch (error) {
-      console.error("Error uploading video:", error);
-      alert("Error al subir el video");
+      console.error('❌ Error uploading featured image:', error);
+      alert('Error al subir la imagen destacada');
     } finally {
-      setIsUploadingMedia(false);
+      setLoading(false);
     }
   };
 
-  const handleImageDelete = async (imageId) => {
-    if (!post?.id) return;
+  // Función para subir imágenes del contenido
+  const handleImageUpload = async (file) => {
     try {
-      await deleteImage({ id: post.id, imageId }).unwrap();
-      setRefreshKey((k) => k + 1);
+      console.log('📸 Subiendo imagen del contenido:', file.name);
+
+      const formData = new FormData();
+      formData.append('image', file);
+
+      // Para FormData, no usar authenticatedFetch porque agrega Content-Type: application/json
+      const headers = {};
+      if (token) {
+        headers['authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/blog/upload-featured-image', {
+        method: 'POST',
+        body: formData,
+        headers: headers // Sin Content-Type para que el browser lo establezca correctamente
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Imagen del contenido subida:', result);
+        
+        // Extraer la URL correcta del resultado de Cloudinary
+        const imageUrl = result.desktop?.url || result.url || '';
+        return { url: imageUrl };
+      } else {
+        console.error('❌ Error subiendo imagen del contenido');
+        // Fallback: crear URL temporal para la imagen
+        const url = URL.createObjectURL(file);
+        return { url };
+      }
     } catch (error) {
-      console.error("Error deleting image:", error);
-      alert("Error al eliminar la imagen");
+      console.error('Error uploading image:', error);
+      // Fallback: crear URL temporal para la imagen
+      const url = URL.createObjectURL(file);
+      return { url };
     }
   };
 
-  const handleVideoDelete = async (videoId) => {
-    if (!post?.id) return;
-    try {
-      await deleteVideo({ id: post.id, videoId }).unwrap();
-      setRefreshKey((k) => k + 1);
-    } catch (error) {
-      console.error("Error deleting video:", error);
-      alert("Error al eliminar el video");
-    }
+  // Generar slug automáticamente
+  const generateSlug = (title) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9 -]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
   };
 
+  // Manejar cambios en inputs
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'title' && { slug: generateSlug(value) })
+    }));
+  };
+
+  // Enviar formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
-      setIsSubmitting(true);
-      // Convertir content a array de bloques (solo texto por ahora)
-      const contentBlocks = formData.content && formData.content.trim().length > 0
-        ? [{ type: 'text', value: formData.content.trim() }]
-        : [];
+      // Si hay una instancia del editor, obtener los datos actuales
+      let currentEditorData = editorData;
+      if (editorInstance && editorInstance.save) {
+        try {
+          currentEditorData = await editorInstance.save();
+          console.log('📝 Datos obtenidos directamente del editor:', currentEditorData);
+        } catch (error) {
+          console.warn('⚠️ No se pudieron obtener datos del editor, usando estado actual:', error);
+        }
+      }
+
+      // Convertir contenido del editor al formato del backend
+      const backendContent = convertToBackendFormat(currentEditorData);
+
       const submitData = {
         ...formData,
-        author: formData.author?.trim() || null,
-        content: contentBlocks,
-        tags: formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag),
-        isFeatured: !!formData.isFeatured,
-        featuredImageIndex: featuredImageIndex,
+        content: backendContent
       };
-      let result;
-      if (post) {
-        result = await updateBlogPost({ id: post.id, ...submitData }).unwrap();
-      } else {
-        result = await createBlogPost(submitData).unwrap();
+
+      console.log('📤 Enviando datos:', submitData);
+      console.log('🔍 editorData actual:', currentEditorData);
+      console.log('🔍 backendContent:', backendContent);
+      console.log('🔍 content length:', backendContent.length);
+      
+      // Debug detallado de cada bloque
+      backendContent.forEach((block, index) => {
+        console.log(`📋 Bloque ${index}:`, block);
+        if (block.type === 'text') {
+          console.log(`📝 Texto bloque ${index}: "${block.value}" (${block.value.length} chars)`);
+          console.log(`📝 Texto trimmed: "${block.value.trim()}" (${block.value.trim().length} chars)`);
+        }
+      });
+
+      // Buscar bloques de texto válidos
+      const textBlocks = backendContent.filter(block => block.type === 'text');
+      console.log(`📝 Bloques de texto encontrados: ${textBlocks.length}`);
+      
+      const validTextBlocks = textBlocks.filter(block => 
+        block.value && block.value.trim().length >= 10
+      );
+      console.log(`📝 Bloques de texto válidos (10+ chars): ${validTextBlocks.length}`);
+
+      // Validación frontend
+      if (!backendContent || backendContent.length === 0) {
+        alert('Por favor agrega contenido al post antes de guardarlo');
+        setLoading(false);
+        return;
       }
-      onSuccess?.(result);
-      onClose();
+
+      // Validar que haya al menos un bloque de texto con 10+ caracteres
+      const hasValidTextBlock = backendContent.some(block => {
+        if (block.type === 'text' && block.value) {
+          const cleanText = block.value.trim();
+          console.log(`🔍 Validando texto: "${cleanText}" (${cleanText.length} chars)`);
+          return cleanText.length >= 10;
+        }
+        return false;
+      });
+
+      console.log(`✅ ¿Tiene bloque de texto válido?: ${hasValidTextBlock}`);
+
+      if (!hasValidTextBlock) {
+        alert('El post debe tener al menos un párrafo de texto con 10 caracteres o más');
+        setLoading(false);
+        return;
+      }
+
+      const url = isEditing ? `/blog/${editingId}` : '/blog';
+      const method = isEditing ? 'PUT' : 'POST';
+
+      console.log('🔗 URL para envío:', url, 'Método:', method, 'editingId:', editingId);
+
+      const response = await authenticatedFetch(url, {
+        method,
+        body: JSON.stringify(submitData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Post guardado:', result);
+        handleSuccess();
+      } else {
+        const error = await response.json();
+        console.error('❌ Error saving blog post:', error);
+        alert('Error al guardar el post: ' + (error.message || 'Error desconocido'));
+      }
     } catch (error) {
-      console.error("Error saving blog post:", error);
-      alert(`Error al ${post ? "actualizar" : "crear"} el post`);
+      console.error('❌ Error saving blog post:', error);
+      alert('Error al guardar el post');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  const renderPreview = () => (
-    <div className="prose max-w-none">
-      <h1>{formData.title || "Título del post"}</h1>
-      {featuredImage && (
-        <img
-          src={featuredImage.url || featuredImage.secure_url || featuredImage}
-          alt="Imagen destacada"
-          className="w-full h-64 object-cover rounded-lg"
-        />
-      )}
-      {formData.excerpt && (
-        <p className="text-lg text-gray-600 italic">{formData.excerpt}</p>
-      )}
-      <div dangerouslySetInnerHTML={{ __html: formData.content }} />
-      {formData.images.length > 0 && (
-        <div className="mt-8">
-          <h3>Galería de imágenes</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {formData.images.map((image, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={image.url || image.secure_url}
-                  alt={image.alt || `Imagen ${index + 1}`}
-                  className={`w-full h-48 object-cover rounded-lg border-4 transition-all duration-200 ${featuredImageIndex === index ? 'border-yellow-400 ring-4 ring-yellow-300' : 'border-gray-200 hover:border-blue-400'}`}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => setFeaturedImageIndex(index)}
-                  title={featuredImageIndex === index ? 'Imagen destacada' : 'Marcar como destacada'}
-                />
-                {featuredImageIndex === index && (
-                  <span className="absolute top-2 left-2 bg-yellow-400 text-white px-2 py-1 text-xs rounded shadow">Destacada</span>
-                )}
-                <button
-                  type="button"
-                  className={`absolute top-2 right-2 px-2 py-1 text-xs rounded ${featuredImageIndex === index ? 'bg-yellow-400 text-white' : 'bg-gray-200 text-gray-700 hover:bg-blue-500 hover:text-white'}`}
-                  onClick={() => setFeaturedImageIndex(index)}
-                >
-                  {featuredImageIndex === index ? 'Destacada' : 'Destacar'}
-                </button>
-              </div>
+  // Renderizar preview de bloques
+  const renderPreviewBlock = (block) => {
+    switch (block.type) {
+      case 'text':
+        return (
+          <p className="mb-4 text-gray-700 leading-relaxed">
+            {block.value}
+          </p>
+        );
+      case 'header':
+        const HeaderTag = `h${block.level || 2}`;
+        const headerClasses = {
+          1: 'text-3xl font-bold mb-6',
+          2: 'text-2xl font-bold mb-4',
+          3: 'text-xl font-bold mb-3',
+          4: 'text-lg font-bold mb-2',
+          5: 'text-base font-bold mb-2',
+          6: 'text-sm font-bold mb-2'
+        };
+        return (
+          <HeaderTag className={`${headerClasses[block.level || 2]} text-gray-900`}>
+            {block.value}
+          </HeaderTag>
+        );
+      case 'list':
+        const ListTag = block.style === 'ordered' ? 'ol' : 'ul';
+        const listClass = block.style === 'ordered' ? 'list-decimal' : 'list-disc';
+        return (
+          <ListTag className={`${listClass} pl-6 mb-4 space-y-2`}>
+            {Array.isArray(block.value) && block.value.map((item, idx) => (
+              <li key={idx} className="text-gray-700">{item}</li>
             ))}
+          </ListTag>
+        );
+      case 'quote':
+        return (
+          <blockquote className="border-l-4 border-blue-500 pl-4 py-2 mb-4 bg-gray-50">
+            <p className="text-gray-700 italic mb-2">{block.value}</p>
+            {block.caption && (
+              <cite className="text-sm text-gray-500">— {block.caption}</cite>
+            )}
+          </blockquote>
+        );
+      case 'image':
+        return (
+          <figure className="mb-6">
+            <img 
+              src={block.value} 
+              alt={block.caption || ''}
+              className={`max-w-full h-auto mx-auto ${
+                block.withBorder ? 'border border-gray-300' : ''
+              } ${
+                block.withBackground ? 'bg-gray-100 p-4' : ''
+              } ${
+                block.stretched ? 'w-full' : ''
+              }`}
+            />
+            {block.caption && (
+              <figcaption className="text-center text-sm text-gray-600 mt-2">
+                {block.caption}
+              </figcaption>
+            )}
+          </figure>
+        );
+      case 'delimiter':
+        return (
+          <div className="text-center my-8">
+            <span className="text-2xl text-gray-400">* * *</span>
           </div>
-          <p className="text-xs text-gray-500 mt-2">Haz click en una imagen o el botón "Destacar" para marcarla como destacada.</p>
-        </div>
-      )}
-      {formData.videos.length > 0 && (
-        <div className="mt-8">
-          <h3>Videos</h3>
-          <div className="space-y-4">
-            {formData.videos.map((video, index) => (
-              <video
-                key={index}
-                src={video.url}
-                controls
-                className="w-full rounded-lg"
-              />
-            ))}
+        );
+      case 'embed':
+        return (
+          <div className="mb-6">
+            <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
+              <p className="text-gray-500">Contenido embebido: {block.service}</p>
+            </div>
+            {block.caption && (
+              <p className="text-center text-sm text-gray-600 mt-2">{block.caption}</p>
+            )}
           </div>
-        </div>
-      )}
-    </div>
-  );
+        );
+      default:
+        return (
+          <p className="mb-4 text-gray-700">{block.value}</p>
+        );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] overflow-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold">
-            {post ? "Editar Post" : "Nuevo Post"}
-          </h2>
-          <div className="flex items-center space-x-2">
-            <button
-              type="button"
-              onClick={() => setShowPreview(!showPreview)}
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-            >
-              {showPreview ? <EyeOff size={20} /> : <Eye size={20} />}
-              <span>{showPreview ? "Editar" : "Vista previa"}</span>
-            </button>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X size={24} />
-            </button>
-          </div>
+    <div className="max-w-6xl mx-auto p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={handleClose}
+            className="flex items-center text-blue-600 hover:text-blue-800"
+          >
+            <FiArrowLeft className="mr-2" />
+            Volver al blog
+          </button>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isEditing ? 'Editar Post' : 'Crear Nuevo Post'}
+          </h1>
         </div>
+        
+        <div className="flex space-x-3">
+          <button
+            type="button"
+            onClick={() => setShowPreview(!showPreview)}
+            className="flex items-center px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          >
+            <FiEye className="mr-2" />
+            {showPreview ? 'Ocultar Preview' : 'Ver Preview'}
+          </button>
+        </div>
+      </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {showPreview ? (
-            renderPreview()
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Autor (firma del post)
-                    </label>
-                    <input
-                      type="text"
-                      name="author"
-                      value={formData.author}
-                      onChange={handleInputChange}
-                      placeholder="Nombre del autor"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Título *
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Slug (URL única)
-                    </label>
-                    <input
-                      type="text"
-                      name="slug"
-                      value={formData.slug}
-                      readOnly // <-- SOLO LECTURA
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Resumen
-                    </label>
-                    <textarea
-                      name="excerpt"
-                      value={formData.excerpt}
-                      onChange={handleInputChange}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tags (separados por comas)
-                    </label>
-                    <input
-                      type="text"
-                      name="tags"
-                      value={formData.tags}
-                      onChange={handleInputChange}
-                      placeholder="tecnología, desarrollo, web"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Estado
-                    </label>
-                    <select
-                      name="status"
-                      value={formData.status}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="draft">Borrador</option>
-                      <option value="published">Publicado</option>
-                      <option value="archived">Archivado</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      name="isFeatured"
-                      checked={formData.isFeatured}
-                      onChange={handleInputChange}
-                      id="isFeatured"
-                    />
-                    <label
-                      htmlFor="isFeatured"
-                      className="text-sm text-gray-700 flex items-center"
-                    >
-                      <Star size={16} className="mr-1 text-yellow-400" />
-                      Post destacado
-                    </label>
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Formulario principal */}
+        <div className={`${showPreview ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-lg font-semibold mb-4">Información básica</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                    Título *
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
                 </div>
 
-                {/* Right Column */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Contenido *
-                    </label>
-                    <textarea
-                      name="content"
-                      value={formData.content}
+                <div>
+                  <label htmlFor="author" className="block text-sm font-medium text-gray-700 mb-1">
+                    Autor
+                  </label>
+                  <input
+                    type="text"
+                    id="author"
+                    name="author"
+                    value={formData.author}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
+                    Slug
+                  </label>
+                  <input
+                    type="text"
+                    id="slug"
+                    name="slug"
+                    value={formData.slug}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700 mb-1">
+                    Extracto
+                  </label>
+                  <textarea
+                    id="excerpt"
+                    name="excerpt"
+                    value={formData.excerpt}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="projectId" className="block text-sm font-medium text-gray-700 mb-1">
+                    Proyecto (opcional)
+                  </label>
+                  <select
+                    id="projectId"
+                    name="projectId"
+                    value={formData.projectId}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Sin proyecto asociado</option>
+                    {Array.isArray(projects) && projects.map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.title}
+                      </option>
+                    ))}
+                  </select>
+                  {!Array.isArray(projects) || projects.length === 0 ? (
+                    <p className="text-sm text-gray-500 mt-1">
+                      No hay proyectos disponibles. Los blogs pueden crearse sin asociar a un proyecto.
+                    </p>
+                  ) : null}
+                </div>
+
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                    Estado
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="draft">Borrador</option>
+                    <option value="published">Publicado</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="featuredImage" className="block text-sm font-medium text-gray-700 mb-1">
+                    Imagen destacada
+                  </label>
+                  <div className="space-y-3">
+                    <input
+                      type="url"
+                      id="featuredImage"
+                      name="featuredImage"
+                      value={formData.featuredImage}
                       onChange={handleInputChange}
-                      required
-                      rows={12}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="URL de la imagen o sube una nueva"
                     />
+                    
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm text-gray-500">o</span>
+                      <label className="flex items-center px-4 py-2 bg-blue-100 text-blue-700 rounded-lg cursor-pointer hover:bg-blue-200 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              handleFeaturedImageUpload(file);
+                            }
+                          }}
+                        />
+                        📸 Subir imagen
+                      </label>
+                    </div>
+
+                    {formData.featuredImage && (
+                      <div className="mt-3">
+                        <img 
+                          src={formData.featuredImage} 
+                          alt="Preview imagen destacada"
+                          className="w-full max-w-xs h-auto border rounded-lg"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Media Upload Section */}
-              {post?.id && (
-                <div className="border-t pt-6 space-y-6">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Gestión de Medios
-                  </h3>
+            {/* Editor de contenido */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-lg font-semibold mb-4">Contenido</h2>
+              <EditorJSComponent
+                key={`editor-${id || 'new'}-${JSON.stringify(editorData)}`} // Forzar re-render cuando cambie el ID o datos
+                data={editorData}
+                onChange={handleEditorChange}
+                onImageUpload={handleImageUpload}
+                onReady={(editor) => {
+                  console.log('📝 Editor instancia recibida:', editor);
+                  setEditorInstance(editor);
+                }}
+              />
+            </div>
 
-
-                  {/* Imagen destacada ahora se elige desde la galería, sección eliminada */}
-
-                  {/* Galería y videos */}
-                  <MediaUploader
-                    onImageUpload={handleImageUpload}
-                    onVideoUpload={handleVideoUpload}
-                    onImageDelete={handleImageDelete}
-                    onVideoDelete={handleVideoDelete}
-                    images={formData.images}
-                    videos={formData.videos}
-                    isUploading={isUploadingMedia}
-                    imageType="gallery"
+            {/* SEO */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <h2 className="text-lg font-semibold mb-4">SEO</h2>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="metaTitle" className="block text-sm font-medium text-gray-700 mb-1">
+                    Meta Título
+                  </label>
+                  <input
+                    type="text"
+                    id="metaTitle"
+                    name="metaTitle"
+                    value={formData.metaTitle}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-              )}
 
-              {!post?.id && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-blue-800 text-sm">
-                    💡 <strong>Tip:</strong> Guarda el post primero para poder
-                    subir imágenes y videos.
-                  </p>
+                <div>
+                  <label htmlFor="metaDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                    Meta Descripción
+                  </label>
+                  <textarea
+                    id="metaDescription"
+                    name="metaDescription"
+                    value={formData.metaDescription}
+                    onChange={handleInputChange}
+                    rows="3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
-              )}
-            </form>
-          )}
+              </div>
+            </div>
+
+            {/* Botones */}
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-6 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex items-center px-6 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <FiSave className="mr-2" />
+                {loading ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear Post')}
+              </button>
+            </div>
+          </form>
         </div>
 
-        {/* Footer */}
-        {!showPreview && (
-          <div className="flex items-center justify-end space-x-3 p-6 border-t bg-gray-50">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Guardando...</span>
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  <span>{post ? "Actualizar" : "Crear"} Post</span>
-                </>
-              )}
-            </button>
+        {/* Preview */}
+        {showPreview && (
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-6">
+              <h2 className="text-lg font-semibold mb-4">Vista Previa</h2>
+              <div className="prose prose-sm max-w-none">
+                <h1 className="text-xl font-bold mb-4">{formData.title || 'Título del post'}</h1>
+                {formData.excerpt && (
+                  <p className="text-gray-600 italic mb-4">{formData.excerpt}</p>
+                )}
+                <div className="border-t pt-4">
+                  {convertToBackendFormat(editorData).map((block, index) => (
+                    <div key={index}>
+                      {renderPreviewBlock(block)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

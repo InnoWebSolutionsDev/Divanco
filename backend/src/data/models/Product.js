@@ -78,7 +78,15 @@ Product.init({
   },
   currency: {
     type: DataTypes.STRING(3),
-    defaultValue: 'USD',
+    defaultValue: 'COP',
+  },
+  // Stock disponible
+  stock: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+    validate: {
+      min: 0
+    }
   },
   // SEO y organización
   order: {

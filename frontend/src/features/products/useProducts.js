@@ -4,6 +4,7 @@ import {
   useGetProductBySlugQuery,
   useGetFeaturedProductsQuery,
   useGetProductsBySubcategoryQuery,
+  useGetProductsByCategoryQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useUploadProductImageMutation,
@@ -33,20 +34,28 @@ export const useProducts = (filters = {}) => {
 
 // Hook para obtener producto por slug
 export const useProduct = (slug) => {
-  const {
-    data: product,
-    isLoading,
-    error,
-    refetch
-  } = useGetProductBySlugQuery(slug, {
-    skip: !slug
+  const result = useGetProductBySlugQuery(slug, {
+    skip: !slug,
+    // Temporal: Forzar refetch para debugging
+    refetchOnMountOrArgChange: true,
   });
 
+  console.log('🎣 useProduct Hook Debug:');
+  console.log('  Slug:', slug);
+  console.log('  Raw result:', result);
+  console.log('  Product data:', result.data);
+  console.log('  Product type:', typeof result.data);
+  console.log('  Product keys:', result.data ? Object.keys(result.data) : 'no data');
+  console.log('  Images:', result.data?.images);
+  console.log('  Price:', result.data?.price);
+  console.log('  Is loading:', result.isLoading);
+  console.log('  Error:', result.error);
+
   return {
-    product,
-    isLoading,
-    error,
-    refetch
+    product: result.data,
+    isLoading: result.isLoading,
+    error: result.error,
+    refetch: result.refetch
   };
 };
 
@@ -241,5 +250,38 @@ export const useProductFilters = (initialFilters = {}) => {
     setCategory,
     setSubcategory,
     setSorting
+  };
+};
+
+// Hook para obtener productos por categoría
+export const useProductsByCategory = (categorySlug, options = {}) => {
+  const {
+    page = 1,
+    limit = 12,
+    sortBy = 'order',
+    sortOrder = 'ASC'
+  } = options;
+
+  const result = useGetProductsByCategoryQuery({
+    categorySlug,
+    page,
+    limit,
+    sortBy,
+    sortOrder
+  }, {
+    skip: !categorySlug
+  });
+
+  return {
+    products: result.data?.products || [],
+    category: result.data?.category || null,
+    pagination: {
+      total: result.data?.total || 0,
+      totalPages: result.data?.totalPages || 0,
+      currentPage: result.data?.currentPage || 1,
+    },
+    isLoading: result.isLoading,
+    error: result.error,
+    refetch: result.refetch
   };
 };

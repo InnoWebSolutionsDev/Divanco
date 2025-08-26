@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Plus, Edit, Trash2, Eye, Star, SlidersHorizontal, Image as ImageIcon } from 'lucide-react';
+import { MdAdd, MdEdit, MdDelete, MdVisibility, MdStar, MdTune, MdImage } from 'react-icons/md';
 import { useGetProjectsQuery, useDeleteProjectMutation, useUpdateProjectMutation, useToggleSliderImageMutation } from '../../../features/projects/projectsApi';
 import ProjectUpload from './ProjectUpload';
 
@@ -71,7 +71,7 @@ const AdminProjectPage = () => {
               }}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <MdAdd className="w-4 h-4 mr-2" />
               Nuevo Proyecto
             </button>
           </div>
@@ -137,7 +137,7 @@ const AdminProjectPage = () => {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">{project.year}</td>
                       <td className="px-6 py-4 text-center">
-                        {project.isFeatured ? <Star className="w-5 h-5 text-yellow-400 inline" /> : <Star className="w-5 h-5 text-gray-300 inline" />}
+                        {project.isFeatured ? <MdStar className="w-5 h-5 text-yellow-400 inline" /> : <MdStar className="w-5 h-5 text-gray-300 inline" />}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <button
@@ -160,7 +160,7 @@ const AdminProjectPage = () => {
                                 onClick={() => handleSetSliderImage(project.id, img.id)}
                                 disabled={isTogglingSliderImage}
                               >
-                                <ImageIcon className="w-5 h-5 inline" />
+                                <MdImage className="w-5 h-5 inline" />
                                 {img.isSliderImage && <span className="ml-1 text-xs">Slider</span>}
                               </button>
                             ))}
@@ -177,7 +177,7 @@ const AdminProjectPage = () => {
                             title="Ver proyecto"
                             onClick={() => window.open(`/proyectos/${project.slug}`, '_blank')}
                           >
-                            <Eye className="w-4 h-4" />
+                            <MdVisibility className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => {
@@ -187,7 +187,7 @@ const AdminProjectPage = () => {
                             className="text-indigo-600 hover:text-indigo-900"
                             title="Editar proyecto"
                           >
-                            <Edit className="w-4 h-4" />
+                            <MdEdit className="w-4 h-4" />
                           </button>
                           <button
                             className="text-red-600 hover:text-red-900 disabled:opacity-50"
@@ -195,7 +195,7 @@ const AdminProjectPage = () => {
                             onClick={() => handleDelete(project.id)}
                             disabled={isDeleting}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <MdDelete className="w-4 h-4" />
                           </button>
                         </div>
                       </td>

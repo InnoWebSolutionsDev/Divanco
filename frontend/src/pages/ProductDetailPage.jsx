@@ -1,338 +1,311 @@
-import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { useProduct, useFeaturedProducts } from '../features/products/useProducts';
-import ProductCard from '../components/ProductCard';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useProduct } from '../features/products/useProducts';
 
 const ProductDetailPage = () => {
   const { slug } = useParams();
-  const navigate = useNavigate();
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-
   const { product, isLoading, error } = useProduct(slug);
-  const { products: relatedProducts } = useFeaturedProducts(4);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Reset selected image when product changes
-  useEffect(() => {
-    setSelectedImageIndex(0);
-  }, [product]);
+
+
+  // Helper function para obtener URLs de imágenes
+  const getImageUrl = (image, size = 'desktop') => {
+    if (!image) return null;
+    return image[size]?.url || image.desktop?.url || image.mobile?.url || image.thumbnail?.url;
+  };
+
+  // Formatear precio en COP
+  const formatPrice = (price) => {
+    console.log('💰 Formateando precio:', price, typeof price);
+    if (!price) return 'Precio no disponible';
+    
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    console.log('💰 Precio numérico:', numericPrice);
+    
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(numericPrice);
+  };
+
+  // Estados de stock
+  const getStockStatus = (stock) => {
+    if (stock === 0) return { text: 'Agotado', color: 'bg-red-100 text-red-800' };
+    if (stock <= 5) return { text: 'Últimas unidades', color: 'bg-yellow-100 text-yellow-800' };
+    return { text: 'Disponible', color: 'bg-green-100 text-green-800' };
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="aspect-square bg-gray-200 rounded-lg"></div>
-              <div className="space-y-4">
-                <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-                <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded"></div>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('❌ Error al cargar producto:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Producto no encontrado</h1>
+          <p className="text-gray-600">El producto que buscas no existe o ha sido eliminado.</p>
         </div>
       </div>
     );
   }
 
-  if (error || !product) {
+  if (!product) {
+    console.warn('⚠️ Producto es null o undefined');
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Producto no encontrado
-          </h1>
-          <p className="text-gray-600 mb-6">
-            El producto que buscas no existe o ha sido eliminado.
-          </p>
-          <button
-            onClick={() => navigate('/productos')}
-            className="bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
-          >
-            Ver todos los productos
-          </button>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Producto no encontrado</h1>
+          <p className="text-gray-600">El producto que buscas no existe.</p>
         </div>
       </div>
     );
   }
 
   const images = product.images || [];
-  const selectedImage = images[selectedImageIndex];
-  
-  // Helper function to get image URL from the complex structure
-  const getImageUrl = (image, size = 'desktop') => {
-    if (!image) return null;
-    return image[size]?.url || image.desktop?.url || image.mobile?.url || image.thumbnail?.url;
-  };
+  const hasImages = images.length > 0;
+  const selectedImage = hasImages ? images[selectedImageIndex] : null;
+  const mainImageUrl = getImageUrl(selectedImage, 'desktop');
+  const stockStatus = getStockStatus(product.stock || 0);
 
-  const selectedImageUrl = getImageUrl(selectedImage);
-
-  const formatPrice = (price) => {
-    if (!price) return 'Consultar precio';
-    return new Intl.NumberFormat('es-ES', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(price);
-  };
-
-  const breadcrumbs = [
-    { name: 'Inicio', href: '/' },
-    { name: 'Productos', href: '/productos' }
-  ];
-
-  if (product.Subcategory?.Category) {
-    breadcrumbs.push({
-      name: product.Subcategory.Category.name,
-      href: `/showroom/${product.Subcategory.Category.slug}`
-    });
-  }
-
-  if (product.Subcategory) {
-    breadcrumbs.push({
-      name: product.Subcategory.name,
-      href: `/showroom/${product.Subcategory.Category?.slug}/${product.Subcategory.slug}`
-    });
-  }
-
-  breadcrumbs.push({ name: product.name, href: null });
-
+ 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumbs */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <nav className="flex" aria-label="Breadcrumb">
-            <ol className="flex items-center space-x-4">
-              {breadcrumbs.map((item, index) => (
-                <li key={index}>
-                  <div className="flex items-center">
-                    {index > 0 && (
-                      <svg className="flex-shrink-0 h-5 w-5 text-gray-400 mr-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    {item.href ? (
-                      <Link to={item.href} className="text-sm font-medium text-gray-500 hover:text-gray-700">
-                        {item.name}
-                      </Link>
-                    ) : (
-                      <span className="text-sm font-medium text-gray-900">{item.name}</span>
-                    )}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        </div>
-      </div>
-
-      {/* Product Detail */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          
-          {/* Images */}
-          <div>
-            {/* Main Image */}
-            <div className="aspect-square bg-white rounded-lg overflow-hidden shadow-sm mb-4">
-              {selectedImageUrl ? (
-                <img
-                  src={selectedImageUrl}
-                  alt={product.name}
-                  className="w-full h-full object-cover cursor-zoom-in"
-                  onClick={() => setIsImageModalOpen(true)}
-                />
-              ) : (
-                <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                  <svg className="w-24 h-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnails */}
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImageIndex(index)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
-                      index === selectedImageIndex
-                        ? 'border-gray-900'
-                        : 'border-gray-200 hover:border-gray-400'
-                    }`}
-                  >
+    <div className="min-h-screen bg-gray-50 py-32"> {/* Aumenté el padding vertical de py-12 a py-16 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden mt-8"> {/* Agregué mt-8 */}
+          <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
+            
+            {/* SECCIÓN DE IMÁGENES */}
+            <div className="aspect-w-1 aspect-h-1 bg-gray-200 lg:aspect-none lg:h-96">
+              <div className="flex">
+                
+                {/* IMAGEN PRINCIPAL */}
+                <div className="flex-1">
+                  {mainImageUrl ? (
                     <img
-                      src={getImageUrl(image, 'thumbnail')}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
+                      src={mainImageUrl}
+                      alt={product.name}
+                      className="w-full h-96 object-cover object-center"
+                      onLoad={() => console.log('✅ Imagen cargada exitosamente:', mainImageUrl)}
+                      onError={() => console.error('❌ Error al cargar imagen:', mainImageUrl)}
                     />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Product Info */}
-          <div>
-            {/* Badges */}
-            <div className="flex gap-2 mb-4">
-              {product.featured && (
-                <span className="bg-red-600 text-white text-sm px-3 py-1 rounded-full font-medium">
-                  Destacado
-                </span>
-              )}
-              {product.isNew && (
-                <span className="bg-green-600 text-white text-sm px-3 py-1 rounded-full font-medium">
-                  Nuevo
-                </span>
-              )}
-              {product.isOnSale && (
-                <span className="bg-orange-600 text-white text-sm px-3 py-1 rounded-full font-medium">
-                  Oferta
-                </span>
-              )}
-            </div>
-
-            {/* Title */}
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {product.name}
-            </h1>
-
-            {/* Category & Brand */}
-            <div className="flex flex-wrap items-center gap-4 mb-6 text-sm text-gray-600">
-              {product.Subcategory?.Category && (
-                <Link 
-                  to={`/showroom/${product.Subcategory.Category.slug}`}
-                  className="hover:text-gray-800 transition-colors"
-                >
-                  {product.Subcategory.Category.name}
-                </Link>
-              )}
-              {product.Subcategory && (
-                <>
-                  <span>•</span>
-                  <Link 
-                    to={`/showroom/${product.Subcategory.Category?.slug}/${product.Subcategory.slug}`}
-                    className="hover:text-gray-800 transition-colors"
-                  >
-                    {product.Subcategory.name}
-                  </Link>
-                </>
-              )}
-              {product.brand && (
-                <>
-                  <span>•</span>
-                  <span className="font-medium">{product.brand}</span>
-                </>
-              )}
-            </div>
-
-            {/* Price */}
-            <div className="mb-6">
-              {product.salePrice ? (
-                <div className="flex items-center gap-4">
-                  <span className="text-3xl font-bold text-red-600">
-                    {formatPrice(product.salePrice)}
-                  </span>
-                  <span className="text-xl text-gray-500 line-through">
-                    {formatPrice(product.price)}
-                  </span>
-                  <span className="bg-red-100 text-red-800 text-sm px-2 py-1 rounded">
-                    -{Math.round(((product.price - product.salePrice) / product.price) * 100)}%
-                  </span>
-                </div>
-              ) : (
-                <span className="text-3xl font-bold text-gray-900">
-                  {formatPrice(product.price)}
-                </span>
-              )}
-            </div>
-
-            {/* Description */}
-            {product.description && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Descripción</h3>
-                <p className="text-gray-600 leading-relaxed">
-                  {product.description}
-                </p>
-              </div>
-            )}
-
-            {/* Specifications */}
-            {product.specifications && Object.keys(product.specifications).length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Especificaciones</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <dl className="grid grid-cols-1 gap-3">
-                    {Object.entries(product.specifications).map(([key, value]) => (
-                      <div key={key} className="flex justify-between py-2 border-b border-gray-200 last:border-0">
-                        <dt className="font-medium text-gray-900">{key}:</dt>
-                        <dd className="text-gray-600">{value}</dd>
+                  ) : (
+                    <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
+                      <div className="text-center">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <p className="mt-2 text-sm text-gray-500">Sin imagen</p>
+                        <p className="mt-1 text-xs text-red-500">Debug: {hasImages ? 'Hay imágenes pero no URL' : 'No hay imágenes'}</p>
                       </div>
-                    ))}
-                  </dl>
+                    </div>
+                  )}
+                </div>
+
+                {/* MINIATURAS VERTICALES */}
+                {hasImages && images.length > 1 && (
+                  <div className="w-24 ml-4 space-y-2 overflow-y-auto max-h-96">
+                    {images.map((image, index) => {
+                      const thumbnailUrl = getImageUrl(image, 'thumbnail');
+                      console.log(`🖼️ Miniatura ${index}:`, thumbnailUrl);
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`block w-full h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                            selectedImageIndex === index 
+                              ? 'border-blue-500 ring-2 ring-blue-200' 
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {thumbnailUrl ? (
+                            <img
+                              src={thumbnailUrl}
+                              alt={`${product.name} - imagen ${index + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                              <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* INFORMACIÓN DEL PRODUCTO */}
+            <div className="p-16">
+              <div className="lg:max-w-lg lg:self-end">
+                
+                {/* Breadcrumb */}
+                <nav className="flex mb-6" aria-label="Breadcrumb"> {/* Aumenté mb-4 a mb-6 */}
+                  <ol className="flex items-center space-x-2 text-sm text-gray-500">
+                    <li>
+                      <a href="/showroom" className="hover:text-gray-700">Showroom</a>
+                    </li>
+                    <li>
+                      <span>/</span>
+                    </li>
+                    {product.subcategory?.category && (
+                      <>
+                        <li>
+                          <a 
+                            href={`/showroom/${product.subcategory.category.slug}`} 
+                            className="hover:text-gray-700"
+                          >
+                            {product.subcategory.category.name}
+                          </a>
+                        </li>
+                        <li>
+                          <span>/</span>
+                        </li>
+                      </>
+                    )}
+                    {product.subcategory && (
+                      <>
+                        <li>
+                          <a 
+                            href={`/showroom/${product.subcategory.category?.slug}/${product.subcategory.slug}`} 
+                            className="hover:text-gray-700"
+                          >
+                            {product.subcategory.name}
+                          </a>
+                        </li>
+                        <li>
+                          <span>/</span>
+                        </li>
+                      </>
+                    )}
+                    <li className="text-gray-900 font-medium">
+                      {product.name}
+                    </li>
+                  </ol>
+                </nav>
+
+                {/* Título y badges */}
+                <div className="mb-8"> {/* Aumenté mb-6 a mb-8 */}
+                  <h1 className="text-3xl font-bold text-gray-900 mb-4"> {/* Aumenté mb-3 a mb-4 */}
+                    {product.name}
+                  </h1>
+                  
+                  {/* Badges */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {product.isFeatured && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        ⭐ Destacado
+                      </span>
+                    )}
+                    {product.isNew && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        🆕 Nuevo
+                      </span>
+                    )}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${stockStatus.color}`}>
+                      {stockStatus.text}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Precio */}
+                <div className="mb-8"> {/* Aumenté mb-6 a mb-8 */}
+                  <p className="text-3xl font-bold text-gray-900">
+                    {formatPrice(product.price)}
+                  </p>
+                  {product.currency && (
+                    <p className="text-sm text-gray-500 mt-1">
+                      Precio en {product.currency}
+                    </p>
+                  )}
+                </div>
+
+                {/* Descripción */}
+                {product.description && (
+                  <div className="mb-8"> {/* Aumenté mb-6 a mb-8 */}
+                    <h3 className="text-lg font-medium text-gray-900 mb-3"> {/* Aumenté mb-2 a mb-3 */}
+                      Descripción
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed">{product.description}</p>
+                  </div>
+                )}
+
+                {/* Especificaciones */}
+                {product.specifications && Object.keys(product.specifications).length > 0 && (
+                  <div className="mb-8"> {/* Aumenté mb-6 a mb-8 */}
+                    <h3 className="text-lg font-medium text-gray-900 mb-4"> {/* Aumenté mb-3 a mb-4 */}
+                      Especificaciones
+                    </h3>
+                    <dl className="grid grid-cols-1 gap-4"> {/* Aumenté gap-3 a gap-4 */}
+                      {Object.entries(product.specifications).map(([key, value]) => (
+                        <div key={key} className="border-b border-gray-200 pb-3"> {/* Aumenté pb-2 a pb-3 */}
+                          <dt className="text-sm font-medium text-gray-600">{key}</dt>
+                          <dd className="text-sm text-gray-900 mt-1">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </div>
+                )}
+
+                {/* Información adicional */}
+                <div className="border-t border-gray-200 pt-8"> {/* Aumenté pt-6 a pt-8 */}
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-8"> {/* Agregué mb-8 */}
+                    {product.brand && (
+                      <div>
+                        <span className="text-gray-600">Marca:</span>
+                        <span className="ml-2 font-medium text-gray-900">{product.brand}</span>
+                      </div>
+                    )}
+                    {product.model && (
+                      <div>
+                        <span className="text-gray-600">Modelo:</span>
+                        <span className="ml-2 font-medium text-gray-900">{product.model}</span>
+                      </div>
+                    )}
+                    {product.sku && (
+                      <div>
+                        <span className="text-gray-600">SKU:</span>
+                        <span className="ml-2 font-medium text-gray-900">{product.sku}</span>
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-gray-600">Stock:</span>
+                      <span className="ml-2 font-medium text-gray-900">{product.stock || 0} unidades</span>
+                    </div>
+                  </div>
+
+                  {/* Botón de WhatsApp */}
+                  <div className="mt-8">
+                    <a
+                      href={`https://wa.me/573001234567?text=${encodeURIComponent(product.whatsappMessage || `Hola! Me interesa el producto "${product.name}". ¿Podrían brindarme más información?`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full bg-green-600 border border-transparent rounded-md py-3 px-8 flex items-center justify-center text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.520-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.119"/>
+                      </svg>
+                      Consultar por WhatsApp
+                    </a>
+                  </div>
                 </div>
               </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button className="flex-1 bg-gray-900 text-white px-8 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors">
-                Solicitar información
-              </button>
-              <button className="flex-1 border border-gray-300 text-gray-900 px-8 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-                Añadir a favoritos
-              </button>
             </div>
           </div>
         </div>
-
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-          <div className="mt-16">
-            <h2 className="text-2xl font-bold text-gray-900 mb-8">Productos relacionados</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {relatedProducts.slice(0, 4).map((relatedProduct) => (
-                <ProductCard key={relatedProduct.id} product={relatedProduct} />
-              ))}
-            </div>
-          </div>
-        )}
       </div>
-
-      {/* Image Modal */}
-      {isImageModalOpen && selectedImageUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4">
-          <div className="relative max-w-5xl max-h-full">
-            <button
-              onClick={() => setIsImageModalOpen(false)}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
-            >
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <img
-              src={selectedImageUrl}
-              alt={product.name}
-              className="max-w-full max-h-full object-contain"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

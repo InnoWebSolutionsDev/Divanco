@@ -31,9 +31,11 @@ const ProductCard = ({
 
   const formatPrice = (price) => {
     if (!price) return 'Consultar precio';
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('es-CO', {
       style: 'currency',
-      currency: 'EUR'
+      currency: 'COP',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     }).format(price);
   };
 
@@ -54,6 +56,23 @@ const ProductCard = ({
         {product.isOnSale && (
           <span className="bg-orange-600 text-white text-xs px-2 py-1 rounded-full font-medium">
             Oferta
+          </span>
+        )}
+      </div>
+
+      {/* Stock Badge */}
+      <div className="absolute top-3 right-3 z-10">
+        {product.stock === 0 ? (
+          <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full font-medium">
+            Agotado
+          </span>
+        ) : product.stock <= 5 ? (
+          <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full font-medium">
+            Últimas unidades
+          </span>
+        ) : (
+          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+            Disponible
           </span>
         )}
       </div>
