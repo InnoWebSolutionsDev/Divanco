@@ -4,6 +4,7 @@ import {
   getAllProjects,
   getProjectsByYear,
   getProjectBySlug,
+  getProjectById,
   createProject,
   updateProject,
   deleteProject,
@@ -71,6 +72,12 @@ router.get('/', getAllProjects);
 
 // Ruta con parámetro dinámico (debe ir al final)
 router.get('/:slug', getProjectBySlug);
+
+router.get('/admin/:id', 
+  authenticateToken, 
+  requireRole(['admin', 'editor']), 
+  getProjectById
+);
 
 // ✅ RUTAS PROTEGIDAS (para administradores)
 // CRUD básico

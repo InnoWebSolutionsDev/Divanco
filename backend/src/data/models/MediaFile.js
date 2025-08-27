@@ -32,7 +32,7 @@ MediaFile.init({
     defaultValue: ''
   },
   urls: {
-    type: DataTypes.JSON, // URLs de Cloudinary
+    type: DataTypes.JSON, 
   },
   metadata: {
     type: DataTypes.JSON,

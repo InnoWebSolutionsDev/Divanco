@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Bars3Icon,
@@ -18,7 +18,10 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [clickCount, setClickCount] = useState(0);
   const [scrolled, setScrolled] = useState(false);
-  const [openSubmenu, setOpenSubmenu] = useState(null); // 'proyectos' | 'blog' | null
+  const [openSubmenu, setOpenSubmenu] = useState(null);
+
+  // ✅ CORREGIR: Usar useRef para el timeout
+  const timeoutRef = useRef(null);
 
   // Consultar últimos 5 proyectos y posts
   const { data: recentProjects } = useGetRecentProjectsQuery(5);
@@ -44,6 +47,26 @@ const Header = () => {
   // Detectar si estamos en la homepage
   const isHomepage = location.pathname === "/";
 
+  // ✅ CORREGIR: Limpiar timeout cuando cambia la ruta
+  useEffect(() => {
+    // Limpiar el timeout anterior si existe
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    // Resetear contador cuando cambia la ruta
+    setClickCount(0);
+  }, [location.pathname]);
+
+  // ✅ CORREGIR: Limpiar timeout al desmontar
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   // Detectar scroll en homepage
   useEffect(() => {
     const handleScroll = () => {
@@ -59,19 +82,30 @@ const Header = () => {
     }
   }, [isHomepage]);
 
-  // Función para manejar el triple click en el logo
+  // ✅ MEJORADO: Función para manejar el triple click en el logo
   const handleLogoClick = (e) => {
     e.preventDefault();
-    setClickCount((prev) => prev + 1);
+    
+    // Limpiar timeout anterior si existe
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-    setTimeout(() => {
-      setClickCount(0);
-    }, 2000);
+    const newClickCount = clickCount + 1;
+    setClickCount(newClickCount);
 
-    if (clickCount === 2) {
+    // Si es el tercer click, navegar inmediatamente
+    if (newClickCount >= 3) {
       navigate("/login");
       setClickCount(0);
+      return;
     }
+
+    // Configurar nuevo timeout para resetear
+    timeoutRef.current = setTimeout(() => {
+      setClickCount(0);
+      timeoutRef.current = null;
+    }, 2000);
   };
 
   // Lógica para el fondo del header
@@ -84,6 +118,11 @@ const Header = () => {
         : "bg-transparent";
     }
   };
+
+  // ✅ CERRAR menú móvil cuando cambia la ruta
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   return (
     <header
@@ -145,6 +184,8 @@ const Header = () => {
           </>
         )}
       </nav>
+
+
     </header>
   );
 };
@@ -420,7 +461,7 @@ function ShowroomSubcategories({ categorySlug, setMobileMenuOpen }) {
   });
   if (!subcatData?.data) return null;
   const { category, subcategories } = subcatData.data;
-  // Debug: loguear el content de cada subcategoría
+  
   if (subcategories && subcategories.length > 0) {
     subcategories.forEach((subcat) => {
       console.log(`Subcat: ${subcat.name}, content:`, subcat.content);
@@ -462,4 +503,4 @@ function ShowroomSubcategories({ categorySlug, setMobileMenuOpen }) {
           )}
     </div>
   );
-}
+};

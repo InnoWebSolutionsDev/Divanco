@@ -32,7 +32,7 @@ const AdminNavigation = () => {
     },
     {
       name: 'Proyectos',
-      path: '/admin/projects',
+      path: '/admin/proyectosEdit',
       icon: CameraIcon,
     },
     {

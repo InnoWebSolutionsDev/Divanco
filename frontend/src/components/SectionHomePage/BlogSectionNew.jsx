@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useGetFeaturedBlogPostsQuery, useGetRecentBlogPostsQuery } from '../../features/blog';
+import { scrollToSection } from '../../utils/simpleScroll';
 
 const BlogSection = () => {
   const { data: featuredResponse, isLoading: featuredLoading, error: featuredError } = useGetFeaturedBlogPostsQuery(3);
@@ -95,7 +96,7 @@ const BlogSection = () => {
   }
 
   return (
-    <section className="py-16 lg:py-24 bg-white">
+    <section id="blog-section" className="py-16 lg:py-24 bg-white relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 lg:mb-16">
@@ -245,6 +246,18 @@ const BlogSection = () => {
           </Link>
         </div>
       </div>
+
+      {/* Flecha de navegación */}
+      <button 
+        onClick={() => scrollToSection('#showroom-section')}
+        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 cursor-pointer hover:scale-110 transition-transform duration-300"
+        aria-label="Ver showroom"
+      >
+        <div className="w-px h-6 bg-gray-300 mx-auto mb-2"></div>
+        <svg className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-300 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+      </button>
     </section>
   );
 };

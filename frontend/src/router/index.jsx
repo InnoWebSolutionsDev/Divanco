@@ -67,10 +67,7 @@ export const router = createBrowserRouter(
           path: "showroom/:categorySlug/:subcategorySlug",
           element: <SubcategoryProductsPage />,
         },
-        {
-          path: "/admin/proyectosEdit",
-          element: <AdminProjectPage />,
-        },
+        
         {
           path: "proyectos/",
           element: <ProjectsPage />, // Filtrada por año con ruta específica
@@ -170,6 +167,10 @@ export const router = createBrowserRouter(
         {
           path: "projects",
           element: <ProjectUpload />,
+        },
+        {
+          path: "/admin/proyectosEdit",
+          element: <AdminProjectPage />,
         },
         {
           path: "blog",

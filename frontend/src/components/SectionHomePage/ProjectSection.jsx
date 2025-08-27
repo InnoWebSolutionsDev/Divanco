@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useGetSliderProjectsQuery } from '../../features/projects/projectsApi';
+import { scrollToSection } from '../../utils/simpleScroll';
 
 const ProjectSection = ({ limit = 6 }) => {
   const { data, isLoading, error } = useGetSliderProjectsQuery(limit);
@@ -73,7 +74,7 @@ const ProjectSection = ({ limit = 6 }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div id="projects-section" className="min-h-screen bg-white relative">
       {/* Slider estilo Minotti con slides parcialmente visibles */}
       <section className="relative overflow-hidden bg-gray-50" style={{ 
         height: isMobile ? 'calc(100vh - 80px)' : '100vh',
@@ -259,6 +260,18 @@ const ProjectSection = ({ limit = 6 }) => {
               <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
             </svg>
           )}
+        </button>
+
+        {/* Flecha de navegación */}
+        <button 
+          onClick={() => scrollToSection('#blog-section')}
+          className="absolute bottom-6 left-1/2 transform -translate-x-1/2 cursor-pointer hover:scale-110 transition-transform duration-300 z-20"
+          aria-label="Ver blog"
+        >
+          <div className="w-px h-6 bg-gray-300 mx-auto mb-2"></div>
+          <svg className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-300 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
         </button>
       </section>
     </div>

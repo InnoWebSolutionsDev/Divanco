@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useGetCategoriesQuery } from '../../features/categories/categoriesApi';
+import { scrollToSection } from '../../utils/simpleScroll';
 
 const ShowroomSection = () => {
   const { data, isLoading, error } = useGetCategoriesQuery({ 
@@ -72,7 +73,7 @@ const ShowroomSection = () => {
   }
 
   return (
-    <section className="py-16 bg-gray-50">
+    <section id="showroom-section" className="py-16 bg-gray-50 relative">
       {/* Título de la sección */}
       <div className="max-w-6xl mx-auto px-4 mb-12">
         <h2 className="text-3xl md:text-4xl font-light text-center text-gray-900 tracking-wide">
@@ -280,6 +281,18 @@ const ShowroomSection = () => {
           </svg>
         </Link>
       </div>
+
+      {/* Flecha de navegación */}
+      <button 
+        onClick={() => scrollToSection('#ediciones-section')}
+        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 cursor-pointer hover:scale-110 transition-transform duration-300"
+        aria-label="Ver ediciones"
+      >
+        <div className="w-px h-6 bg-gray-300 mx-auto mb-2"></div>
+        <svg className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors duration-300 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        </svg>
+      </button>
     </section>
   );
 };
