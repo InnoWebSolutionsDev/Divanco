@@ -210,6 +210,8 @@ const MinimalMobileMenu = ({
   const [openCat, setOpenCat] = useState(null);
   const { data: recentProjects } = useGetRecentProjectsQuery(5);
   const { data: recentBlogPosts } = useGetRecentBlogPostsQuery(5);
+  const { logoutWithoutNavigate } = useAuth();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     console.log("categoriesData:", categoriesData);
@@ -441,13 +443,25 @@ const MinimalMobileMenu = ({
         <span>Buscar</span>
       </Link>
       {isAuthenticated && (
-        <Link
-          to="/profile"
-          className="block text-base font-light uppercase tracking-widest text-white/80 hover:text-naranjaDivanco py-3 px-2 rounded transition-all duration-200"
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          {user?.name || "Profile"}
-        </Link>
+        <div>
+          <Link
+            to="/profile"
+            className="block text-base font-light uppercase tracking-widest text-white/80 hover:text-naranjaDivanco py-3 px-2 rounded transition-all duration-200"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            {user?.name || "Profile"}
+          </Link>
+          <button
+            onClick={async () => {
+              await logoutWithoutNavigate();
+              setMobileMenuOpen(false);
+              navigate('/login');
+            }}
+            className="block w-full text-left text-base font-light uppercase tracking-widest text-white/80 hover:text-red-400 py-3 px-2 rounded transition-all duration-200"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       )}
     </div>
   );
