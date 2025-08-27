@@ -1,5 +1,6 @@
-import { Category, Subcategory, Project, BlogPost, User } from '../data/models/index.js';
+import { Category, Subcategory, Project, BlogPost, User, MediaFile } from '../data/models/index.js';
 import { Op } from 'sequelize';
+import sequelize from '../data/config/sequelize.js';
 
 // Búsqueda global
 export const globalSearch = async (req, res) => {
@@ -96,17 +97,33 @@ export const globalSearch = async (req, res) => {
             { searchableText: { [Op.iLike]: `%${searchTerm}%` } }
           ]
         },
-        attributes: ['id', 'title', 'slug', 'description', 'location', 'year', 'projectType', 'featuredImage'],
+        attributes: ['id', 'title', 'slug', 'description', 'location', 'year', 'projectType'],
+        include: [{
+          model: MediaFile,
+          as: 'media',
+          where: { isActive: true },
+          attributes: ['id', 'urls', 'type', 'isMain'],
+          required: false,
+          limit: 1
+        }],
         limit: type === 'projects' ? itemLimit : 5,
         offset: type === 'projects' ? offset : 0,
         order: [['year', 'DESC'], ['title', 'ASC']]
       });
 
-      results.projects = projects.map(project => ({
-        ...project.toJSON(),
-        type: 'project',
-        url: `/proyectos/${project.slug}`
-      }));
+      results.projects = projects.map(project => {
+        const projectData = project.toJSON();
+        const mainImage = project.media && project.media.length > 0 
+          ? project.media.find(m => m.isMain) || project.media[0]
+          : null;
+        
+        return {
+          ...projectData,
+          type: 'project',
+          url: `/proyectos/${project.slug}`,
+          featuredImage: mainImage && mainImage.urls ? (mainImage.urls.desktop || mainImage.urls[0] || null) : null
+        };
+      });
     }
 
     // Búsqueda en blog posts
@@ -116,17 +133,15 @@ export const globalSearch = async (req, res) => {
           status: 'published',
           [Op.or]: [
             { title: { [Op.iLike]: `%${searchTerm}%` } },
-            { content: { [Op.iLike]: `%${searchTerm}%` } },
+            sequelize.where(
+              sequelize.cast(sequelize.col('content'), 'text'),
+              { [Op.iLike]: `%${searchTerm}%` }
+            ),
             { excerpt: { [Op.iLike]: `%${searchTerm}%` } },
             { searchableText: { [Op.iLike]: `%${searchTerm}%` } }
           ]
         },
-        include: [{
-          model: User,
-          as: 'author',
-          attributes: ['name']
-        }],
-        attributes: ['id', 'title', 'slug', 'excerpt', 'publishedAt', 'featuredImage'],
+        attributes: ['id', 'title', 'slug', 'excerpt', 'publishedAt', 'featuredImage', 'author'],
         limit: type === 'blog' ? itemLimit : 5,
         offset: type === 'blog' ? offset : 0,
         order: [['publishedAt', 'DESC']]
@@ -134,7 +149,7 @@ export const globalSearch = async (req, res) => {
 
       results.blogPosts = blogPosts.map(post => ({
         ...post.toJSON(),
-        type: 'blog',
+        type: 'post',
         url: `/blog/${post.slug}`
       }));
     }
@@ -353,24 +368,43 @@ export const advancedSearch = async (req, res) => {
 
     const projects = await Project.findAll({
       where: projectWhereClause,
-      attributes: ['id', 'title', 'slug', 'description', 'location', 'year', 'projectType', 'featuredImage'],
+      attributes: ['id', 'title', 'slug', 'description', 'location', 'year', 'projectType'],
+      include: [{
+        model: MediaFile,
+        as: 'media',
+        where: { isActive: true },
+  attributes: ['id', 'urls', 'type', 'isMain'],
+        required: false,
+        limit: 1
+      }],
       limit: itemLimit,
       offset: offset,
       order: projectOrder
     });
 
-    results.projects = projects.map(project => ({
-      ...project.toJSON(),
-      type: 'project',
-      url: `/proyectos/${project.slug}`
-    }));
+    results.projects = projects.map(project => {
+      const projectData = project.toJSON();
+      const mainImage = project.media && project.media.length > 0 
+        ? project.media.find(m => m.isMain) || project.media[0]
+        : null;
+      
+      return {
+        ...projectData,
+        type: 'project',
+        url: `/proyectos/${project.slug}`,
+  featuredImage: mainImage && mainImage.urls ? (mainImage.urls.desktop || mainImage.urls[0] || null) : null
+      };
+    });
 
     // Búsqueda avanzada en blog posts
     const blogWhereClause = {
       status: 'published',
       [Op.or]: [
         { title: { [Op.iLike]: `%${searchTerm}%` } },
-        { content: { [Op.iLike]: `%${searchTerm}%` } },
+        sequelize.where(
+          sequelize.cast(sequelize.col('content'), 'text'),
+          { [Op.iLike]: `%${searchTerm}%` }
+        ),
         { excerpt: { [Op.iLike]: `%${searchTerm}%` } },
         { searchableText: { [Op.iLike]: `%${searchTerm}%` } }
       ]
@@ -398,12 +432,7 @@ export const advancedSearch = async (req, res) => {
 
     const blogPosts = await BlogPost.findAll({
       where: blogWhereClause,
-      include: [{
-        model: User,
-        as: 'author',
-        attributes: ['name']
-      }],
-      attributes: ['id', 'title', 'slug', 'excerpt', 'publishedAt', 'featuredImage', 'tags'],
+      attributes: ['id', 'title', 'slug', 'excerpt', 'publishedAt', 'featuredImage', 'tags', 'author'],
       limit: itemLimit,
       offset: offset,
       order: blogOrder
@@ -411,7 +440,7 @@ export const advancedSearch = async (req, res) => {
 
     results.blogPosts = blogPosts.map(post => ({
       ...post.toJSON(),
-      type: 'blog',
+      type: 'post',
       url: `/blog/${post.slug}`
     }));
 

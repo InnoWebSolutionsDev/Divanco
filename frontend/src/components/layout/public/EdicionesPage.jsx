@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { scrollToSection } from '../../../utils/simpleScroll';
 
 function EdicionesPage() {
   const [currentImage, setCurrentImage] = useState(0);
@@ -38,7 +39,7 @@ function EdicionesPage() {
   }, [images.length]);
 
   return (
-    <section className="relative h-screen bg-gray-50 overflow-hidden">
+    <section id="ediciones-section" className="relative h-screen bg-gray-50 overflow-hidden">
       {/* Container de imágenes */}
       <div className="absolute inset-0">
         {images.map((image, index) => (
@@ -124,6 +125,23 @@ function EdicionesPage() {
         <span className="mx-2">—</span>
         <span>{images.length.toString().padStart(2, '0')}</span>
       </div>
+
+      {/* Flecha de navegación - Volver al inicio */}
+      <button 
+        onClick={() => {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        }}
+        className="absolute bottom-6 left-1/2 transform -translate-x-1/2 cursor-pointer hover:scale-110 transition-transform duration-300"
+        aria-label="Volver al inicio"
+      >
+        <div className="w-px h-6 bg-white/50 mx-auto mb-2"></div>
+        <svg className="w-4 h-4 text-white/70 hover:text-white transition-colors duration-300 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </button>
     </section>
   );
 }

@@ -7,15 +7,12 @@ import BlogSectionNew from '../../components/SectionHomePage/BlogSectionNew';
 const HomePage = () => {
   return (
     <div>
-
-    
       <Hero  />
       <SloganPage />
-      <EdicionesPage />
+      <ProjectSection />
       <BlogSectionNew />
       <ShowroomSection />
-      <ProjectSection />
-
+      <EdicionesPage />
       
       <section className="py-20 px-4 sm:px-6 lg:px-8"></section>
     </div>

@@ -127,6 +127,14 @@ export const projectsApi = baseApi.injectEndpoints({
       ],
     }),
 
+    getProjectById: builder.query({
+  query: (id) => `/projects/admin/${id}`,
+  providesTags: (result, error, id) => [
+    { type: 'Project', id },
+  ],
+}),
+
+
     // ✅ PROYECTOS RECIENTES (usando endpoint existente)
     getRecentProjects: builder.query({
       query: (limit = 6) => `/projects?limit=${limit}&sortBy=updatedAt&sortOrder=DESC&publicOnly=true`,
@@ -296,6 +304,7 @@ export const {
   useGetRecentProjectsQuery,
   useGetProjectsByYearQuery,
   useGetProjectBySlugQuery,
+   useGetProjectByIdQuery,
   
   // CRUD Admin
   useCreateProjectMutation,

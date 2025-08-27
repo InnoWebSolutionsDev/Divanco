@@ -5,4 +5,5 @@ export {
   useGetFeaturedProjectsQuery,
   useGetProjectsByYearQuery,
   useGetProjectBySlugQuery,
+  useGetProjectByIdQuery,
 } from './projectsApi';

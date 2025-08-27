@@ -571,7 +571,7 @@ export const getProjectBySlug = async (req, res) => {
   }
 };
 
-// ...existing code...
+
 
 // ✅ FUNCIÓN DE TEST ESPECÍFICA PARA DEBUGGING
 export const testProjectCreation = async (req, res) => {
@@ -706,7 +706,7 @@ export const testProjectCreation = async (req, res) => {
 export const debugCreateProject = async (req, res) => {
   console.log('\n🚨 === DEBUG CREATE PROJECT INICIADO ===');
   console.log('📅 Timestamp:', new Date().toISOString());
-  
+  console.log("📝 [createProject] req.body:", req.body);
   try {
     // Log 1: Request completo
     console.log('📨 REQUEST DEBUG:');
@@ -776,15 +776,14 @@ export const debugCreateProject = async (req, res) => {
     }
     console.log('✅ Year validation passed');
     
-    const validProjectTypes = ['Preproyecto', 'Proyecto', 'Dirección'];
-    if (!projectType || !validProjectTypes.includes(projectType)) {
-      console.log('❌ ProjectType validation failed');
-      return res.status(400).json({
-        success: false,
-        message: 'Tipo de proyecto inválido',
-        debug: { projectType, validTypes: validProjectTypes }
-      });
-    }
+    const validProjectTypes = ['Diseño', 'Proyecto', 'Dirección de Obra'];
+if (!projectType || !validProjectTypes.includes(projectType)) {
+  console.log('❌ ERROR: Tipo de proyecto inválido');
+  return res.status(400).json({
+    success: false,
+    message: 'El tipo de proyecto es requerido y debe ser válido (Diseño, Proyecto, Dirección de Obra)'
+  });
+}
     console.log('✅ ProjectType validation passed');
     
     // Log 5: Preparar data final
@@ -954,7 +953,7 @@ export const createProject = async (req, res) => {
     }
 
     // ✅ LOG 3: Verificar projectType válido
-    const validProjectTypes = ['Preproyecto', 'Proyecto', 'Dirección'];
+    const validProjectTypes = ["Diseño", "Proyecto", "Dirección de Obra"];
     console.log('4. Validación projectType:');
     console.log('   - projectType recibido:', projectType);
     console.log('   - tipos válidos:', validProjectTypes);
@@ -1559,6 +1558,73 @@ export const toggleSliderImage = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error actualizando imagen del slider:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+// ...existing code...
+
+// ✅ NUEVA FUNCIÓN: Obtener proyecto por ID (para admin)
+export const getProjectById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log(`🔍 Obteniendo proyecto por ID: ${id}`);
+
+    const project = await Project.findOne({
+      where: { 
+        id: id,
+        isActive: true  // Opcional: quitar si quieres ver proyectos inactivos en admin
+      },
+      include: [
+        {
+          model: MediaFile,
+          as: 'media',
+          where: { isActive: true },
+          required: false,
+          order: [['isMain', 'DESC'], ['order', 'ASC']]
+        },
+        {
+          model: BlogPost,
+          as: 'blogPosts',
+          required: false,
+          order: [['publishedAt', 'DESC']]
+        }
+      ]
+    });
+
+    if (!project) {
+      return res.status(404).json({
+        success: false,
+        message: 'Proyecto no encontrado'
+      });
+    }
+
+    // Organizar media por tipos (igual que en getProjectBySlug)
+    const mediaByType = {
+      renders: project.media?.filter(m => m.type === 'render') || [],
+      planos: project.media?.filter(m => m.type === 'plano') || [],
+      videos: project.media?.filter(m => m.type === 'video') || [],
+      obra_proceso: project.media?.filter(m => m.type === 'obra_proceso') || [],
+      obra_finalizada: project.media?.filter(m => m.type === 'obra_finalizada') || [],
+      otros: project.media?.filter(m => m.type === 'otro') || []
+    };
+
+    console.log(`✅ Proyecto encontrado: ${project.title}`);
+
+    res.json({
+      success: true,
+      data: {
+        ...project.toJSON(),
+        mediaByType
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error obteniendo proyecto por ID:', error);
     res.status(500).json({
       success: false,
       message: 'Error interno del servidor'

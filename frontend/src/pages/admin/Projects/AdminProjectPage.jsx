@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { MdAdd, MdEdit, MdDelete, MdVisibility, MdStar, MdTune, MdImage } from 'react-icons/md';
+
 import { useGetProjectsQuery, useDeleteProjectMutation, useUpdateProjectMutation, useToggleSliderImageMutation } from '../../../features/projects/projectsApi';
 import ProjectUpload from './ProjectUpload';
+
 
 const AdminProjectPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -146,7 +148,7 @@ const AdminProjectPage = () => {
                           onClick={() => handleToggleSlider(project)}
                           disabled={isUpdating}
                         >
-                          <SlidersHorizontal className="w-5 h-5 inline" />
+                          <MdTune className="w-5 h-5 inline" />
                         </button>
                       </td>
                       <td className="px-6 py-4 text-center">

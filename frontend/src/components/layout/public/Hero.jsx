@@ -1,6 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
+import { scrollToSection } from '../../../utils/simpleScroll';
 
 const Hero = ({ 
   backgroundImage = '/images/prueba/hero.png',
@@ -90,11 +91,15 @@ const Hero = ({
         />
       )}
 
-      {/* ✅ Scroll Indicator */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+      {/* ✅ Scroll Indicator - Clickeable */}
+      <button 
+        onClick={() => scrollToSection('#slogan-section')}
+        className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10 cursor-pointer hover:scale-110 transition-transform duration-300"
+        aria-label="Desplazarse hacia abajo"
+      >
         <div className="w-px h-16 bg-white/50 mx-auto mb-4"></div>
         <svg 
-          className="w-6 h-6 text-white/70 animate-bounce" 
+          className="w-6 h-6 text-white/70 animate-bounce hover:text-white transition-colors duration-300" 
           fill="none" 
           stroke="currentColor" 
           viewBox="0 0 24 24"
@@ -106,7 +111,7 @@ const Hero = ({
             d="M19 14l-7 7m0 0l-7-7m7 7V3" 
           />
         </svg>
-      </div>
+      </button>
     </section>
   );
 };

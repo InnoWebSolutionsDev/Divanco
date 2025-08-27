@@ -1,4 +1,4 @@
-import User from '../data/models/index.js';
+import {User} from '../data/models/index.js';
 import bcrypt from 'bcryptjs';
 
 export const createUser = async (req, res, next) => {
@@ -14,24 +14,52 @@ export const createUser = async (req, res, next) => {
 
 export const getUsers = async (req, res, next) => {
   try {
-    const users = await User.findAll();
-    res.json(users);
+    console.log('🔍 Obteniendo todos los usuarios...');
+    
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] } // ✅ Excluir contraseñas por seguridad
+    });
+    
+    console.log('✅ Usuarios encontrados:', users.length);
+    
+    res.json({
+      success: true,
+      data: users
+    });
   } catch (error) {
-    next(error);
+    console.error('❌ Error obteniendo usuarios:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error interno del servidor'
+    });
   }
 };
 
 export const getUserById = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const { id } = req.params;
+    
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] }
+    });
+    
     if (!user) {
-      const err = new Error('User not found');
-      err.status = 404;
-      throw err;
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado'
+      });
     }
-    res.json(user);
+    
+    res.json({
+      success: true,
+      data: user
+    });
   } catch (error) {
-    next(error);
+    console.error('Error obteniendo usuario:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error interno del servidor'
+    });
   }
 };
 
